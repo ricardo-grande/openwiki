@@ -49,7 +49,7 @@ export function createOpenWikiConnectorTools(
         properties: {},
         additionalProperties: false,
       } as const,
-      func: async () => stringifyToolResult(await listConnectors()),
+      func: async () => reportToolResult(() => listConnectors()),
     }),
     new DynamicStructuredTool({
       name: "openwiki_list_mcp_tools",
@@ -66,8 +66,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await listMcpToolsForConnector(getConnectorId(input, "connectorId")),
+        reportToolResult(() =>
+          listMcpToolsForConnector(getConnectorId(input, "connectorId")),
         ),
     }),
     new DynamicStructuredTool({
@@ -92,8 +92,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await callMcpToolForConnector(
+        reportToolResult(() =>
+          callMcpToolForConnector(
             getConnectorId(input, "connectorId"),
             getStringInput(input, "toolName"),
             getRecordInput(input, "args") ?? {},
@@ -130,8 +130,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await ingestConnector(
+        reportToolResult(() =>
+          ingestConnector(
             getConnectorId(input, "connectorId"),
             getIngestOptions(input),
           ),
@@ -146,7 +146,7 @@ export function createOpenWikiConnectorTools(
         properties: {},
         additionalProperties: false,
       } as const,
-      func: async () => stringifyToolResult(await ingestAllConnectors()),
+      func: async () => reportToolResult(() => ingestAllConnectors()),
     }),
     new DynamicStructuredTool({
       name: "openwiki_list_raw_items",
@@ -173,8 +173,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await listRawItems(getConnectorId(input, "connectorId")),
+        reportToolResult(() =>
+          listRawItems(getConnectorId(input, "connectorId")),
         ),
     }),
     new DynamicStructuredTool({
@@ -208,8 +208,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await readRawItem(
+        reportToolResult(() =>
+          readRawItem(
             getConnectorId(input, "connectorId"),
             getStringInput(input, "path"),
             getNumberInput(input, "maxBytes") ?? 100_000,
@@ -547,6 +547,24 @@ function getStringArrayInput(
 
 function stringifyToolResult(value: unknown): string {
   return JSON.stringify(value, null, 2);
+}
+
+/**
+ * Run a connector tool and return its result as JSON, reporting any failure to
+ * the model as `{ "error": "..." }` instead of throwing. OpenWiki's middleware
+ * wraps every tool call, and LangChain re-raises errors that pass through
+ * middleware, so a thrown error here would end the whole agent run, for
+ * example when the model lists the tools of an MCP connector that is not
+ * configured. Refusals still return no data.
+ */
+async function reportToolResult(run: () => Promise<unknown>): Promise<string> {
+  try {
+    return stringifyToolResult(await run());
+  } catch (error) {
+    return stringifyToolResult({
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

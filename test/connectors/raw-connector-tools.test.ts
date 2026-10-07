@@ -85,13 +85,36 @@ describe("raw connector tools", () => {
     const linkRelativePath = await createSymlinkRawItem(home, "x", runId);
     const tools = await loadConnectorTools(home);
 
-    await expect(
-      getTool(tools, "openwiki_read_raw_item").invoke({
-        connectorId: "x",
-        maxBytes: 100,
-        path: linkRelativePath,
-      }),
-    ).rejects.toThrow(/symbolic links/u);
+    const result = JSON.parse(
+      String(
+        await getTool(tools, "openwiki_read_raw_item").invoke({
+          connectorId: "x",
+          maxBytes: 100,
+          path: linkRelativePath,
+        }),
+      ),
+    ) as Record<string, unknown>;
+    // The refusal reaches the model as an error result carrying no data.
+    expect(Object.keys(result)).toEqual(["error"]);
+    expect(result.error).toMatch(/symbolic links/u);
+  });
+
+  test("reports an unconfigured MCP connector to the model instead of throwing", async () => {
+    // A thrown tool error ends the whole agent run, because LangChain re-raises
+    // errors that pass through OpenWiki's tool middleware.
+    const home = await createTempHome();
+    const tools = await loadConnectorTools(home);
+
+    const result = JSON.parse(
+      String(
+        await getTool(tools, "openwiki_list_mcp_tools").invoke({
+          connectorId: "custom-mcp",
+        }),
+      ),
+    ) as Record<string, unknown>;
+    // The refusal reaches the model as an error result carrying no data.
+    expect(Object.keys(result)).toEqual(["error"]);
+    expect(result.error).toMatch(/not enabled/u);
   });
 
   test("rejects symlink raw directories before listing", async () => {
@@ -99,9 +122,16 @@ describe("raw connector tools", () => {
     await createSymlinkRawDir(home, "x");
     const tools = await loadConnectorTools(home);
 
-    await expect(
-      getTool(tools, "openwiki_list_raw_items").invoke({ connectorId: "x" }),
-    ).rejects.toThrow(/symbolic links/u);
+    const result = JSON.parse(
+      String(
+        await getTool(tools, "openwiki_list_raw_items").invoke({
+          connectorId: "x",
+        }),
+      ),
+    ) as Record<string, unknown>;
+    // The refusal reaches the model as an error result carrying no data.
+    expect(Object.keys(result)).toEqual(["error"]);
+    expect(result.error).toMatch(/symbolic links/u);
   });
 
   test("rejects symlink raw directories before reading", async () => {
@@ -109,13 +139,18 @@ describe("raw connector tools", () => {
     const rawItemPath = await createSymlinkRawDir(home, "x");
     const tools = await loadConnectorTools(home);
 
-    await expect(
-      getTool(tools, "openwiki_read_raw_item").invoke({
-        connectorId: "x",
-        maxBytes: 100,
-        path: rawItemPath,
-      }),
-    ).rejects.toThrow(/symbolic links/u);
+    const result = JSON.parse(
+      String(
+        await getTool(tools, "openwiki_read_raw_item").invoke({
+          connectorId: "x",
+          maxBytes: 100,
+          path: rawItemPath,
+        }),
+      ),
+    ) as Record<string, unknown>;
+    // The refusal reaches the model as an error result carrying no data.
+    expect(Object.keys(result)).toEqual(["error"]);
+    expect(result.error).toMatch(/symbolic links/u);
   });
 });
 
