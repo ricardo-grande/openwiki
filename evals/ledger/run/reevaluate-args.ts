@@ -89,6 +89,11 @@ function parseReevaluationArgs(argv: string[]): ReevaluationArgs {
 
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
+
+    // pnpm 7+ forwards the `--` in `pnpm run <script> -- <args>` to the script.
+    if (token === "--") {
+      continue;
+    }
     const equals = token.indexOf("=");
     const flag = equals === -1 ? token : token.slice(0, equals);
 
