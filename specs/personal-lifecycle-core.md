@@ -4,7 +4,7 @@ title: Personal Lifecycle Core and Drivers
 description: Defines the durable, model-free lifecycle core for OpenWiki personal mode and the contract that its native and host drivers follow.
 spec_id: personal-lifecycle-core
 kind: architecture
-version: "0.1"
+version: "0.2"
 status: draft
 depends_on: []
 generated: { by: claude/claude-opus-5-5, at: 2026-10-07T15:42:16Z }
@@ -19,7 +19,7 @@ sources:
 
 # Personal Lifecycle Core and Drivers
 
-**Version 0.1** · Status: draft · Kind: architecture
+**Version 0.2** · Status: draft · Kind: architecture
 
 This spec gives OpenWiki personal mode (the local brain under
 `~/.openwiki/wiki`) the same architecture code mode already has. A durable,
@@ -55,7 +55,7 @@ version are listed in §7.
 | 4   | Agent boundaries      | What drivers and their agents may do |
 | 5   | Conformance           | Checks PLC-001 to PLC-019 |
 | 6   | Considered & deferred | Claims brain, retention, per-instance cursors, ... |
-| 7   | Changelog             | 0.1 initial draft |
+| 7   | Changelog             | 0.2 opt-in flag, release gate, onboarding entry point, translation removal timing |
 
 ## Conventions
 
@@ -652,12 +652,13 @@ Entry points:
 | Entry point | Today | Under this spec |
 |---|---|---|
 | `openwiki personal --init/--update [msg]` | one monolithic agent run | `begin(mode, instruction = msg)`, then the native driver |
+| personal onboarding completion | offers "Run ingestion now" (`ingest all`) or "Run later"; personal init never runs | `begin(init)`, then the native driver. It never pulls or ingests, so on a fresh home the frontier is empty and `/quickstart.md` is the only job. The user seeds the wiki later with `ingest` |
 | `openwiki ingest <target>` | pull, then one agent run per source instance | deterministic pulls for the targets, then one `begin(update, scope.connectors)` and the native driver |
 | `openwiki ingest <target> --pull-only` | (new) | pulls only. Evidence waits in the frontier of the next run |
 | scheduled ingestion | `ingest all --scheduled` | unchanged, or `--pull-only` when the schedule is set to pull-only |
 | `openwiki personal` chat | agent that may write the wiki without finalization | read-only answering. An edit request opens a one-page run: `begin(update, scope.pages, instruction)` |
 | `git-repo` connector | agentic, so never pulled by `ingest` | deterministic (`supportsAgenticDiscovery: false`) |
-| translation middleware | model pass before init/update | deleted. Personal init/update is its only caller |
+| translation middleware | model pass before init/update | not used by the new native driver. Deleted together with the legacy monolithic path, its only caller (rules below) |
 
 **Example**
 
@@ -678,12 +679,28 @@ Entry points:
 - `ingest` MUST run all requested pulls before calling `begin`. It MUST NOT
   call `begin` once per source instance. Rationale: one run per ingest is
   cheaper and lets canonical pages reconcile all sources together.
-- The legacy monolithic path MUST remain available behind
-  `OPENWIKI_PERSONAL_LEGACY=1` until the new native driver matches or beats it
-  on the personal evaluation fixtures (§6). It MUST be removed in the first
-  minor release after that.
-- The new native driver MUST NOT become the default before those fixtures
-  exist.
+- Until the release gate below passes, the legacy monolithic path MUST stay
+  the default for every entry point in the table. The new native driver runs
+  only when `OPENWIKI_PERSONAL_CORE=1` is set.
+- The new native driver MUST NOT become the default before the personal
+  evaluation fixtures exist and the release gate passes. The fixtures are the
+  personal LEDGER benchmarks: the `evals/ledger` benchmarks with
+  `kind: "personal"`, which replay frozen synthetic raw runs. Before the gate
+  runs, they MUST include at least one benchmark with an agentic connector,
+  so gathering is exercised, and one with `git-repo`.
+- **Release gate.** Run every personal LEDGER benchmark three times on each
+  path. The gate passes when, for every benchmark:
+  - the new driver's mean LEDGER score is at least the legacy path's mean;
+  - no model-free structural check that passes on the legacy path fails on the
+    new driver.
+- When the gate passes, the new native driver MUST become the default, and
+  the legacy path MUST remain available behind `OPENWIKI_PERSONAL_LEGACY=1`.
+  `OPENWIKI_PERSONAL_CORE` then has no effect.
+- The legacy path MUST be removed in the first minor release after the flip.
+  The translation middleware and the `OPENWIKI_PERSONAL_CORE` and
+  `OPENWIKI_PERSONAL_LEGACY` flags MUST be removed in the same change.
+  Rationale: the legacy path is the middleware's only caller, so deleting it
+  earlier would break the opt-out.
 
 **Rationale.** These roles are the same as the code-mode native driver's, so the
 worker pool, retry, and tracing are shared. A single agent per run was rejected
@@ -760,7 +777,7 @@ The following MUST NOT be treated as non-conformance:
 | PLC-012 | Cursor not advanced for a connector with a skipped seeded job | error | test | §3.4 |
 | PLC-013 | `begin` while a fresh lock exists returns `conflict`; two simultaneous takeovers of an expired lock yield exactly one holder; scheduled ingestion never takes over | error | test | §3.4 |
 | PLC-014 | `init` never deletes existing pages | error | test | §3.4 |
-| PLC-015 | No translation pass runs on a language change; rewrite jobs are added | error | test | §3.4 |
+| PLC-015 | On the new native driver, no translation pass runs on a language change; rewrite jobs are added | error | test | §3.4 |
 | PLC-016 | Native workers have no shell and no ingest tools | error | test | §3.5 |
 | PLC-017 | A page write with a stale `baseVersion` is rejected with `conflict`, for both native and host writes | error | test | §3.4 |
 | PLC-018 | Init requires only `/quickstart.md`; `/open-questions.md` is required only once it exists | error | test | §3.3 |
@@ -791,13 +808,29 @@ The following MUST NOT be treated as non-conformance:
 - **Code-mode cross-process single writer.** Code mode has the gap that the
   §3.4 lock closes for personal mode. Fixing it is a separate change to
   `repository-run.ts`.
-- **Evaluation fixture content.** A frozen raw-dump set plus a rubric for
-  comparing the legacy and new native paths. Their *existence* is a release gate
-  (§3.5). Their design is not part of the spec.
+- **Evaluation fixture content.** The personal LEDGER benchmarks' data, trap
+  manifests, and temporal grounding rule are defined with LEDGER
+  (`evals/ledger`), not here. This spec fixes only which benchmarks count as
+  the fixtures and the release gate's comparison rule (§3.5).
 
 ---
 
 ## 7. Changelog
+
+### 0.2 · 2026-10-07
+
+- **Opt-in flag** (§3.5). The new native driver runs only with
+  `OPENWIKI_PERSONAL_CORE=1` until the release gate passes; after the flip,
+  `OPENWIKI_PERSONAL_LEGACY=1` opts out.
+- **Release gate** (§3.5, §6). The personal evaluation fixtures are named as
+  the `kind: "personal"` LEDGER benchmarks, with a per-benchmark comparison
+  rule: mean score over three runs at least the legacy mean, and no structural
+  check regression.
+- **Onboarding entry point** (§3.5). Personal onboarding runs `begin(init)`
+  and never pulls or ingests.
+- **Translation middleware removal** (§3.5). It is deleted together with the
+  legacy path, its only caller, not when the new driver lands. PLC-015 now
+  applies to the new native driver.
 
 ### 0.1 · 2026-10-07
 

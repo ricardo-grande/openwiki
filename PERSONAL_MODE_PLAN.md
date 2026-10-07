@@ -15,6 +15,30 @@ fixtures, the same way code mode is covered. Every later milestone is then
 measured against that baseline. S2, which makes onboarding run init only, is
 independent and can ship at any time.
 
+## Status
+
+- [x] **S0. Spec fixes.** Both specs are at 0.2.
+  - [x] S0.1 `status` ships early with core fields `null` (host §3.2, §3.4)
+  - [x] S0.2 `ingest` moved to the lifecycle stage (host §3.2)
+  - [x] S0.3 Translation middleware deleted with the legacy path (core §3.5)
+  - [x] S0.4 Opt-in flag `OPENWIKI_PERSONAL_CORE=1` (core §3.5)
+  - [x] S0.5 PHM-001 and PHM-005 check the shipped stage (host §5.1)
+  - [x] S0.6 Fixtures named as personal LEDGER benchmarks, with a
+        per-benchmark release gate (core §3.5, §6)
+  - [x] S0.7 Onboarding entry point runs `begin(init)` (core §3.5)
+- [ ] **S1.** Personal LEDGER baseline
+- [ ] **S2.** Onboarding runs init only
+- [ ] **C1.** Shared groundwork
+- [ ] **C2.** Core state, lock, begin and finish
+- [ ] **C3.** Plan and page operations
+- [ ] **C4.** Native driver, opt-in
+- [ ] **C5.** Entry-point rewiring
+- [ ] **C6.** Default flip
+- [ ] **C7.** Remove the legacy path
+- [ ] **H1.** Personal server and installer components
+- [ ] **H2.** Retrieval and read-only evidence
+- [ ] **H3.** Lifecycle tools and full skill
+
 ## Order
 
 ```mermaid
@@ -550,10 +574,9 @@ These are deferred by the specs:
 
 ## Decisions needed
 
-- Accept the S0 fixes as proposed, or resolve them differently?
-- The opt-in flag name (S0.4).
 - The S1 temporal grounding rule: is "the newest relevant dated evidence
   decides" the right definition of `stale` for personal knowledge? This is
   the decision that most affects what the personal score means.
-- The C6 flip rule: mean score at least the legacy score with no structural
-  regression, or a stricter margin?
+- The C6 flip rule: core 0.2 requires, on every benchmark, a mean score at
+  least the legacy mean with no structural regression. Is a stricter margin
+  needed?

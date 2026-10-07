@@ -4,7 +4,7 @@ title: Personal Host Agent Mode
 description: Defines how host coding agents read, refresh and maintain the OpenWiki personal wiki over MCP, as a driver of the personal lifecycle core.
 spec_id: personal-host-mode
 kind: architecture
-version: "0.1"
+version: "0.2"
 status: draft
 depends_on: [/specs/personal-lifecycle-core.md]
 generated: { by: claude/claude-opus-5-5, at: 2026-10-07T15:42:16Z }
@@ -20,7 +20,7 @@ sources:
 
 # Personal Host Agent Mode
 
-**Version 0.1** · Status: draft · Kind: architecture
+**Version 0.2** · Status: draft · Kind: architecture
 
 This spec defines how a host coding agent (Claude Code, Codex, Cursor, and the
 others) uses OpenWiki's personal wiki through a dedicated `openwiki-personal`
@@ -52,7 +52,7 @@ version are listed in §7.
 | 4   | Agent boundaries      | What a host agent may do with personal data |
 | 5   | Conformance           | Checks PHM-001 to PHM-018 |
 | 6   | Considered & deferred | Host OAuth, config edits, model-free onboarding, workspaces, Pi |
-| 7   | Changelog             | 0.1 initial draft |
+| 7   | Changelog             | 0.2 status staging, `ingest` moved to lifecycle stage, staged tool-list checks |
 
 ## Conventions
 
@@ -230,10 +230,10 @@ This section lists the personal tools and the rules every one of them follows.
 | `openwiki_personal_search` | `{query, limit?}` | no | layout only |
 | `openwiki_personal_read` | `{page, sections?}` | no | layout only |
 | `openwiki_personal_list_pages` | `{dir?}` | no | layout only |
-| `openwiki_personal_status` | `{}` | no | no |
+| `openwiki_personal_status` | `{}` | no | state formats |
 | `openwiki_personal_list_raw_items` | `{connectorId}` | no | no |
 | `openwiki_personal_read_raw_item` | `{connectorId, path, maxBytes?}` | no | no |
-| `openwiki_personal_ingest` | `{connectorId, windowHours?, limit?, streams?}` | no | no |
+| `openwiki_personal_ingest` | `{connectorId, windowHours?, limit?, streams?}` | no | yes |
 | `openwiki_personal_list_mcp_tools` | `{runId, connectorId}` | phase `gathering` | yes |
 | `openwiki_personal_call_mcp_tool` | `{runId, connectorId, toolName, args?}` | phase `gathering` | yes |
 | `openwiki_personal_close_gathering` | `{runId}` | phase `gathering` | yes |
@@ -245,11 +245,16 @@ This section lists the personal tools and the rules every one of them follows.
 | `openwiki_personal_submit_page` | `{runId, jobId}` | phase `generating` | yes |
 | `openwiki_personal_finish` | `{runId}` | all jobs non-pending | yes |
 
-The "Core required" column has three values:
+The "Core required" column has four values:
 
 - **layout only**: needs only core §3.1's layout parameterization.
 - **no**: needs nothing from the core.
+- **state formats**: reads the core §3.2 state files (the synthesis cursor,
+  `.run.json`, and `.run.lock`), but calls no core operation.
 - **yes**: needs core §3.2–§3.4.
+
+`openwiki_personal_ingest` calls no core operation, but it is marked **yes**
+because only the core synthesizes its pulls (see "Delivery staging" below).
 
 **Example**
 
@@ -294,9 +299,19 @@ openwiki_personal_next_page({runId}) →
 
 **Edge cases.**
 
-- **Delivery staging.** The tools that need nothing from the core, or only its
-  layout, MAY ship before the lifecycle tools. A server that has the core only
-  partially MUST NOT register the tools that need the full core.
+- **Delivery staging.** The tools marked **no**, **layout only**, or **state
+  formats** MAY ship before the lifecycle tools. A server that has the core
+  only partially MUST NOT register the tools marked **yes**. A shipped stage
+  registers its tools in §3.2 order.
+  - `openwiki_personal_status` MAY ship before the core state formats exist.
+    Until then it returns `synthesisCursor`, `pending`, and `activeRun` as
+    `null` (§3.4).
+  - `openwiki_personal_ingest` MUST NOT ship before the lifecycle tools.
+    Rationale: before the core, synthesis is the legacy `openwiki ingest`
+    path, which synthesizes only the raw files of its own pull. A pull made
+    through this tool would never be synthesized. When the core then runs for
+    the first time, a connector with no cursor contributes only its newest
+    raw run (core §3.2), so every earlier host pull would be lost.
 
 ### 3.3 Personal retrieval
 
@@ -356,9 +371,14 @@ triggers pulls.
   - `wikiGoal`;
   - the source instances (id, connector, name, `connectedAt`, `ingestionGoal`);
   - per-connector readiness, reporting env presence only, never values;
-  - the synthesis cursor;
-  - the number of raw runs newer than the cursor (`pending`);
-  - the active run (`runId`, `phase`, lock holder and age), or `null`.
+  - `synthesisCursor`: the synthesis cursor (core §3.2);
+  - `pending`: per connector, the number of raw runs newer than the cursor;
+  - `activeRun`: the active run (`runId`, `phase`, lock holder and age), or
+    `null` when no run is active.
+
+  A server that ships before the core state formats returns
+  `synthesisCursor`, `pending`, and `activeRun` as `null` (§3.2, "Delivery
+  staging").
 - `openwiki_personal_read_raw_item` and `openwiki_personal_call_mcp_tool` return
   their content inside the untrusted envelope:
   `{ untrusted: true, source: "<connectorId>", content, truncated }`.
@@ -562,11 +582,11 @@ The following MUST NOT be treated as non-conformance:
 
 | ID | Check | Severity | Checked by | Ref |
 |---|---|---|---|---|
-| PHM-001 | `openwiki mcp --host` exposes exactly today's ten tools and INSTRUCTIONS; `openwiki mcp personal --host` exposes exactly the §3.2 tools | error | test (`session-manager`, `mcp-server`) | §3.1 |
+| PHM-001 | `openwiki mcp --host` exposes exactly today's ten tools and INSTRUCTIONS; `openwiki mcp personal --host` exposes exactly the §3.2 tools for the shipped stage | error | test (`session-manager`, `mcp-server`) | §3.1 |
 | PHM-002 | Installing, upgrading, or uninstalling either component leaves the other's config entry, skill directory, and receipt byte-identical; `--personal --project` is rejected | error | installer test | §3.1 |
 | PHM-003 | After the scoped load, no model-provider key is present in `process.env` | error | test | §3.1 |
 | PHM-004 | `auth <p>` creates a connected `sourceInstance` | error | test | §3.1 |
-| PHM-005 | Personal tool names and order match §3.2 | error | test | §3.2 |
+| PHM-005 | The registered personal tools are the §3.2 tools for the shipped stage, in §3.2 order | error | test | §3.2 |
 | PHM-006 | Phase gating: each run-bound tool rejects a wrong phase or `runId` with `invalid_state` | error | test | §3.2 |
 | PHM-007 | Search and read work on a non-Git `OPENWIKI_CONFIG_DIR`; refs have no `openwiki/` prefix | error | test | §3.3 |
 | PHM-008 | Symlinked page or wiki directory is refused | error | test | §3.3 |
@@ -615,6 +635,16 @@ The following MUST NOT be treated as non-conformance:
 ---
 
 ## 7. Changelog
+
+### 0.2 · 2026-10-07
+
+- **`status` staging** (§3.2, §3.4). Its "Core required" value is now **state
+  formats**. It may ship early with `synthesisCursor`, `pending`, and
+  `activeRun` set to `null`.
+- **`ingest` staging** (§3.2). It now ships with the lifecycle tools, because
+  pulls made before the core would never be synthesized.
+- **Staged tool-list checks** (§5.1). PHM-001 and PHM-005 check the tools of
+  the shipped stage, in §3.2 order.
 
 ### 0.1 · 2026-10-07
 
