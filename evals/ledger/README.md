@@ -196,12 +196,21 @@ test (`LEDGER_LIVE=1`).
 ### Legacy personal baseline
 
 Three runs per benchmark of today's legacy personal path. Later personal-mode
-milestones are compared against these numbers.
+milestones are compared against these numbers, so every later run must use the
+same system and evaluator models.
+
+- System model: not yet recorded
+- Evaluator model: not yet recorded
+- Evaluator gold agreement (`precision-gold-personal.json`): not yet recorded
 
 | Benchmark    | Runs | LEDGER score     | Supported | Stale | Hallucinated | Unverified | Structural checks |
 | ------------ | ---- | ---------------- | --------- | ----- | ------------ | ---------- | ----------------- |
 | inbox-week   | –    | not yet recorded | –         | –     | –            | –          | –                 |
 | cross-source | –    | not yet recorded | –         | –     | –            | –          | –                 |
+
+An evaluator is valid only for the benchmark kinds whose gold set it passes at
+the 0.9 floor. A judge that passes the personal set but not the repository set
+may score personal runs, and must not be used for repository runs.
 
 ## LEDGER score
 

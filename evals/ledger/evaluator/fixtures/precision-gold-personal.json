@@ -8,8 +8,13 @@
         "classification": "factual",
         "assertions": [
           {
-            "statement": "Sam owes Priya Shah the Q2 roadmap review deck, due Monday, March 9.",
-            "sourceQuote": "Sam owes Priya Shah the Q2 roadmap review deck, due Monday, March 9",
+            "statement": "Sam owes Priya Shah the Q2 roadmap review deck.",
+            "sourceQuote": "Sam owes Priya Shah the Q2 roadmap review deck",
+            "tense": "current"
+          },
+          {
+            "statement": "The Q2 roadmap review deck is due Monday, March 9.",
+            "sourceQuote": "the Q2 roadmap review deck, due Monday, March 9",
             "tense": "current"
           }
         ]
@@ -26,6 +31,66 @@
       "content": "See the People page for everyone on the Atlas project.",
       "expected": {
         "classification": "navigation",
+        "assertions": []
+      }
+    },
+    {
+      "content": "The Q2 roadmap review deck was previously due Thursday, March 5.",
+      "expected": {
+        "classification": "factual",
+        "assertions": [
+          {
+            "statement": "The Q2 roadmap review deck was previously due Thursday, March 5.",
+            "sourceQuote": "The Q2 roadmap review deck was previously due Thursday, March 5",
+            "tense": "historical"
+          }
+        ]
+      }
+    },
+    {
+      "content": "Dana Kim and Lee Park disagree on the Atlas cutover date.",
+      "expected": {
+        "classification": "factual",
+        "assertions": [
+          {
+            "statement": "Dana Kim and Lee Park disagree on the Atlas cutover date.",
+            "sourceQuote": "Dana Kim and Lee Park disagree on the Atlas cutover date",
+            "tense": "current"
+          }
+        ]
+      }
+    },
+    {
+      "content": "The Lisbon trip was cancelled.",
+      "expected": {
+        "classification": "factual",
+        "assertions": [
+          {
+            "statement": "The Lisbon trip was cancelled.",
+            "sourceQuote": "The Lisbon trip was cancelled",
+            "tense": "historical"
+          }
+        ]
+      }
+    },
+    {
+      "content": "Reply to Dana Kim about the Atlas cutover date before Friday.",
+      "expected": {
+        "classification": "instruction",
+        "assertions": []
+      }
+    },
+    {
+      "content": "- [ ] Send Priya Shah the Q2 roadmap review deck",
+      "expected": {
+        "classification": "instruction",
+        "assertions": []
+      }
+    },
+    {
+      "content": "Priya is great to work with.",
+      "expected": {
+        "classification": "opinion",
         "assertions": []
       }
     }

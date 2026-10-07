@@ -237,6 +237,48 @@ function sameJson(first: unknown, second: unknown): boolean {
 }
 
 /**
+ * Trim the boundary of a source quote: surrounding whitespace and trailing
+ * sentence punctuation. Both "X was removed" and "X was removed." are exact
+ * verbatim spans of the same sentence and the extraction pipeline accepts
+ * either, so the gold comparison must not count that choice as disagreement.
+ * The quoted text itself is still compared exactly.
+ *
+ * @param quote - A source quote.
+ *
+ * @returns The quote without boundary whitespace or trailing punctuation.
+ */
+function normalizeQuoteBoundary(quote: string): string {
+  return quote.trim().replace(/[\s.,;:!?]+$/u, "");
+}
+
+/**
+ * Normalize extracted assertions for comparison: identical except for each
+ * source quote's boundary.
+ *
+ * @param assertions - Expected or received assertions.
+ *
+ * @returns The comparable assertions.
+ */
+function comparableAssertions(assertions: unknown): unknown {
+  if (!Array.isArray(assertions)) {
+    return assertions;
+  }
+
+  return assertions.map((assertion: unknown) =>
+    typeof assertion === "object" &&
+    assertion !== null &&
+    typeof (assertion as { sourceQuote?: unknown }).sourceQuote === "string"
+      ? {
+          ...assertion,
+          sourceQuote: normalizeQuoteBoundary(
+            (assertion as { sourceQuote: string }).sourceQuote,
+          ),
+        }
+      : assertion,
+  );
+}
+
+/**
  * Run every live semantic stage and report exact judge-vs-human agreement.
  */
 export async function measureGoldAgreement(inputs: {
@@ -270,7 +312,10 @@ export async function measureGoldAgreement(inputs: {
     const actual = extractionById.get(`gold-unit-${index}`);
     if (
       actual?.classification === item.expected.classification &&
-      sameJson(actual.assertions, item.expected.assertions)
+      sameJson(
+        comparableAssertions(actual.assertions),
+        comparableAssertions(item.expected.assertions),
+      )
     ) {
       extractionCorrect += 1;
     } else {

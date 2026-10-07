@@ -118,3 +118,78 @@ describe("precision gold agreement", () => {
     ).toThrow(/gold agreement below 0\.9/u);
   });
 });
+
+describe("extraction agreement", () => {
+  const fixture = {
+    description: "quote boundary cases",
+    extractionCases: [
+      {
+        content: "The Lisbon trip was cancelled.",
+        expected: {
+          classification: "factual" as const,
+          assertions: [
+            {
+              statement: "The Lisbon trip was cancelled.",
+              sourceQuote: "The Lisbon trip was cancelled",
+              tense: "historical" as const,
+            },
+          ],
+        },
+      },
+      {
+        content: "The deck is due Monday, March 9.",
+        expected: {
+          classification: "factual" as const,
+          assertions: [
+            {
+              statement: "The deck is due Monday, March 9.",
+              sourceQuote: "The deck is due Monday, March 9",
+              tense: "current" as const,
+            },
+          ],
+        },
+      },
+    ],
+    groundingCases: [],
+  };
+
+  test("ignores trailing punctuation in quotes but not different quoted text", async () => {
+    const report = await measureGoldAgreement({
+      model: fakeModel([
+        {
+          units: [
+            {
+              unitId: "gold-unit-0",
+              classification: "factual",
+              assertions: [
+                {
+                  statement: "The Lisbon trip was cancelled.",
+                  sourceQuote: "The Lisbon trip was cancelled. ",
+                  tense: "historical",
+                },
+              ],
+              rationale: "Same span with its final period.",
+            },
+            {
+              unitId: "gold-unit-1",
+              classification: "factual",
+              assertions: [
+                {
+                  statement: "The deck is due Monday, March 9.",
+                  sourceQuote: "due Monday, March 9",
+                  tense: "current",
+                },
+              ],
+              rationale: "A shorter span is a different quote.",
+            },
+          ],
+        },
+      ]),
+      fixture,
+    });
+
+    expect(report.extraction).toMatchObject({ correct: 1, total: 2 });
+    expect(report.extraction.mismatches).toHaveLength(1);
+    expect(report.extraction.mismatches[0]).toMatch(/^case 1:/u);
+  });
+});

@@ -4,6 +4,11 @@ The gold-agreement gate measures the extraction/classification and source-ground
 judges against human-reviewed cases. Every stage must achieve at least 0.90
 agreement in the optional live-model tier.
 
+Extraction agreement requires the same classification and the same claims:
+statement, tense, and source quote. A quote's boundary whitespace and trailing
+punctuation are ignored, because "X was removed" and "X was removed." are both
+verbatim spans of the same text; the quoted text itself must match exactly.
+
 A miss below the floor is tolerated as measurement error. The only sanctioned
 responses are:
 
