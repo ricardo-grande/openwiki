@@ -19,6 +19,13 @@ export function formatRunSummary(
   if (options.detailsPath !== undefined) {
     lines.push(`├ 🔬 Details → ${options.detailsPath}`);
   }
+  const checks = result.checkpoints.flatMap(
+    (checkpoint) => checkpoint.structuralChecks ?? [],
+  );
+  if (checks.length > 0) {
+    const passed = checks.filter((check) => check.passed).length;
+    lines.push(`├ 🧱 Structure ${passed}/${checks.length} checks passed`);
+  }
   const elapsed =
     options.elapsedMs === undefined
       ? ""

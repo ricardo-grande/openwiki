@@ -1,6 +1,10 @@
 import { SystemRunError } from "../core/errors.js";
 import { captureArtifact } from "../replay/artifact.js";
-import { GitReplay } from "../replay/git-replay.js";
+import {
+  GitCheckpointReplay,
+  type CheckpointReplay,
+} from "../replay/checkpoint-replay.js";
+import { PersonalReplay } from "../replay/personal-replay.js";
 import { computeDiagnostics } from "../metrics/claims.js";
 import { computeLedgerScore } from "../metrics/score.js";
 import type {
@@ -15,12 +19,17 @@ import type {
   SystemRunOutcome,
   SystemUnderTest,
 } from "../core/types.js";
-import { createWorkspace } from "../replay/workspace.js";
+import { createWorkspace, type Workspace } from "../replay/workspace.js";
+import { RawEvidenceAdapter } from "../source/raw-evidence.js";
 import {
   GitSourceEvidenceAdapter,
   type SourceEvidenceAdapter,
 } from "../source/source-adapter.js";
-import { evaluateCheckpoint, initialCarry } from "./evaluate-checkpoint.js";
+import {
+  checkpointRevision,
+  evaluateCheckpoint,
+  initialCarry,
+} from "./evaluate-checkpoint.js";
 import type { BenchmarkProgressReporter } from "./progress-events.js";
 
 /**
@@ -47,7 +56,8 @@ export interface RunnerInputs {
   /**
    * Adapter that normalizes the active source checkpoint into evidence.
    *
-   * @default Git tracked-file evidence
+   * @default Git tracked-file evidence for repository benchmarks, cumulative
+   *   raw-item evidence for personal ones
    */
   sourceEvidenceAdapter?: SourceEvidenceAdapter;
 
@@ -86,16 +96,37 @@ export interface RunnerInputs {
 }
 
 /**
+ * Create the replay for a benchmark kind inside the run workspace: a guarded Git
+ * worktree for a repository benchmark, a temporary OpenWiki home for a personal
+ * one.
+ *
+ * @param benchmark - The benchmark to replay.
+ * @param workspace - The run workspace.
+ *
+ * @returns The ready replay.
+ */
+async function createReplay(
+  benchmark: LedgerBenchmark,
+  workspace: Workspace,
+): Promise<CheckpointReplay> {
+  return benchmark.kind === "personal"
+    ? PersonalReplay.create(benchmark, workspace.worktreeParent)
+    : GitCheckpointReplay.create(benchmark, workspace.worktreeParent);
+}
+
+/**
  * Run a benchmark end to end and return the measured result. Creates an isolated
- * workspace and a guarded Git replay, validates the whole trace up front, then
+ * workspace and a guarded replay, validates the whole trace up front, then
  * walks it running `init` then `update`, freezes an immutable artifact at each
  * checkpoint and evaluates it. The workspace and worktree
  * are always torn down, even on failure.
  *
- * The preflight validation, before any system runs, checks three things for the
- * trace: every checkpoint SHA resolves to a commit in the source repo, every
- * checkpoint is a Git ancestor of the one that follows it, and no checkpoint
- * tracks anything under the wiki directory.
+ * For a repository benchmark the preflight validation, before any system runs,
+ * checks three things for the trace: every checkpoint SHA resolves to a commit
+ * in the source repo, every checkpoint is a Git ancestor of the one that follows
+ * it, and no checkpoint tracks anything under the wiki directory. A personal
+ * benchmark was fully validated by the loader, and its replay additionally runs
+ * model-free structural checks after each system run.
  *
  * Sticky obsolete targets: once a fact version goes obsolete it stays in the
  * forgetting watch set for every later checkpoint, and is retired only when the
@@ -120,8 +151,11 @@ export async function runBenchmark(
   inputs: RunnerInputs,
 ): Promise<LedgerRunResult> {
   const { benchmark, system, evaluationBackend, config, startedAt } = inputs;
-  const sourceEvidenceAdapter =
-    inputs.sourceEvidenceAdapter ?? new GitSourceEvidenceAdapter();
+  const sourceEvidenceAdapter: SourceEvidenceAdapter =
+    inputs.sourceEvidenceAdapter ??
+    (benchmark.kind === "personal"
+      ? new RawEvidenceAdapter(benchmark)
+      : new GitSourceEvidenceAdapter());
   const checkpoints = benchmark.trace.checkpoints;
   const reportProgress = inputs.onProgress ?? (() => undefined);
   reportProgress({
@@ -135,30 +169,12 @@ export async function runBenchmark(
   });
   const workspace = await createWorkspace();
 
-  let replay: GitReplay | undefined;
+  let replay: CheckpointReplay | undefined;
 
   try {
-    replay = await GitReplay.create(
-      benchmark.sourceRepoPath,
-      workspace.worktreeParent,
-      checkpoints[0].commit,
-    );
+    replay = await createReplay(benchmark, workspace);
+    await replay.preflight();
     reportProgress({ type: "replay-ready" });
-
-    for (let i = 0; i < checkpoints.length; i += 1) {
-      const checkpoint = checkpoints[i];
-
-      await replay.assertCommitResolves(checkpoint.commit);
-
-      if (i > 0) {
-        await replay.assertAncestor(
-          checkpoints[i - 1].commit,
-          checkpoint.commit,
-        );
-      }
-
-      await replay.assertWikiNotTrackedAt(checkpoint.commit);
-    }
 
     const checkpointResults: CheckpointResult[] = [];
     const history: CheckpointEvaluationRecord[] = [];
@@ -174,19 +190,17 @@ export async function runBenchmark(
         checkpointId: checkpoint.id,
         checkpointIndex: i,
         totalCheckpoints: checkpoints.length,
-        commit: checkpoint.commit,
+        revision: checkpointRevision(benchmark, i),
         label: checkpoint.label,
         command,
       });
 
-      if (i > 0) {
-        await replay.checkout(checkpoint.commit);
-      }
+      await replay.advanceTo(i);
 
       const outcome: SystemRunOutcome =
         i === 0
-          ? await system.init(replay.worktreeDir)
-          : await system.update(replay.worktreeDir);
+          ? await system.init(replay.rootDir)
+          : await system.update(replay.rootDir);
       reportProgress({
         type: "system-complete",
         checkpointId: checkpoint.id,
@@ -197,14 +211,17 @@ export async function runBenchmark(
 
       const artifact = await captureArtifact(
         checkpoint.id,
-        replay.worktreeDir,
+        replay.wikiDir,
         workspace.artifactsRoot,
       );
       await inputs.onArtifact?.(artifact);
+      const structuralChecks = await replay.structuralChecks?.(i);
       const currentEvidence = await sourceEvidenceAdapter.collectEvidence(
         checkpoint.id,
-        replay.worktreeDir,
+        replay.evidenceRoot,
       );
+      // A cumulative adapter's corpus already spans every checkpoint so far;
+      // otherwise earlier checkpoints' records join as historical evidence.
       const evidence: EvidenceCorpus = {
         checkpointId: checkpoint.id,
         records: [
@@ -212,13 +229,15 @@ export async function runBenchmark(
             ...record,
             current: true,
           })),
-          ...evidenceHistory.flatMap((historical) =>
-            historical.records.map((record) => ({
-              ...record,
-              evidenceId: `${historical.checkpointId}:${record.evidenceId}`,
-              current: false,
-            })),
-          ),
+          ...(sourceEvidenceAdapter.cumulative === true
+            ? []
+            : evidenceHistory.flatMap((historical) =>
+                historical.records.map((record) => ({
+                  ...record,
+                  evidenceId: `${historical.checkpointId}:${record.evidenceId}`,
+                  current: false,
+                })),
+              )),
         ],
       };
       await inputs.onEvidence?.(evidence);
@@ -228,6 +247,13 @@ export async function runBenchmark(
         checkpointId: checkpoint.id,
         documentCount: artifact.documents.length,
       });
+      if (structuralChecks !== undefined) {
+        reportProgress({
+          type: "structural-checks",
+          checkpointId: checkpoint.id,
+          checks: structuralChecks,
+        });
+      }
 
       if (i === 0 && artifact.documents.length === 0) {
         throw new SystemRunError(
@@ -240,18 +266,17 @@ export async function runBenchmark(
         history: historyEntry,
         nextCarry,
       } = await evaluateCheckpoint({
-        sourceRepoPath: benchmark.sourceRepoPath,
-        checkpoint,
+        benchmark,
         index: i,
         artifact,
         evidence,
-        evidenceMap: benchmark.evidenceMap,
         evaluationBackend,
         carry,
         efficiency: {
           durationMs: outcome.durationMs,
           skipped: outcome.skipped,
         },
+        structuralChecks,
         reportProgress,
       });
 
@@ -264,6 +289,7 @@ export async function runBenchmark(
       metadata: {
         benchmarkName: benchmark.name,
         difficulty: benchmark.difficulty,
+        benchmarkKind: benchmark.kind ?? "repository",
         startedAt,
         system: { provider: config.provider, modelId: config.systemModelId },
         evaluatorModelId: config.evaluatorModelId,

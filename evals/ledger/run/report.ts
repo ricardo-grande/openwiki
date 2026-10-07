@@ -49,6 +49,53 @@ function appendClaimClass(
 
 /** Format one completed run as an auditable Markdown report without inventing a
  * composite quality score. */
+/**
+ * Append the model-free structural checks as a pass/fail table with each
+ * failure's details. Omitted when no checkpoint recorded any.
+ */
+function appendStructuralChecks(
+  lines: string[],
+  result: LedgerRunResult,
+): void {
+  const checked = result.checkpoints.filter(
+    (checkpoint) => checkpoint.structuralChecks !== undefined,
+  );
+  if (checked.length === 0) return;
+
+  const ids = [
+    ...new Set(
+      checked.flatMap((checkpoint) =>
+        (checkpoint.structuralChecks ?? []).map((check) => check.id),
+      ),
+    ),
+  ];
+  lines.push("", "## Structural checks", "");
+  lines.push(`| Checkpoint | ${ids.join(" | ")} |`);
+  lines.push(`| --- | ${ids.map(() => "---").join(" | ")} |`);
+  for (const checkpoint of checked) {
+    const byId = new Map(
+      (checkpoint.structuralChecks ?? []).map((check) => [check.id, check]),
+    );
+    const cells = ids.map((id) => {
+      const check = byId.get(id);
+      return check === undefined ? "–" : check.passed ? "pass" : "FAIL";
+    });
+    lines.push(`| ${checkpoint.checkpointId} | ${cells.join(" | ")} |`);
+  }
+
+  for (const checkpoint of checked) {
+    for (const check of checkpoint.structuralChecks ?? []) {
+      if (check.passed) continue;
+      lines.push(
+        `- ${checkpoint.checkpointId} \`${check.id}\` (${check.label}):`,
+      );
+      for (const detail of check.details) {
+        lines.push(`  - ${detail}`);
+      }
+    }
+  }
+}
+
 export function formatReport(result: LedgerRunResult): string {
   const lines: string[] = [
     `# LEDGER report: ${result.metadata.benchmarkName}`,
@@ -62,12 +109,15 @@ export function formatReport(result: LedgerRunResult): string {
     lines.push(`- Re-evaluated from: ${result.metadata.reevaluatedFrom}`);
   }
 
+  const personal = result.metadata.benchmarkKind === "personal";
+  const forgettingLabel = personal ? "Fact forgetting" : "API forgetting";
+
   lines.push(`- LEDGER score: ${pct(result.score.value)}`);
   lines.push(`- Claim health: ${pct(result.score.claimHealth)}`);
 
   lines.push("", "## Checkpoints", "");
   lines.push(
-    "| Checkpoint | Current claims | Supported | Stale | Hallucinated | Unverified | API forgetting | Evaluator | Duration (ms) | Churn | Skipped |",
+    `| Checkpoint | Current claims | Supported | Stale | Hallucinated | Unverified | ${forgettingLabel} | Evaluator | Duration (ms) | Churn | Skipped |`,
   );
   lines.push(
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -84,8 +134,10 @@ export function formatReport(result: LedgerRunResult): string {
     `- Mean resolved stale lifetime: ${formatLifetime(result.diagnostics.staleKnowledge.meanResolvedLifetime)}`,
   );
   lines.push(
-    `- Obsolete API facts still unresolved: ${result.diagnostics.staleKnowledge.unresolvedCount}`,
+    `- Obsolete ${personal ? "trap" : "API"} facts still unresolved: ${result.diagnostics.staleKnowledge.unresolvedCount}`,
   );
+
+  appendStructuralChecks(lines, result);
 
   lines.push("", "## Evaluation detail", "");
   for (const checkpoint of result.checkpoints) {
@@ -96,7 +148,9 @@ export function formatReport(result: LedgerRunResult): string {
     appendClaimClass(lines, "stale", detail.precisionEvaluations);
     appendClaimClass(lines, "unverified", detail.precisionEvaluations);
     if (detail.forgettingEvaluations.length > 0) {
-      lines.push(`- API forgetting (${detail.forgettingEvaluations.length}):`);
+      lines.push(
+        `- ${forgettingLabel} (${detail.forgettingEvaluations.length}):`,
+      );
       for (const item of detail.forgettingEvaluations) {
         lines.push(
           `  - \`${item.factVersionId}\` ${item.verdict}: ${item.rationale}`,

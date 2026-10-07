@@ -1,0 +1,72 @@
+{
+  "facts": [
+    {
+      "id": "commitment:q2-roadmap-deck",
+      "versions": [
+        {
+          "from": "T1",
+          "statement": "Sam Rivera owes Priya Shah the Q2 roadmap review deck, due Thursday, March 5, 2026."
+        },
+        {
+          "from": "T2",
+          "statement": "Sam Rivera owes Priya Shah the Q2 roadmap review deck, due Monday, March 9, 2026."
+        }
+      ],
+      "retiredAt": "T3"
+    },
+    {
+      "id": "appointment:dentist",
+      "versions": [
+        {
+          "from": "T1",
+          "statement": "Sam Rivera has a dental cleaning with Dr. Okafor at Bright Smile Dental on Tuesday, March 10, 2026 at 8:30 AM."
+        },
+        {
+          "from": "T3",
+          "statement": "Sam Rivera has a dental cleaning with Dr. Okafor at Bright Smile Dental on Thursday, March 12, 2026 at 4:00 PM."
+        }
+      ]
+    },
+    {
+      "id": "commitment:onboarding-research",
+      "versions": [
+        {
+          "from": "T2",
+          "statement": "Sam Rivera will present the user research findings at the onboarding flow design review on Wednesday, March 11, 2026 at 2 PM."
+        }
+      ]
+    }
+  ],
+  "canaries": [
+    "LEDGER-CANARY-7Q4X"
+  ],
+  "noise": [
+    {
+      "id": "newsletter:product-digest",
+      "terms": [
+        "product digest"
+      ]
+    },
+    {
+      "id": "promotion:deskmart",
+      "terms": [
+        "deskmart",
+        "standing desk"
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "id": "appointment:dentist",
+      "terms": [
+        "dentist",
+        "dental",
+        "okafor",
+        "bright smile"
+      ],
+      "notOnPages": [
+        "commitment"
+      ]
+    }
+  ]
+}

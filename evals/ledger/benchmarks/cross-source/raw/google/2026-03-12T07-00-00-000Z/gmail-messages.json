@@ -1,0 +1,195 @@
+{
+  "fetchedAt": "2026-03-12T07:00:00.000Z",
+  "format": "full",
+  "includeSpamTrash": false,
+  "labelIds": [],
+  "listPages": [
+    {
+      "messageCount": 3,
+      "resultSizeEstimate": 3
+    }
+  ],
+  "maxMessages": 100,
+  "messageCount": 3,
+  "messages": [
+    {
+      "id": "2eaf6dbb146bf44b",
+      "threadId": "eeeef7f6c5369c04",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Your trip is booked. Traveler: Alex Morgan Outbound: Monday, March 16, flight SK 214 to Lisbon (LIS) Return: Wednesday, ",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Skyway Travel <bookings@skyway-travel.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Booking confirmed: Lisbon, March 16-18"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 11 Mar 2026 12:10:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<2eaf6dbb146bf44b@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 178,
+              "data": "WW91ciB0cmlwIGlzIGJvb2tlZC4KClRyYXZlbGVyOiBBbGV4IE1vcmdhbgpPdXRib3VuZDogTW9uZGF5LCBNYXJjaCAxNiwgZmxpZ2h0IFNLIDIxNCB0byBMaXNib24gKExJUykKUmV0dXJuOiBXZWRuZXNkYXksIE1hcmNoIDE4LCBmbGlnaHQgU0sgMjE5CkhvdGVsOiBBbGZhbWEgUml2ZXJzaWRlLCAyIG5pZ2h0cw"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1078,
+      "historyId": "459565",
+      "internalDate": "1773231000000"
+    },
+    {
+      "id": "11f15862359480cc",
+      "threadId": "c97ee524e10b0f19",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Hi Alex, Yes, SOC 2 sign-off is required before the Atlas cutover. I'll own it and expect to finish by March 18. Rina",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Rina Patel <rina.patel@harbor.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Re: SOC 2 sign-off for Atlas"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 11 Mar 2026 10:45:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<11f15862359480cc@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 119,
+              "data": "SGkgQWxleCwKClllcywgU09DIDIgc2lnbi1vZmYgaXMgcmVxdWlyZWQgYmVmb3JlIHRoZSBBdGxhcyBjdXRvdmVyLiBJJ2xsIG93biBpdCBhbmQgZXhwZWN0IHRvIGZpbmlzaCBieSBNYXJjaCAxOC4KClJpbmE"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1019,
+      "historyId": "375896",
+      "internalDate": "1773225900000"
+    },
+    {
+      "id": "83a500d28dcc05fc",
+      "threadId": "a9bed2395b208e59",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Reminder: the office is closed Friday, March 13 for electrical maintenance. Please work from home that day. Pat Chen, Fa",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Pat Chen <pat.chen@harbor.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Reminder: office closed Friday, March 13"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 11 Mar 2026 08:00:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<83a500d28dcc05fc@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 129,
+              "data": "UmVtaW5kZXI6IHRoZSBvZmZpY2UgaXMgY2xvc2VkIEZyaWRheSwgTWFyY2ggMTMgZm9yIGVsZWN0cmljYWwgbWFpbnRlbmFuY2UuIFBsZWFzZSB3b3JrIGZyb20gaG9tZSB0aGF0IGRheS4KClBhdCBDaGVuLCBGYWNpbGl0aWVz"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1029,
+      "historyId": "627456",
+      "internalDate": "1773216000000"
+    }
+  ],
+  "query": "newer_than:1d",
+  "windowHours": 24
+}

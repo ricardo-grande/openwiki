@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { WorktreeSafetyError } from "../core/errors.js";
-import { assertContained, wikiDirFor } from "../core/paths.js";
+import { assertContained } from "../core/paths.js";
 import type { KnowledgeArtifact, KnowledgeDocument } from "../core/types.js";
 
 /**
@@ -12,7 +12,7 @@ import type { KnowledgeArtifact, KnowledgeDocument } from "../core/types.js";
  * directory yields an empty list rather than throwing, so the runner can decide
  * how to treat an empty run.
  *
- * @param wikiDir - Absolute path to the `openwiki/` directory.
+ * @param wikiDir - Absolute path to the wiki directory.
  *
  * @returns The documents, sorted by `relativePath`.
  */
@@ -74,13 +74,14 @@ function fingerprint(documents: KnowledgeDocument[]): string {
 }
 
 /**
- * Capture the wiki inside a worktree as an immutable artifact: read every
+ * Capture a wiki directory as an immutable artifact: read every
  * knowledge document, write a private copy under the artifacts root, and record
  * a fingerprint. The evaluator consumes the returned immutable document list;
  * the on-disk snapshot remains available for run artifacts and diagnostics.
  *
  * @param checkpointId - The checkpoint this artifact belongs to.
- * @param worktreeDir - Absolute path to the worktree whose wiki to capture.
+ * @param wikiDir - Absolute path to the wiki directory to capture: a
+ *   worktree's `openwiki/` or a personal home's `wiki/`.
  * @param artifactsRoot - Absolute path (inside the workspace) to write the
  *   snapshot beneath.
  *
@@ -88,10 +89,10 @@ function fingerprint(documents: KnowledgeDocument[]): string {
  */
 export async function captureArtifact(
   checkpointId: string,
-  worktreeDir: string,
+  wikiDir: string,
   artifactsRoot: string,
 ): Promise<KnowledgeArtifact> {
-  const documents = await collectDocuments(wikiDirFor(worktreeDir));
+  const documents = await collectDocuments(wikiDir);
   const snapshotDir = path.join(artifactsRoot, checkpointId);
 
   // Checkpoint ids originate in benchmark metadata. Validation constrains them

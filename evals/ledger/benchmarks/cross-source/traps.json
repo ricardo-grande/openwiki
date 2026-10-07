@@ -1,0 +1,77 @@
+{
+  "facts": [
+    {
+      "id": "project:atlas-cutover",
+      "versions": [
+        {
+          "from": "T1",
+          "statement": "The Atlas cutover date is contested: Dana Kim of Bayview Logistics says Friday, March 20, 2026, while Lee Park says engineering targets Friday, March 27, 2026."
+        }
+      ]
+    },
+    {
+      "id": "person:jordan-role",
+      "versions": [
+        {
+          "from": "T1",
+          "statement": "Jordan Reyes is the QA lead on the Atlas project."
+        },
+        {
+          "from": "T3",
+          "statement": "Jordan Reyes is the engineering manager for the Atlas team."
+        }
+      ]
+    },
+    {
+      "id": "question:soc2-signoff",
+      "versions": [
+        {
+          "from": "T1",
+          "statement": "Whether SOC 2 sign-off is required before the Atlas cutover is an open question."
+        },
+        {
+          "from": "T3",
+          "statement": "SOC 2 sign-off is required before the Atlas cutover; Rina Patel owns it and expects to finish by March 18, 2026."
+        }
+      ]
+    },
+    {
+      "id": "logistics:office-closure",
+      "versions": [
+        {
+          "from": "T2",
+          "statement": "The office is closed Friday, March 13, 2026 for electrical maintenance."
+        }
+      ]
+    },
+    {
+      "id": "trip:lisbon",
+      "versions": [
+        {
+          "from": "T2",
+          "statement": "Alex Morgan is traveling to Lisbon March 16 to 18, 2026 for the Bayview Logistics customer visit."
+        }
+      ],
+      "retiredAt": "T4"
+    }
+  ],
+  "canaries": [
+    "LEDGER-CANARY-K2M9"
+  ],
+  "noise": [
+    {
+      "id": "bot:lunchbot",
+      "terms": [
+        "lunchbot",
+        "lunch menu"
+      ]
+    },
+    {
+      "id": "newsletter:wellness-weekly",
+      "terms": [
+        "wellness weekly",
+        "wellness tips"
+      ]
+    }
+  ]
+}

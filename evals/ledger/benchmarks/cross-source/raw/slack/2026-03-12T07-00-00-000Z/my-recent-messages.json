@@ -1,0 +1,195 @@
+{
+  "coverage": {
+    "definitiveForLatestMessage": true,
+    "latestMessageSource": "search.messages",
+    "recent": {
+      "conversationScanLimit": 500,
+      "conversationTypes": [
+        "public_channel",
+        "private_channel",
+        "im",
+        "mpim"
+      ],
+      "hasMoreAfterScan": false,
+      "maxConversations": 50,
+      "messagesPerConversation": 50,
+      "note": "Bounded recent conversation history. Slack conversations are scanned first, sorted by updated timestamp descending, then the selected conversations' recent histories are fetched.",
+      "scannedConversationCount": 4,
+      "selectedConversationCount": 4,
+      "sort": "updated_desc",
+      "source": "conversations.history"
+    },
+    "search": {
+      "limit": 20,
+      "note": "Slack search.messages query for the authenticated user's messages, sorted by timestamp descending.",
+      "query": "from:<@U0ALEXM01>",
+      "resultCount": 2,
+      "source": "search.messages",
+      "sort": "timestamp_desc",
+      "total": 2
+    }
+  },
+  "definitiveForLatestMessage": true,
+  "fetchedAt": "2026-03-12T07:00:00.000Z",
+  "latestMessage": {
+    "conversation": {
+      "id": "D0LEEPRK1",
+      "is_im": true,
+      "is_mpim": false
+    },
+    "message": {
+      "type": "message",
+      "user": "U0ALEXM01",
+      "username": "alex",
+      "ts": "1773155640.000106",
+      "text": "Happy to. I'll book travel tomorrow.",
+      "permalink": "https://harbor-analytics.slack.example.com/archives/D0LEEPRK1/p1773155640000106",
+      "channel": {
+        "id": "D0LEEPRK1",
+        "is_im": true,
+        "is_mpim": false
+      }
+    }
+  },
+  "note": "latestMessage is computed from Slack search.messages sorted by timestamp descending for the authenticated user.",
+  "recentUserMessages": [
+    {
+      "conversation": {
+        "id": "D0LEEPRK1",
+        "is_im": true,
+        "is_mpim": false
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "text": "Happy to. I'll book travel tomorrow.",
+        "ts": "1773155640.000106",
+        "user_profile": {
+          "real_name": "Alex Morgan",
+          "display_name": "alex"
+        }
+      }
+    },
+    {
+      "conversation": {
+        "id": "C0ATLAS01",
+        "is_im": false,
+        "is_mpim": false,
+        "name": "atlas"
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "text": "Do we need SOC 2 sign-off before the Atlas cutover? Nobody seems sure. I'll ask compliance.",
+        "ts": "1773051600.000101",
+        "user_profile": {
+          "real_name": "Alex Morgan",
+          "display_name": "alex"
+        }
+      }
+    }
+  ],
+  "searchUserMessages": [
+    {
+      "conversation": {
+        "id": "D0LEEPRK1",
+        "is_im": true,
+        "is_mpim": false
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "username": "alex",
+        "ts": "1773155640.000106",
+        "text": "Happy to. I'll book travel tomorrow.",
+        "permalink": "https://harbor-analytics.slack.example.com/archives/D0LEEPRK1/p1773155640000106",
+        "channel": {
+          "id": "D0LEEPRK1",
+          "is_im": true,
+          "is_mpim": false
+        }
+      }
+    },
+    {
+      "conversation": {
+        "id": "C0ATLAS01",
+        "is_im": false,
+        "is_mpim": false,
+        "name": "atlas"
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "username": "alex",
+        "ts": "1773051600.000101",
+        "text": "Do we need SOC 2 sign-off before the Atlas cutover? Nobody seems sure. I'll ask compliance.",
+        "permalink": "https://harbor-analytics.slack.example.com/archives/C0ATLAS01/p1773051600000101",
+        "channel": {
+          "id": "C0ATLAS01",
+          "is_im": false,
+          "is_mpim": false,
+          "name": "atlas"
+        }
+      }
+    }
+  ],
+  "source": "search.messages",
+  "user": {
+    "id": "U0ALEXM01",
+    "team_id": "T0HARBOR1",
+    "name": "alex",
+    "deleted": false,
+    "real_name": "Alex Morgan",
+    "is_bot": false,
+    "profile": {
+      "title": "Product Lead",
+      "real_name": "Alex Morgan",
+      "display_name": "alex"
+    }
+  },
+  "userId": "U0ALEXM01",
+  "userMessages": [
+    {
+      "conversation": {
+        "id": "D0LEEPRK1",
+        "is_im": true,
+        "is_mpim": false
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "username": "alex",
+        "ts": "1773155640.000106",
+        "text": "Happy to. I'll book travel tomorrow.",
+        "permalink": "https://harbor-analytics.slack.example.com/archives/D0LEEPRK1/p1773155640000106",
+        "channel": {
+          "id": "D0LEEPRK1",
+          "is_im": true,
+          "is_mpim": false
+        }
+      }
+    },
+    {
+      "conversation": {
+        "id": "C0ATLAS01",
+        "is_im": false,
+        "is_mpim": false,
+        "name": "atlas"
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "username": "alex",
+        "ts": "1773051600.000101",
+        "text": "Do we need SOC 2 sign-off before the Atlas cutover? Nobody seems sure. I'll ask compliance.",
+        "permalink": "https://harbor-analytics.slack.example.com/archives/C0ATLAS01/p1773051600000101",
+        "channel": {
+          "id": "C0ATLAS01",
+          "is_im": false,
+          "is_mpim": false,
+          "name": "atlas"
+        }
+      }
+    }
+  ]
+}

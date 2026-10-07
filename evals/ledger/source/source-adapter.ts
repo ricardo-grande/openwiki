@@ -12,6 +12,15 @@ export interface SourceEvidenceAdapter {
   readonly name: string;
 
   /**
+   * Whether each corpus already spans every checkpoint up to the active one.
+   * The runner appends earlier checkpoints' records as historical evidence
+   * only for non-cumulative adapters.
+   *
+   * @default false
+   */
+  readonly cumulative?: boolean;
+
+  /**
    * Collect immutable evidence from the active source checkpoint.
    *
    * @param checkpointId - Active benchmark checkpoint.

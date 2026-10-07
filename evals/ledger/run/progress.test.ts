@@ -30,7 +30,7 @@ describe("createCliProgressReporter", () => {
       checkpointId: "T1",
       checkpointIndex: 1,
       totalCheckpoints: 3,
-      commit: "abcdef0123456789",
+      revision: "abcdef0",
       command: "update",
     });
     report({

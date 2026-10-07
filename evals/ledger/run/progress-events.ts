@@ -1,4 +1,4 @@
-import type { BenchmarkDifficulty } from "../core/types.js";
+import type { BenchmarkDifficulty, StructuralCheck } from "../core/types.js";
 
 /** One current claim displayed by verbose checkpoint output. */
 export interface ProgressClaim {
@@ -26,7 +26,11 @@ export type BenchmarkProgressEvent =
       checkpointId: string;
       checkpointIndex: number;
       totalCheckpoints: number;
-      commit: string;
+      /**
+       * Short label naming what the checkpoint replays: a commit SHA prefix for
+       * repository benchmarks, the pulled sources for personal ones.
+       */
+      revision: string;
       label?: string;
       command: "init" | "update";
       evaluationOnly?: boolean;
@@ -43,6 +47,11 @@ export type BenchmarkProgressEvent =
       checkpointId: string;
       documentCount: number;
       loaded?: boolean;
+    }
+  | {
+      type: "structural-checks";
+      checkpointId: string;
+      checks: StructuralCheck[];
     }
   | {
       type: "evaluation-start";

@@ -69,11 +69,6 @@ export interface SemanticEvidenceMap {
 }
 
 /**
- * A benchmark: an evolution trace plus the source repository it is scored
- * against. Truth is read directly from the source at each checkpoint by
- * `extractSurface`; there is no hand-authored knowledge census.
- */
-/**
  * Author-declared honest rating of how hard a benchmark's history is for a
  * documentation system to maintain. Rendered in the run headline and report so
  * weak results on a `hard` benchmark read differently from the same results on
@@ -81,7 +76,16 @@ export interface SemanticEvidenceMap {
  */
 export type BenchmarkDifficulty = "easy" | "medium" | "hard";
 
-export interface LedgerBenchmark {
+/**
+ * What a benchmark replays: a Git history scored against repository source, or
+ * a timeline of recorded personal connector pulls scored against the raw items.
+ */
+export type BenchmarkKind = "repository" | "personal";
+
+/**
+ * Fields every benchmark kind shares.
+ */
+interface LedgerBenchmarkBase {
   /**
    * Machine name, unique per benchmark directory, used in report filenames.
    */
@@ -99,6 +103,26 @@ export interface LedgerBenchmark {
   difficulty: BenchmarkDifficulty;
 
   /**
+   * Optional evaluator-only semantic routing map. It is never exposed to the
+   * System Under Test. Benchmarks without one retain source BM25 selection.
+   */
+  evidenceMap?: SemanticEvidenceMap;
+}
+
+/**
+ * A repository benchmark: an evolution trace plus the source repository it is
+ * scored against. Truth is read directly from the source at each checkpoint by
+ * `extractSurface`; there is no hand-authored knowledge census.
+ */
+export interface RepositoryBenchmark extends LedgerBenchmarkBase {
+  /**
+   * Benchmark kind discriminant.
+   *
+   * @default "repository" when `benchmark.json` declares no kind
+   */
+  kind?: "repository";
+
+  /**
    * Absolute path to the source Git repository to replay. Resolved from the
    * benchmark file location plus its declared relative or absolute repo path at
    * load time, so downstream code always sees an absolute path.
@@ -106,15 +130,247 @@ export interface LedgerBenchmark {
   sourceRepoPath: string;
 
   /**
-   * Optional evaluator-only semantic routing map. It is never exposed to the
-   * System Under Test. Benchmarks without one retain source BM25 selection.
-   */
-  evidenceMap?: SemanticEvidenceMap;
-
-  /**
    * The frozen evolution trace.
    */
   trace: LedgerTrace;
+}
+
+/**
+ * One recorded connector pull a personal checkpoint makes available. The pull's
+ * files live in `raw/<connectorId>/<rawRunId>/` beside `benchmark.json`, in the
+ * same layout and JSON shapes the real connector writes.
+ */
+export interface PersonalPull {
+  /**
+   * OpenWiki connector id, for example `"google"` or `"slack"`.
+   */
+  connectorId: string;
+
+  /**
+   * Raw run directory name, in the connector's `createRunId` format.
+   */
+  rawRunId: string;
+}
+
+/**
+ * One point in a personal benchmark's timeline. Index 0 is the onboarding
+ * `personal --init` with no pulls; every later index is one `openwiki ingest`
+ * of that checkpoint's pulls.
+ */
+export interface PersonalCheckpoint {
+  /**
+   * Stable identifier, unique within the benchmark.
+   */
+  id: string;
+
+  /**
+   * Human-readable label for reports.
+   *
+   * @default the checkpoint id is shown alone when omitted
+   */
+  label?: string;
+
+  /**
+   * Pulls added at this checkpoint, at most one per connector.
+   */
+  pulls: PersonalPull[];
+}
+
+/**
+ * One connected source in the replayed onboarding configuration.
+ */
+export interface PersonalConnectorSpec {
+  /**
+   * OpenWiki connector id. Must be a deterministic (non-agentic) connector.
+   */
+  connectorId: string;
+
+  /**
+   * Source instance id written to `onboarding.json`.
+   */
+  instanceId: string;
+
+  /**
+   * Optional display name for the source instance.
+   *
+   * @default the connector's display name
+   */
+  name?: string;
+
+  /**
+   * Optional source-specific ingestion instructions.
+   *
+   * @default no source-specific instructions
+   */
+  ingestionGoal?: string;
+}
+
+/**
+ * One version of a trap fact, in force from a checkpoint onward.
+ */
+export interface PersonalTrapFactVersion {
+  /**
+   * Checkpoint id from which this version is current truth.
+   */
+  from: string;
+
+  /**
+   * Self-contained statement of the fact as current truth.
+   */
+  statement: string;
+}
+
+/**
+ * A fact the fixture builder plants, changes, or retires. Changed and retired
+ * versions become forgetting targets, exactly as changed or removed API surface
+ * does for repository benchmarks.
+ */
+export interface PersonalTrapFact {
+  /**
+   * Stable fact identity, for example `"commitment:q3-budget"`.
+   */
+  id: string;
+
+  /**
+   * Versions in trace order. The first version plants the fact.
+   */
+  versions: PersonalTrapFactVersion[];
+
+  /**
+   * Checkpoint id at which the fact stops being current (completed, cancelled,
+   * answered).
+   *
+   * @default undefined the fact stays current to the end of the trace
+   */
+  retiredAt?: string;
+}
+
+/**
+ * Noise the builder planted (newsletters, promotions) that must not receive its
+ * own wiki page.
+ */
+export interface PersonalTrapNoise {
+  /**
+   * Stable noise identity.
+   */
+  id: string;
+
+  /**
+   * Distinctive terms; a wiki page whose path or title contains any of them is
+   * a page dedicated to the noise item.
+   */
+  terms: string[];
+}
+
+/**
+ * Content that belongs on some pages and not others, for example a dentist
+ * appointment that is personal logistics, not a work commitment.
+ */
+export interface PersonalTrapPlacement {
+  /**
+   * Stable placement identity.
+   */
+  id: string;
+
+  /**
+   * Distinctive terms identifying the content.
+   */
+  terms: string[];
+
+  /**
+   * Path fragments of pages that must not mention any of the terms, matched
+   * case-insensitively against the page's wiki path.
+   */
+  notOnPages: string[];
+}
+
+/**
+ * Evaluator-only trap manifest, the personal counterpart of the taskflow trap
+ * catalog. Never given to the System Under Test.
+ */
+export interface PersonalTrapManifest {
+  /**
+   * Facts planted, changed, or retired across the trace.
+   */
+  facts: PersonalTrapFact[];
+
+  /**
+   * Prompt-injection canary strings that must never reach the wiki.
+   */
+  canaries: string[];
+
+  /**
+   * Noise items that must not get their own pages.
+   */
+  noise: PersonalTrapNoise[];
+
+  /**
+   * Content that must stay off particular pages.
+   *
+   * @default [] no placement traps
+   */
+  placements?: PersonalTrapPlacement[];
+}
+
+/**
+ * A personal benchmark: a timeline of recorded connector pulls replayed into a
+ * temporary OpenWiki home, scored against the cumulative raw items.
+ */
+export interface PersonalBenchmark extends LedgerBenchmarkBase {
+  /**
+   * Benchmark kind discriminant.
+   */
+  kind: "personal";
+
+  /**
+   * Absolute path to the benchmark's `raw/` fixture directory.
+   */
+  rawRoot: string;
+
+  /**
+   * The user's wiki brief, written to the replayed home's `INSTRUCTIONS.md`.
+   */
+  wikiGoal: string;
+
+  /**
+   * Connected sources written to the replayed `onboarding.json`.
+   */
+  connectors: PersonalConnectorSpec[];
+
+  /**
+   * The frozen pull timeline.
+   */
+  trace: {
+    checkpoints: PersonalCheckpoint[];
+  };
+
+  /**
+   * Evaluator-only trap manifest loaded from `traps.json`.
+   */
+  traps: PersonalTrapManifest;
+}
+
+/**
+ * Any benchmark LEDGER can run.
+ */
+export type LedgerBenchmark = RepositoryBenchmark | PersonalBenchmark;
+
+/**
+ * The checkpoint fields shared by every benchmark kind.
+ */
+export type AnyLedgerCheckpoint = LedgerCheckpoint | PersonalCheckpoint;
+
+/**
+ * Narrow a benchmark to the personal kind.
+ *
+ * @param benchmark - Any benchmark.
+ *
+ * @returns Whether the benchmark replays personal connector pulls.
+ */
+export function isPersonalBenchmark(
+  benchmark: LedgerBenchmark,
+): benchmark is PersonalBenchmark {
+  return benchmark.kind === "personal";
 }
 
 // ---------------------------------------------------------------------------
@@ -124,7 +380,7 @@ export interface LedgerBenchmark {
 /**
  * The kind of public-surface element a `SurfaceItem` describes.
  */
-export type SurfaceKind = "symbol" | "file" | "version";
+export type SurfaceKind = "symbol" | "file" | "version" | "fact";
 
 /**
  * One element of a repository's public surface at a single checkpoint,
@@ -137,8 +393,8 @@ export type SurfaceKind = "symbol" | "file" | "version";
 export interface SurfaceItem {
   /**
    * Stable logical id for this surface element, unique within a checkpoint:
-   * `symbol:<name>`, `file:<path>`, or `version`. Forgetting history keys off
-   * this id across checkpoints.
+   * `symbol:<name>`, `file:<path>`, `version`, or a personal trap fact id.
+   * Forgetting history keys off this id across checkpoints.
    */
   factId: string;
 
@@ -389,7 +645,25 @@ export interface EvidenceRecord {
    * Exact normalized source content available for semantic judgment.
    */
   content: string;
+
+  /**
+   * ISO-8601 time the source item was sent or written. Dated-evidence grounding
+   * uses it to decide which of several relevant items is newest.
+   *
+   * @default absent for undated evidence such as repository files
+   */
+  sourceDate?: string;
 }
+
+/**
+ * How the grounding judge resolves time.
+ *
+ * - `checkpoint`: current evidence is the active checkpoint; earlier
+ *   checkpoints are historical (repository benchmarks).
+ * - `dated-evidence`: every item pulled so far is current, and the newest
+ *   relevant dated item decides (personal benchmarks).
+ */
+export type GroundingMode = "checkpoint" | "dated-evidence";
 
 /**
  * Immutable source evidence collected for one checkpoint.
@@ -729,6 +1003,39 @@ export interface CheckpointResult {
    *   always populates it from the evaluator's output
    */
   evaluations?: CheckpointEvaluationDetail;
+
+  /**
+   * Model-free structural checks reported next to the score.
+   *
+   * @default absent for replays that define no structural checks (repository
+   *   benchmarks)
+   */
+  structuralChecks?: StructuralCheck[];
+}
+
+/**
+ * One model-free structural check on the system's output at a checkpoint.
+ */
+export interface StructuralCheck {
+  /**
+   * Stable check identity, for example `"quickstart"`.
+   */
+  id: string;
+
+  /**
+   * Human-readable description of what passing means.
+   */
+  label: string;
+
+  /**
+   * Whether the check passed.
+   */
+  passed: boolean;
+
+  /**
+   * Bounded explanation of each failure, empty when the check passed.
+   */
+  details: string[];
 }
 
 /**
@@ -886,6 +1193,13 @@ export interface LedgerRunMetadata {
   difficulty: BenchmarkDifficulty;
 
   /**
+   * Kind of benchmark that was run.
+   *
+   * @default "repository" for runs saved before personal benchmarks existed
+   */
+  benchmarkKind?: BenchmarkKind;
+
+  /**
    * ISO-8601 timestamp the run started, stamped by the caller (scripts cannot
    * read the clock deterministically, so this is injected).
    */
@@ -974,21 +1288,22 @@ export interface SystemUnderTest {
   readonly name: string;
 
   /**
-   * Run the system's initial generation against a prepared worktree, writing its
-   * wiki into `<worktreeDir>/openwiki/`.
+   * Run the system's initial generation against a prepared replay root, writing
+   * its wiki where the replay captures it: `<worktreeDir>/openwiki/` for a Git
+   * worktree, `<home>/wiki/` for a personal OpenWiki home.
    *
-   * @param worktreeDir - Absolute path to the checked-out worktree at T0.
+   * @param worktreeDir - Absolute path to the replay root at T0.
    *
    * @returns The run outcome.
    */
   init(worktreeDir: string): Promise<SystemRunOutcome>;
 
   /**
-   * Run the system's incremental update against a prepared worktree whose source
-   * has advanced to a later checkpoint and whose `openwiki/` still holds the
-   * prior artifact.
+   * Run the system's incremental update against a replay root whose source has
+   * advanced to a later checkpoint and whose wiki still holds the prior
+   * artifact.
    *
-   * @param worktreeDir - Absolute path to the checked-out worktree at Tn.
+   * @param worktreeDir - Absolute path to the replay root at Tn.
    *
    * @returns The run outcome.
    */
@@ -1054,6 +1369,13 @@ export interface EvaluationInput {
    * benchmark. Raw source selected through the map remains the grounding truth.
    */
   evidenceMap?: SemanticEvidenceMap;
+
+  /**
+   * How the grounding judge resolves time across evidence.
+   *
+   * @default "checkpoint"
+   */
+  groundingMode?: GroundingMode;
 
   /**
    * Fact versions that went obsolete at the transition into this checkpoint and

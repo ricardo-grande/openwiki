@@ -1,0 +1,136 @@
+{
+  "fetchedAt": "2026-03-10T07:00:00.000Z",
+  "format": "full",
+  "includeSpamTrash": false,
+  "labelIds": [],
+  "listPages": [
+    {
+      "messageCount": 2,
+      "resultSizeEstimate": 2
+    }
+  ],
+  "maxMessages": 100,
+  "messageCount": 2,
+  "messages": [
+    {
+      "id": "1706b5161105e977",
+      "threadId": "118283899209c026",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_UPDATES"
+      ],
+      "snippet": "Wellness Weekly tips: five stretches you can do at your desk, plus why hydration matters more than you think.",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Wellness Weekly <tips@wellness-weekly.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Wellness Weekly: five stretches for your desk"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 09 Mar 2026 16:00:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<1706b5161105e977@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 109,
+              "data": "V2VsbG5lc3MgV2Vla2x5IHRpcHM6IGZpdmUgc3RyZXRjaGVzIHlvdSBjYW4gZG8gYXQgeW91ciBkZXNrLCBwbHVzIHdoeSBoeWRyYXRpb24gbWF0dGVycyBtb3JlIHRoYW4geW91IHRoaW5rLg"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1009,
+      "historyId": "709045",
+      "internalDate": "1773072000000"
+    },
+    {
+      "id": "e54a5a075af1ede6",
+      "threadId": "c487b82519aa9651",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Hi Alex, Confirming from our side that the Atlas cutover is scheduled for Friday, March 20. Our warehouse team is planni",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Dana Kim <dana.kim@bayview-logistics.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Atlas cutover plan"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 09 Mar 2026 14:30:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<e54a5a075af1ede6@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 169,
+              "data": "SGkgQWxleCwKCkNvbmZpcm1pbmcgZnJvbSBvdXIgc2lkZSB0aGF0IHRoZSBBdGxhcyBjdXRvdmVyIGlzIHNjaGVkdWxlZCBmb3IgRnJpZGF5LCBNYXJjaCAyMC4gT3VyIHdhcmVob3VzZSB0ZWFtIGlzIHBsYW5uaW5nIGFyb3VuZCB0aGF0IGRhdGUuCgpEYW5hIEtpbQpCYXl2aWV3IExvZ2lzdGljcw"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1069,
+      "historyId": "726778",
+      "internalDate": "1773066600000"
+    }
+  ],
+  "query": "newer_than:1d",
+  "windowHours": 24
+}

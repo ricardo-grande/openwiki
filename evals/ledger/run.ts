@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { ModelEvaluationBackend } from "./evaluator/model-backend.js";
 import { parseArgs } from "./run/args.js";
 import { loadBenchmark } from "./benchmark/benchmark.js";
+import { OpenWikiPersonalSystem } from "./system/openwiki-personal-system.js";
 import { OpenWikiSystem } from "./system/openwiki-system.js";
 import { finalizeRun, persistFailureAudit } from "./run/finalize.js";
 import {
@@ -41,10 +42,14 @@ async function main(): Promise<void> {
     startedAt,
   );
 
-  const system = new OpenWikiSystem({
+  const systemOptions = {
     provider: config.provider,
     modelId: config.systemModelId,
-  });
+  };
+  const system =
+    benchmark.kind === "personal"
+      ? new OpenWikiPersonalSystem(systemOptions)
+      : new OpenWikiSystem(systemOptions);
   const evaluationBackend = new ModelEvaluationBackend({
     provider: config.provider,
     // resolveRunConfig guarantees a concrete evaluator model id.

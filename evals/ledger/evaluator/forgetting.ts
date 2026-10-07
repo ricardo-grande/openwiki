@@ -4,6 +4,7 @@ import { EvaluationError } from "../core/errors.js";
 import type {
   EvaluationWarning,
   ForgettingEvaluation,
+  GroundingMode,
   ObsoleteFactTarget,
 } from "../core/types.js";
 import { invokeStructuredModel } from "./direct-model.js";
@@ -17,7 +18,7 @@ import {
   toExcerpt,
   type Limiter,
 } from "./pass-utils.js";
-import { FORGETTING_SYSTEM, forgettingPrompt } from "./prompts.js";
+import { forgettingPrompt, forgettingSystemFor } from "./prompts.js";
 import { SectionBm25Index } from "./retrieval.js";
 import { forgettingOutputSchema } from "./schemas.js";
 import type { ForgettingOutput } from "./schemas.js";
@@ -72,6 +73,13 @@ export interface ForgettingPassInput {
 
   /** Optional sink for obsolete facts whose final verdict is complete. */
   onProgress?: (completed: number, total: number) => void;
+
+  /**
+   * How the benchmark resolves time; selects the personal-fact addendum.
+   *
+   * @default "checkpoint"
+   */
+  groundingMode?: GroundingMode;
 }
 
 /** Build the structured task prompt for a batch of obsolete facts. */
@@ -255,7 +263,7 @@ async function evaluateBatch(
     model: input.model,
     pass: "forgetting",
     checkpointId: input.checkpointId,
-    systemPrompt: FORGETTING_SYSTEM,
+    systemPrompt: forgettingSystemFor(input.groundingMode),
     taskPrompt: buildPrompt(targets),
     schema: forgettingOutputSchema,
     validate: (parsed) => validateOutput(targets, parsed),
@@ -283,7 +291,7 @@ async function evaluateBatchResilient(
       model: input.model,
       pass: "forgetting",
       checkpointId: input.checkpointId,
-      systemPrompt: FORGETTING_SYSTEM,
+      systemPrompt: forgettingSystemFor(input.groundingMode),
       taskPrompt: buildPrompt(targets),
       schema: forgettingOutputSchema,
       timeoutMs: input.timeoutMs,

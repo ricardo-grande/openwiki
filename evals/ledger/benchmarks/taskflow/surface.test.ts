@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import type {
-  LedgerBenchmark,
   ObsoleteFactTarget,
+  RepositoryBenchmark,
   SurfaceItem,
 } from "../../core/types.js";
 import { validateEvidenceMapSources } from "../../benchmark/validation.js";
@@ -79,7 +79,7 @@ describe("taskflow benchmark surface", () => {
   beforeAll(async () => {
     const manifest = JSON.parse(
       await readFile(path.join(benchmarkDir, "benchmark.json"), "utf8"),
-    ) as Omit<LedgerBenchmark, "sourceRepoPath"> & { sourceRepo: string };
+    ) as Omit<RepositoryBenchmark, "sourceRepoPath"> & { sourceRepo: string };
     checkpoints = manifest.trace.checkpoints;
 
     // Reconstruct the source repository from the committed bundle into a throwaway

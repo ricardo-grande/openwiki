@@ -27,6 +27,16 @@ independent and can ship at any time.
         per-benchmark release gate (core §3.5, §6)
   - [x] S0.7 Onboarding entry point runs `begin(init)` (core §3.5)
 - [ ] **S1.** Personal LEDGER baseline
+  - [x] S1.1 `personal` benchmark kind, loader, and validation
+  - [x] S1.2 `inbox-week` and `cross-source` fixture builders and trap
+        manifests, with a connector round-trip shape test
+  - [x] S1.3 Raw-timeline replay, child-process system adapter, and the
+        injectable connector registry in `runOpenWikiIngestion`
+  - [x] S1.4 Raw evidence adapter and `dated-evidence` grounding, with a
+        personal gold calibration set
+  - [x] S1.5 Trap-driven forgetting and structural checks in the report
+  - [ ] S1.6 Live gold calibration and the three-run legacy baseline in
+        `evals/ledger/README.md`
 - [ ] **S2.** Onboarding runs init only
 - [ ] **C1.** Shared groundwork
 - [ ] **C2.** Core state, lock, begin and finish

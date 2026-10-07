@@ -2,7 +2,14 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { BenchmarkValidationError } from "../core/errors.js";
-import type { BenchmarkDifficulty, LedgerBenchmark } from "../core/types.js";
+import type {
+  BenchmarkDifficulty,
+  LedgerBenchmark,
+  PersonalBenchmark,
+  PersonalTrapManifest,
+  RepositoryBenchmark,
+} from "../core/types.js";
+import { validatePersonalRawFixtures } from "./personal-validation.js";
 import { ensureSourceRepoAvailable } from "./source-repo.js";
 import { validateBenchmark, validateEvidenceMapSources } from "./validation.js";
 
@@ -10,6 +17,16 @@ import { validateBenchmark, validateEvidenceMapSources } from "./validation.js";
  * Name of the manifest file inside a benchmark directory.
  */
 const BENCHMARK_FILE = "benchmark.json";
+
+/**
+ * Name of a personal benchmark's evaluator-only trap manifest.
+ */
+const TRAPS_FILE = "traps.json";
+
+/**
+ * Name of a personal benchmark's recorded-pull fixture directory.
+ */
+const RAW_DIR = "raw";
 
 /**
  * The difficulty labels a benchmark manifest may declare, in ascending order.
@@ -40,6 +57,24 @@ export interface LoadBenchmarkOptions {
  * `loadBenchmark` and `validateBenchmark` have checked it.
  */
 interface RawBenchmark {
+  /**
+   * Benchmark kind. Typed `unknown` because the raw file is untrusted until
+   * checked.
+   *
+   * @default "repository" when absent
+   */
+  kind?: unknown;
+
+  /**
+   * Personal benchmarks only: the user's wiki brief.
+   */
+  wikiGoal?: unknown;
+
+  /**
+   * Personal benchmarks only: the connected sources.
+   */
+  connectors?: unknown;
+
   /**
    * Human-readable benchmark name for reports. Typed `unknown` because the raw
    * file is untrusted until checked.
@@ -123,12 +158,6 @@ export async function loadBenchmark(
     );
   }
 
-  if (typeof raw.sourceRepo !== "string" || raw.sourceRepo.length === 0) {
-    throw new BenchmarkValidationError(
-      `${file}: "sourceRepo" must be a non-empty string.`,
-    );
-  }
-
   if (
     typeof raw.difficulty !== "string" ||
     !DIFFICULTIES.includes(raw.difficulty as BenchmarkDifficulty)
@@ -138,6 +167,29 @@ export async function loadBenchmark(
     );
   }
   const difficulty = raw.difficulty as BenchmarkDifficulty;
+  const name = typeof raw.name === "string" ? raw.name : "";
+  const description =
+    typeof raw.description === "string" ? raw.description : "";
+
+  if (raw.kind === "personal") {
+    return loadPersonalBenchmark(benchmarkDir, raw, {
+      name,
+      description,
+      difficulty,
+    });
+  }
+
+  if (raw.kind !== undefined && raw.kind !== "repository") {
+    throw new BenchmarkValidationError(
+      `${file}: "kind" must be "repository" or "personal".`,
+    );
+  }
+
+  if (typeof raw.sourceRepo !== "string" || raw.sourceRepo.length === 0) {
+    throw new BenchmarkValidationError(
+      `${file}: "sourceRepo" must be a non-empty string.`,
+    );
+  }
 
   const sourceRepoPath = path.resolve(benchmarkDir, raw.sourceRepo);
 
@@ -147,21 +199,78 @@ export async function loadBenchmark(
     await ensureSourceRepoAvailable(benchmarkDir, sourceRepoPath);
   }
 
-  const benchmark: LedgerBenchmark = {
-    name: typeof raw.name === "string" ? raw.name : "",
-    description: typeof raw.description === "string" ? raw.description : "",
+  const benchmark: RepositoryBenchmark = {
+    name,
+    description,
     difficulty,
     sourceRepoPath,
-    evidenceMap: raw.evidenceMap as LedgerBenchmark["evidenceMap"],
+    evidenceMap: raw.evidenceMap as RepositoryBenchmark["evidenceMap"],
     // Cast is deliberate: validateBenchmark performs the deep structural checks
     // that make this cast sound, and throws before the value is used otherwise.
-    trace: raw.trace as LedgerBenchmark["trace"],
+    trace: raw.trace as RepositoryBenchmark["trace"],
   };
 
   validateBenchmark(benchmark);
   if (options.ensureSourceRepo !== false) {
     await validateEvidenceMapSources(benchmark);
   }
+
+  return benchmark;
+}
+
+/**
+ * Assemble and validate a personal benchmark: read its evaluator-only trap
+ * manifest, resolve its `raw/` fixture root, and confirm every pull's fixture
+ * directory exists.
+ *
+ * @param benchmarkDir - Absolute benchmark directory.
+ * @param raw - The parsed, untrusted manifest.
+ * @param common - Already-checked cosmetic fields and difficulty.
+ *
+ * @returns The validated personal benchmark.
+ *
+ * @throws BenchmarkValidationError when the trap manifest is missing or the
+ *   benchmark fails an integrity check.
+ */
+async function loadPersonalBenchmark(
+  benchmarkDir: string,
+  raw: RawBenchmark,
+  common: Pick<PersonalBenchmark, "name" | "description" | "difficulty">,
+): Promise<PersonalBenchmark> {
+  if (raw.sourceRepo !== undefined) {
+    throw new BenchmarkValidationError(
+      `A personal benchmark must not declare "sourceRepo".`,
+    );
+  }
+
+  const trapsFile = path.join(benchmarkDir, TRAPS_FILE);
+  let traps: PersonalTrapManifest;
+
+  try {
+    traps = JSON.parse(
+      await readFile(trapsFile, "utf8"),
+    ) as PersonalTrapManifest;
+  } catch (error) {
+    throw new BenchmarkValidationError(
+      `Could not read or parse ${trapsFile}: ${(error as Error).message}`,
+    );
+  }
+
+  // Casts are deliberate: validateBenchmark performs the deep structural checks
+  // that make them sound, and throws before the values are used otherwise.
+  const benchmark: PersonalBenchmark = {
+    ...common,
+    kind: "personal",
+    rawRoot: path.join(benchmarkDir, RAW_DIR),
+    wikiGoal: raw.wikiGoal as string,
+    connectors: raw.connectors as PersonalBenchmark["connectors"],
+    evidenceMap: raw.evidenceMap as PersonalBenchmark["evidenceMap"],
+    trace: raw.trace as PersonalBenchmark["trace"],
+    traps,
+  };
+
+  validateBenchmark(benchmark);
+  await validatePersonalRawFixtures(benchmark);
 
   return benchmark;
 }

@@ -138,6 +138,71 @@ invalid after isolated repair falls back to `unverified`; a failed extraction
 unit contributes no claims. Both cases lower the separately reported evaluator
 completeness rate and remain visible as warnings in the audit report.
 
+## Personal benchmarks
+
+A benchmark with `"kind": "personal"` replays recorded connector pulls through
+OpenWiki's personal path instead of a Git history. `inbox-week` (Gmail, medium)
+and `cross-source` (Gmail and Slack, hard) are checked in. Repository benchmarks
+omit `kind`, which defaults to `"repository"`.
+
+```text
+benchmarks/<name>/
+  benchmark.json      kind, wikiGoal, connectors, trace of pulls per checkpoint
+  traps.json          evaluator-only: facts planted/changed/retired, canaries, noise
+  raw/<connectorId>/<rawRunId>/   files exactly as the real connector writes them
+  build-fixtures.mjs  deterministic builder for all of the above
+```
+
+- **Replay.** Each run builds a temporary OpenWiki home with the onboarding
+  config and wiki brief. T0 is `personal --init` with no data. Every later
+  checkpoint copies its pulls into `connectors/<id>/raw/<runId>/` and runs one
+  `openwiki ingest`: `all` when the checkpoint pulls every source, otherwise
+  one source at a time. A replay connector returns the recorded pull instead of
+  fetching, so the real source-update prompt and agent run are exercised.
+- **Isolation.** OpenWiki runs in a child process with `OPENWIKI_CONFIG_DIR`
+  pointed at the temporary home, connector credentials removed, and telemetry
+  off. Provider credentials come from the parent environment. The user's
+  `~/.openwiki` is never read or written.
+- **Evidence.** One record per email or Slack message, plus the wiki brief and
+  connected sources. The corpus is cumulative, deduplicated across re-delivered
+  items, and every record is current and dated.
+- **Grounding.** Personal runs use the `dated-evidence` judgment prompt: the
+  newest relevant item decides, a claim an older item established and a newer
+  one changed is stale, and a fact independent sources disagree on is contested.
+  `formerlyTrue` must cite items with different dates.
+- **Forgetting.** Trap facts are the scorable surface. A changed or retired
+  fact's former version joins the forgetting watch set, exactly as changed API
+  surface does for repository benchmarks.
+- **Structural checks** are model-free and reported next to the score: a
+  quickstart exists and every page has valid front matter, `.last-update.json`
+  is complete, no canary reaches the wiki, nothing outside the wiki and
+  OpenWiki's own state changed in the home, no page is dedicated to planted
+  noise, and placement traps stay off the pages they don't belong on.
+
+Fixtures are synthetic and must match the connectors byte for byte.
+`benchmarks/personal-fixtures.test.ts` runs each recorded pull back through the
+real Gmail or Slack connector with a stubbed API and requires identical output,
+and checks that each builder is deterministic. After changing a builder:
+
+```bash
+node evals/ledger/benchmarks/inbox-week/build-fixtures.mjs
+node evals/ledger/benchmarks/cross-source/build-fixtures.mjs
+```
+
+The dated-evidence prompt is calibrated against
+`evaluator/fixtures/precision-gold-personal.json` by the live gold-agreement
+test (`LEDGER_LIVE=1`).
+
+### Legacy personal baseline
+
+Three runs per benchmark of today's legacy personal path. Later personal-mode
+milestones are compared against these numbers.
+
+| Benchmark    | Runs | LEDGER score     | Supported | Stale | Hallucinated | Unverified | Structural checks |
+| ------------ | ---- | ---------------- | --------- | ----- | ------------ | ---------- | ----------------- |
+| inbox-week   | –    | not yet recorded | –         | –     | –            | –          | –                 |
+| cross-source | –    | not yet recorded | –         | –     | –            | –          | –                 |
+
 ## LEDGER score
 
 The run-level score is opportunity-weighted claim health across the trace:
@@ -200,6 +265,13 @@ evaluation is genuinely complete.
 OPENWIKI_PROVIDER=anthropic \
 LEDGER_EVALUATOR_MODEL_ID=claude-sonnet-5 \
 pnpm run eval:ledger -- --benchmark evals/ledger/benchmarks/taskflow
+```
+
+Personal benchmarks run the same way:
+
+```bash
+pnpm run eval:ledger -- --benchmark evals/ledger/benchmarks/inbox-week
+pnpm run eval:ledger -- --benchmark evals/ledger/benchmarks/cross-source
 ```
 
 Provider credentials use the same environment configuration as OpenWiki. Add
