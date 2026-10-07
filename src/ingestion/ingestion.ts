@@ -60,6 +60,13 @@ export type OpenWikiIngestionOptions = Pick<
   OpenWikiRunOptions,
   "debug" | "modelId" | "onEvent"
 > & {
+  /**
+   * Connector runtimes to pull from, keyed by connector id. Lets a caller such
+   * as the LEDGER personal benchmark replay recorded pulls instead of fetching.
+   *
+   * @default createConnectorRegistry()
+   */
+  connectorRegistry?: Record<ConnectorId, ConnectorRuntime>;
   scheduledOnly?: boolean;
   target: IngestionTarget;
 };
@@ -72,7 +79,7 @@ export async function runOpenWikiIngestion(
   await loadOpenWikiEnv();
   await ensureOpenWikiHome();
   const config = await readOpenWikiOnboardingConfig();
-  const registry = createConnectorRegistry();
+  const registry = options.connectorRegistry ?? createConnectorRegistry();
   const sourceInstances = resolveIngestionSourceInstances(
     options.target,
     config,
