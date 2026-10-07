@@ -41,8 +41,8 @@ importers:
         specifier: ^1.2.9
         version: 1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3)
       '@langchain/google':
-        specifier: ^0.2.3
-        version: 0.2.3(@langchain/core@1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3))(supports-color@7.2.0)
+        specifier: ^0.2.8
+        version: 0.2.8(@langchain/core@1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3))(supports-color@7.2.0)
       '@langchain/langgraph-checkpoint-sqlite':
         specifier: ^1.0.4
         version: 1.0.4(@langchain/core@1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3))(@langchain/langgraph-checkpoint@1.1.5(@langchain/core@1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3)))
@@ -758,11 +758,11 @@ packages:
     resolution: {integrity: sha512-conzSEj9Zu1AyXJLXsSbgrtxtxinmI1yGqQ5CIJZSoV5rvv+yvQE/vgBnoySpBQ/bl3YPgj2FL/gbDjWykLSfg==}
     engines: {node: '>=20'}
 
-  '@langchain/google@0.2.3':
-    resolution: {integrity: sha512-5X7SwP+oE+C7Jh+X67yFBLm7G7d1ZsJJKC76UNI4MZzWAC5ZtC+JVXCY+Ehj4w3Pr9XxHxc6IwBmQl5SG39yOg==}
+  '@langchain/google@0.2.8':
+    resolution: {integrity: sha512-TYJkKggRhF2WGq+rYQEed7vI4tXgdxAHfJU69X5WZMdDdWwxiscfR32lP+oIhI5Mt4xZCgtXQT1WG/oEKCcj1g==}
     engines: {node: '>=20'}
     peerDependencies:
-      '@langchain/core': ^1.2.9
+      '@langchain/core': ^1.2.13
 
   '@langchain/langgraph-checkpoint-sqlite@1.0.4':
     resolution: {integrity: sha512-tcfDU6mwy9Su7BQKjGLTrWPL2CZzaGwb5XzEttqRRhcI3g4P6a/S7qFoJf6jcP/vP71bere7JRDZPTzahhHqog==}
@@ -1816,6 +1816,10 @@ packages:
   eventsource-parser@3.1.1:
     resolution: {integrity: sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==}
     engines: {node: '>=18.0.0'}
+
+  eventsource-parser@4.1.1:
+    resolution: {integrity: sha512-zaWNqeSLeyzEAAt2Q6aDBRDRk/VnPmsKqvToyGvv6aahvLv71A4Jw7jG93Hckf11zXurbqgsffvpSgKPoeU1Qw==}
+    engines: {node: '>=22.12'}
 
   eventsource@3.0.7:
     resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
@@ -3957,11 +3961,11 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/google@0.2.3(@langchain/core@1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3))(supports-color@7.2.0)':
+  '@langchain/google@0.2.8(@langchain/core@1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3))(supports-color@7.2.0)':
     dependencies:
       '@langchain/core': 1.2.9(openai@7.23.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(undici@7.29.1)(ws@8.21.3)(zod@4.6.5))(ws@8.21.3)
-      eventsource-parser: 3.1.1
-      google-auth-library: 10.9.1(supports-color@7.2.0)
+      eventsource-parser: 4.1.1
+      google-auth-library: 11.1.0(supports-color@7.2.0)
       jose: 6.2.10
     transitivePeerDependencies:
       - supports-color
@@ -5127,6 +5131,8 @@ snapshots:
   eventemitter3@5.0.4: {}
 
   eventsource-parser@3.1.1: {}
+
+  eventsource-parser@4.1.1: {}
 
   eventsource@3.0.7:
     dependencies:
