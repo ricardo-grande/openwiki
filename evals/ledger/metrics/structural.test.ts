@@ -46,6 +46,10 @@ describe("runPersonalStructuralChecks", () => {
         relativePath: "personal-logistics.md",
         content: "---\ntype: page\n---\nDentist on Thursday.\n",
       },
+      // OpenWiki writes directory indexes and logs without front matter.
+      { relativePath: "index.md", content: "# Index\n" },
+      { relativePath: "people/index.md", content: "# People\n" },
+      { relativePath: "log.md", content: "# Log\n" },
       LAST_UPDATE,
     ]);
 

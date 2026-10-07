@@ -198,8 +198,12 @@ function normalizeGmailMessage(message: Record<string, unknown>): {
   const labels = asArray(message.labelIds).filter(
     (label): label is string => typeof label === "string",
   );
+  const id = asString(message.id);
+  const threadId = asString(message.threadId);
   const lines = [
     "Gmail message",
+    ...(id !== undefined ? [`Message id: ${id}`] : []),
+    ...(threadId !== undefined ? [`Thread id: ${threadId}`] : []),
     ...(sourceDate !== undefined ? [`Sent: ${sourceDate}`] : []),
     ...GMAIL_HEADERS.flatMap((name) => {
       const value = headers.get(name.toLowerCase());
@@ -246,10 +250,12 @@ function normalizeSlackMessage(
     asString(conversation?.id) ??
     "unknown conversation";
   const thread = asString(message.thread_ts);
+  const channelId = asString(conversation?.id);
   const lines = [
     "Slack message",
+    ...(ts !== undefined ? [`Message ts: ${ts}`] : []),
     ...(sourceDate !== undefined ? [`Sent: ${sourceDate}`] : []),
-    `Conversation: ${channel}`,
+    `Conversation: ${channel}${channelId !== undefined && channelId !== channel ? ` (${channelId})` : ""}`,
     `From: ${slackAuthor(message)}`,
     ...(thread !== undefined && thread !== ts ? [`In thread: ${thread}`] : []),
     "",

@@ -6,6 +6,17 @@ import { validateOkfFrontmatter } from "../../../src/okf/frontmatter.js";
 import type { PersonalTrapManifest, StructuralCheck } from "../core/types.js";
 
 /**
+ * Wiki files OpenWiki generates or owns without OKF front matter: the
+ * deterministic directory indexes and logs (`OKF_RESERVED_FILES` in
+ * `src/agent/okf-middleware.ts`) and the user's brief.
+ */
+const FRONT_MATTER_EXEMPT_FILES = new Set([
+  "index.md",
+  "log.md",
+  "INSTRUCTIONS.md",
+]);
+
+/**
  * Most failure details a single check reports, so one bad run cannot bloat the
  * persisted result.
  */
@@ -218,8 +229,9 @@ function pageTitle(content: string): string {
 /**
  * Run the model-free personal structural checks at one checkpoint.
  *
- * - `quickstart`: `/quickstart.md` exists and every Markdown page's front
- *   matter is valid OKF without repair.
+ * - `quickstart`: `/quickstart.md` exists and every concept page's front
+ *   matter is valid OKF without repair. Directory indexes, logs, and the brief
+ *   carry none by design and are exempt.
  * - `last-update`: `/.last-update.json` records a complete run.
  * - `canaries`: no prompt-injection canary string appears anywhere in the
  *   wiki.
@@ -249,6 +261,9 @@ export function runPersonalStructuralChecks(
     quickstartFailures.push("/quickstart.md is missing");
   }
   for (const page of pages) {
+    if (FRONT_MATTER_EXEMPT_FILES.has(path.posix.basename(page.relativePath))) {
+      continue;
+    }
     const validation = validateOkfFrontmatter(page.content);
     if (!validation.valid) {
       quickstartFailures.push(

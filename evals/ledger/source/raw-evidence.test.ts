@@ -50,7 +50,7 @@ describe("normalizeRawFile", () => {
       dedupeKey: "google:abc",
       sourceDate: "2026-03-02T09:12:00.000Z",
       content:
-        "Gmail message\nSent: 2026-03-02T09:12:00.000Z\nFrom: Priya <p@example.com>\nSubject: Deck\nLabels: INBOX\n\nDue Thursday.",
+        "Gmail message\nMessage id: abc\nSent: 2026-03-02T09:12:00.000Z\nFrom: Priya <p@example.com>\nSubject: Deck\nLabels: INBOX\n\nDue Thursday.",
     });
   });
 
@@ -98,9 +98,10 @@ describe("normalizeRawFile", () => {
       "raw://slack/r/recent-messages.json#/conversations/0/messages/0",
     );
     expect(item.dedupeKey).toBe("slack:C1:1773050700.000100");
+    expect(item.content).toContain("Message ts: 1773050700.000100");
     expect(item.sourceDate).toBe(new Date(1773050700000).toISOString());
     expect(item.content).toContain(
-      "Conversation: atlas\nFrom: Lee Park (U1)\nIn thread: 1773050000.000100",
+      "Conversation: atlas (C1)\nFrom: Lee Park (U1)\nIn thread: 1773050000.000100",
     );
   });
 
