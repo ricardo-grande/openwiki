@@ -103,11 +103,13 @@ On Windows, install with a Node.js package manager (`npm install -g openwiki` or
 <details>
 <summary><b>What the coding-agent integration supports</b></summary>
 
-Host-driven runs currently support repository code wikis, not personal brains. They use repository source and tests; connector-sourced context, including LangSmith, is not yet supported.
+Repository host runs use repository source and tests; connector-sourced context, including LangSmith, is not yet supported. The personal wiki has its own integration, described below.
 
 The coding agent investigates the repository, plans the wiki, and writes each assigned page sequentially with its native repository tools. OpenWiki owns the durable queue, Claims validation and persistence, source-drift handling, and deterministic finalization of Claims, indexes, provenance, setup files, and metadata.
 
 The MCP generation lifecycle is `openwiki_begin → openwiki_submit_plan → openwiki_next_page → openwiki_submit_page → … → openwiki_finish`, with optional on-demand `openwiki_inspect_page_claims`. The host submits only sparse Claim decisions for each page: OpenWiki retains current unaffected Claims, applies explicit confirmations, revisions, additions, or retractions, and refuses to finish until the final state is durable.
+
+The personal wiki is served by a separate `openwiki-personal` MCP server and skill. Install them with `openwiki integrations install <host> --personal`, at user scope only; they leave the repository integration untouched. The coding agent can then answer from `~/.openwiki/wiki`, pull connected sources with `openwiki_personal_ingest`, and maintain the wiki through the same resumable personal lifecycle as `OPENWIKI_PERSONAL_CORE=1`: `openwiki_personal_begin → openwiki_personal_submit_plan → openwiki_personal_next_page → openwiki_personal_write_page → openwiki_personal_submit_page → … → openwiki_personal_finish`. It writes pages only through OpenWiki's page tools, which confine each write to the page of its job and reject a write over a page that changed since the agent read it. When the session ends, an unfinished run stays resumable by the next session or by `OPENWIKI_PERSONAL_CORE=1 openwiki personal --update`. The personal server never loads OpenWiki's model-provider keys.
 
 Contributors adding another coding agent should follow [Adding a coding-agent integration](CONTRIBUTING.md#adding-a-coding-agent-integration).
 
@@ -458,6 +460,8 @@ With the flag set, the entry points change:
 If another process holds the wiki, the command names it and exits with an error. `ingest` keeps what it pulled for the next update. If that process is gone and its lock has expired, an interactive command asks before taking over the run; scheduled ingestion never takes over.
 
 Without the flag, `--pull-only` and `cron pull-only all on` are refused, because the default ingestion never reads data it did not pull itself.
+
+Coding agents with the [personal integration](#what-the-coding-agent-integration-supports) always use the lifecycle core, with or without the flag.
 
 </details>
 

@@ -147,7 +147,33 @@ independent and can ship at any time.
     mode. The guard serializes the H3 lifecycle tools.
   - [x] H2.6 Follow-up after C2: `status` reads the core state formats and
         fills `synthesisCursor`, `pending`, and `activeRun`
-- [ ] **H3.** Lifecycle tools and full skill
+- [x] **H3.** Lifecycle tools and full skill
+  - [x] H3.1 The eleven evidence and lifecycle tools on `openwiki-personal`,
+        after the retrieval tools in §3.2 order and under the single-operation
+        guard; `begin` adds `briefs` (connector guidance and the user's
+        ingestion goals) and `openQuestions`
+  - [x] H3.2 `write_page` and `edit_page` resolve the page from `jobId`, take
+        a `baseVersion`, reject content over 512 KB, and repair front matter
+        through the core
+  - [x] H3.3 `ingest` pulls every connected instance of a deterministic
+        connector and refuses agentic ones; the gathering proxy works only in
+        `gathering`, for the run's open MCP connectors, applies the read-only
+        policy, and returns the untrusted envelope with the result's `raw://`
+        ref
+  - [x] H3.4 When stdin closes, the server waits for the operation in
+        progress, releases `.run.lock`, and keeps `.run.json`
+  - [x] H3.5 The build writes `references/personal.md` from
+        `agent/prompts/personal-reference.ts`, with a byte-equality test. The
+        planner and page contracts moved into `personal-guidance.ts`; the
+        native prompts stay byte-identical.
+  - [x] H3.6 `SKILL.md` and the INSTRUCTIONS carry the run sequence and the
+        lock and page conflict handling
+  - Every tool result and error message is scrubbed of the connector
+    environment values the server loaded and of secret-like environment
+    values (PHM-009).
+  - `ingest` for a connector with several connected instances pulls each and
+    returns one merged result.
+  - PHM-014 drives the native driver with scripted agents in both directions.
 
 ## Order
 

@@ -2,10 +2,15 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { parse } from "yaml";
+import {
+  PERSONAL_REFERENCE_PATH,
+  renderPersonalReference,
+} from "../../src/agent/prompts/personal-reference.ts";
 import { PERSONAL_INSTRUCTIONS } from "../../src/integrations/personal/instructions.ts";
 
 const SKILL_ROOT = path.join(process.cwd(), "integrations/openwiki-personal");
 const SKILL_PATH = path.join(SKILL_ROOT, "SKILL.md");
+const REFERENCE_PATH = path.join(process.cwd(), PERSONAL_REFERENCE_PATH);
 const REPOSITORY_TOOL = /\bopenwiki_(?!personal_)[a-z_]+/u;
 
 /**
@@ -77,10 +82,47 @@ describe("personal host skill", () => {
     }
   });
 
+  test.each([
+    ["skill", () => readFile(SKILL_PATH, "utf8")],
+    ["instructions", () => Promise.resolve(PERSONAL_INSTRUCTIONS)],
+  ])("%s lists the run sequence and conflict handling", async (_, read) => {
+    const text = (await read()).replace(/\s+/gu, " ");
+    const sequence = [
+      "openwiki_personal_ingest",
+      "openwiki_personal_begin",
+      "openwiki_personal_list_mcp_tools",
+      "openwiki_personal_call_mcp_tool",
+      "openwiki_personal_close_gathering",
+      "openwiki_personal_submit_plan",
+      "openwiki_personal_next_page",
+      "openwiki_personal_write_page",
+      "openwiki_personal_submit_page",
+      "openwiki_personal_finish",
+    ].map((tool) => text.indexOf(tool));
+    expect(sequence).not.toContain(-1);
+    expect(sequence).toEqual([...sequence].sort((a, b) => a - b));
+    expect(text).toContain("noop");
+    expect(text).toMatch(/do not retry in a loop/u);
+    expect(text).toMatch(/takeover[^.]*only after the user confirms/u);
+    expect(text).toMatch(/Never retry with (?:a|the) stale `?baseVersion`?/u);
+  });
+
+  test("links the generated reference", async () => {
+    const skill = await readFile(SKILL_PATH, "utf8");
+    expect(skill).toContain("(references/personal.md)");
+  });
+
+  test("ships the reference generated from the shared guidance (PHM-015)", async () => {
+    expect(await readFile(REFERENCE_PATH, "utf8")).toBe(
+      renderPersonalReference(),
+    );
+  });
+
   test("mentions no repository tool (PHM-017)", async () => {
     const skill = await readFile(SKILL_PATH, "utf8");
     expect(skill).not.toMatch(REPOSITORY_TOOL);
     expect(PERSONAL_INSTRUCTIONS).not.toMatch(REPOSITORY_TOOL);
+    expect(await readFile(REFERENCE_PATH, "utf8")).not.toMatch(REPOSITORY_TOOL);
   });
 
   test("ships Codex and Bob metadata", async () => {

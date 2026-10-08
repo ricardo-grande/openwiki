@@ -168,8 +168,8 @@ afterEach(async () => {
 });
 
 describe("personal retrieval tools", () => {
-  test("registers the stage-H2 tools in host §3.2 order (PHM-005)", async () => {
-    expect([...(await loadTools()).keys()]).toEqual([
+  test("registers the retrieval tools first, in host §3.2 order (PHM-005)", async () => {
+    expect([...(await loadTools()).keys()].slice(0, 6)).toEqual([
       "openwiki_personal_search",
       "openwiki_personal_read",
       "openwiki_personal_list_pages",

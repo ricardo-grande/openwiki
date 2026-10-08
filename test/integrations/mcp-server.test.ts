@@ -412,7 +412,7 @@ describe("OpenWiki MCP lifecycle smoke test", () => {
 });
 
 describe("OpenWiki personal MCP server", () => {
-  test("announces openwiki-personal with personal guidance and the stage-H2 tools (PHM-001)", async () => {
+  test("announces openwiki-personal with personal guidance and every personal tool (PHM-001)", async () => {
     const fixture = await connect(
       PersonalSessionManager.create({ host: "claude" }),
       createOpenWikiPersonalMcpServer,
@@ -428,6 +428,17 @@ describe("OpenWiki personal MCP server", () => {
         "openwiki_personal_status",
         "openwiki_personal_list_raw_items",
         "openwiki_personal_read_raw_item",
+        "openwiki_personal_ingest",
+        "openwiki_personal_list_mcp_tools",
+        "openwiki_personal_call_mcp_tool",
+        "openwiki_personal_close_gathering",
+        "openwiki_personal_begin",
+        "openwiki_personal_submit_plan",
+        "openwiki_personal_next_page",
+        "openwiki_personal_write_page",
+        "openwiki_personal_edit_page",
+        "openwiki_personal_submit_page",
+        "openwiki_personal_finish",
       ]);
       const instructions = fixture.client.getInstructions() ?? "";
       expect(instructions).toContain("user's own personal wiki");

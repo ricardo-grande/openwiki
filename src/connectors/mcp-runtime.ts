@@ -38,6 +38,24 @@ export type McpToolCallResult = {
 
 const MCP_CONNECTOR_IDS = new Set<ConnectorId>(["custom-mcp", "notion"]);
 
+/**
+ * A tool call refused before it reached the MCP server: the tool was not
+ * discovered, or the read-only policy does not allow it.
+ */
+export class McpToolCallRefusedError extends Error {
+  /**
+   * `unknown_tool` when tools/list did not return the tool, `not_read_only`
+   * when the read-only policy refused it.
+   */
+  readonly reason: "unknown_tool" | "not_read_only";
+
+  constructor(reason: McpToolCallRefusedError["reason"], message: string) {
+    super(message);
+    this.name = "McpToolCallRefusedError";
+    this.reason = reason;
+  }
+}
+
 export function isMcpConnectorId(
   connectorId: ConnectorId,
 ): connectorId is McpConnectorId {
@@ -86,14 +104,15 @@ export async function callMcpConnectorTool(
   const tool = discovery.tools.find((candidate) => candidate.name === toolName);
 
   if (!tool) {
-    throw new Error(
+    throw new McpToolCallRefusedError(
+      "unknown_tool",
       `MCP tool ${toolName} was not returned by tools/list for ${connectorId}. Run openwiki_list_mcp_tools first and use an exact discovered name.`,
     );
   }
 
   const policy = getToolCallPolicy(connectorId, config, tool);
   if (!policy.allowed) {
-    throw new Error(policy.reason);
+    throw new McpToolCallRefusedError("not_read_only", policy.reason);
   }
 
   const result = await executeMcpTool(config, tool.name, args);

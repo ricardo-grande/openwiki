@@ -53,10 +53,15 @@ export async function resolveScopedConnectorEnvKeys(): Promise<Set<string>> {
 /**
  * Limits this process's `.env` loads to the connector keys, then loads them
  * into `process.env` without overwriting values already set.
+ *
+ * @returns The keys and values read from `<home>/.env`, so the caller can
+ *   keep them out of tool results.
  */
-export async function loadScopedConnectorEnv(): Promise<void> {
+export async function loadScopedConnectorEnv(): Promise<
+  Readonly<Record<string, string>>
+> {
   scopeOpenWikiEnvLoading(await resolveScopedConnectorEnvKeys());
-  await loadOpenWikiEnv();
+  return loadOpenWikiEnv();
 }
 
 /**

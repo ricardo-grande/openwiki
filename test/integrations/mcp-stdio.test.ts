@@ -1,3 +1,4 @@
+import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 const transport = vi.hoisted(() => ({
@@ -24,6 +25,7 @@ import {
   runOpenWikiMcp,
   runOpenWikiPersonalMcp,
 } from "../../src/integrations/mcp/stdio.ts";
+import { PersonalSessionManager } from "../../src/integrations/personal/session-manager.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -47,9 +49,25 @@ describe("OpenWiki MCP stdio entry point", () => {
       .spyOn(process.stdout, "write")
       .mockImplementation(() => true);
 
-    await runOpenWikiPersonalMcp({ host: "claude" });
+    await runOpenWikiPersonalMcp({ host: "claude" }, new PassThrough());
 
     expect(transport.starts).toHaveBeenCalledOnce();
     expect(stdout).not.toHaveBeenCalled();
+  });
+
+  test("ends the personal session once when stdin closes", async () => {
+    const close = vi
+      .spyOn(PersonalSessionManager.prototype, "close")
+      .mockResolvedValue();
+    const stdin = new PassThrough();
+
+    await runOpenWikiPersonalMcp({ host: "claude" }, stdin);
+    expect(close).not.toHaveBeenCalled();
+
+    stdin.end();
+    stdin.resume();
+    await new Promise((resolve) => stdin.once("close", resolve));
+
+    expect(close).toHaveBeenCalledOnce();
   });
 });

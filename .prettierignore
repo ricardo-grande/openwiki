@@ -10,3 +10,7 @@ evals/ledger/benchmarks/inbox-week/*.json
 evals/ledger/benchmarks/inbox-week/raw/
 evals/ledger/benchmarks/cross-source/*.json
 evals/ledger/benchmarks/cross-source/raw/
+
+# Generated from src/agent/prompts/personal-guidance.ts by the build and kept
+# byte-identical to its output.
+integrations/openwiki-personal/references/personal.md
