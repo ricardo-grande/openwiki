@@ -159,6 +159,12 @@ describe("canonical OpenWiki host skill", () => {
     expect(validateOkfFrontmatter(example ?? "")).toEqual({ valid: true });
   });
 
+  test("mentions no personal tool (PHM-017)", async () => {
+    const skill = await readFile(SKILL_PATH, "utf8");
+    expect(skill).not.toMatch(/openwiki_personal_/u);
+    expect(skill).not.toContain("openwiki-personal");
+  });
+
   test("has no references dependency and retains Codex metadata", async () => {
     const entries = await readdir(SKILL_ROOT);
     expect(entries).not.toContain("references");

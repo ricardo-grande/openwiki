@@ -13,6 +13,12 @@ export type HostTargetId =
   | "copilot";
 
 /**
+ * Separately installed integration components: the repository server and
+ * skill, or the personal server and skill.
+ */
+export type HostIntegrationComponent = "code" | "personal";
+
+/**
  * Current managed installation states exposed to callers.
  */
 export type HostIntegrationStatus =
@@ -58,9 +64,10 @@ export interface HostMcpConfig {
  */
 export interface HostInstallationPaths {
   /**
-   * Skill destination relative to the selected scope root.
+   * Directory holding the host's skills, relative to the selected scope root.
+   * Each component installs its skill in its own subdirectory.
    */
-  readonly skillDirectory: string;
+  readonly skillsRoot: string;
 
   /**
    * MCP config format and destination for the selected scope.
@@ -104,6 +111,37 @@ export interface HostTarget {
 }
 
 /**
+ * What one component installs: its skill, its MCP server, and its scopes.
+ */
+export interface HostIntegrationComponentDefinition {
+  /**
+   * Stable component identifier.
+   */
+  readonly id: HostIntegrationComponent;
+
+  /**
+   * Skill directory name below the host's skills root, and bundle directory
+   * name below the package's `integrations/`.
+   */
+  readonly skillName: string;
+
+  /**
+   * MCP config key that owns the server entry.
+   */
+  readonly serverName: string;
+
+  /**
+   * `openwiki` arguments that start the server, before `--host <id>`.
+   */
+  readonly serverArgs: readonly string[];
+
+  /**
+   * Scopes the component may be installed in.
+   */
+  readonly scopes: readonly HostIntegrationScope[];
+}
+
+/**
  * Options for installing or upgrading a host integration.
  */
 export interface InstallOptions {
@@ -111,6 +149,13 @@ export interface InstallOptions {
    * Ownership scope receiving the host integration.
    */
   scope: HostIntegrationScope;
+
+  /**
+   * Component to install.
+   *
+   * @default "code"
+   */
+  component?: HostIntegrationComponent;
 
   /**
    * Home or project directory anchoring the selected scope.
@@ -142,6 +187,13 @@ export interface UninstallOptions {
   scope: HostIntegrationScope;
 
   /**
+   * Component to remove or inspect.
+   *
+   * @default "code"
+   */
+  component?: HostIntegrationComponent;
+
+  /**
    * Home or project directory anchoring the selected scope.
    */
   root: string;
@@ -160,6 +212,11 @@ export interface InstallResult {
    * Ownership scope affected by the operation.
    */
   scope: HostIntegrationScope;
+
+  /**
+   * Component affected by the operation.
+   */
+  component: HostIntegrationComponent;
 
   /**
    * Absolute installed skill directory.

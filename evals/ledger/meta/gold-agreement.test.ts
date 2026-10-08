@@ -5,54 +5,106 @@ import {
   assertGoldAgreement,
   loadPrecisionGoldFixture,
   measureGoldAgreement,
+  PRECISION_GOLD_FIXTURES,
 } from "./gold-agreement.js";
+import {
+  PRECISION_DATED_JUDGMENT_SYSTEM,
+  PRECISION_JUDGMENT_SYSTEM,
+} from "../evaluator/prompts.js";
 
-function fakeModel(responses: unknown[]): BaseChatModel {
+function fakeModel(
+  responses: unknown[],
+  systemPrompts: string[] = [],
+): BaseChatModel {
   const queue = [...responses];
   return {
-    withStructuredOutput: () => ({ invoke: async () => queue.shift() }),
+    withStructuredOutput: () => ({
+      invoke: async (messages: Array<{ content: unknown }>) => {
+        systemPrompts.push(String(messages[0]?.content));
+        return queue.shift();
+      },
+    }),
   } as unknown as BaseChatModel;
 }
 
 describe("precision gold agreement", () => {
-  test("reports perfect agreement for human-labeled stage outputs", async () => {
-    const fixture = await loadPrecisionGoldFixture();
-    const responses: unknown[] = [
-      {
-        units: fixture.extractionCases.map((item, index) => ({
-          unitId: `gold-unit-${index}`,
-          ...item.expected,
-          rationale: "Human-labeled fixture response.",
-        })),
-      },
-      ...fixture.groundingCases.map((item, index) => ({
-        evaluations: [
-          {
-            assertionId: `gold-grounding-${index}`,
-            verdict: item.expected.verdict,
-            formerlyTrue: item.expected.formerlyTrue,
-            evidenceIds:
-              item.expected.verdict === "not-addressed"
-                ? []
-                : item.evidence.map((evidence) => evidence.evidenceId),
+  test.each(
+    Object.keys(PRECISION_GOLD_FIXTURES) as Array<
+      keyof typeof PRECISION_GOLD_FIXTURES
+    >,
+  )(
+    "reports perfect agreement for human-labeled %s stage outputs",
+    async (name) => {
+      const fixture = await loadPrecisionGoldFixture(name);
+      const responses: unknown[] = [
+        {
+          units: fixture.extractionCases.map((item, index) => ({
+            unitId: `gold-unit-${index}`,
+            ...item.expected,
             rationale: "Human-labeled fixture response.",
-          },
-        ],
-      })),
-    ];
+          })),
+        },
+        ...fixture.groundingCases.map((item, index) => ({
+          evaluations: [
+            {
+              assertionId: `gold-grounding-${index}`,
+              verdict: item.expected.verdict,
+              formerlyTrue: item.expected.formerlyTrue,
+              evidenceIds:
+                item.expected.verdict === "not-addressed"
+                  ? []
+                  : item.evidence.map((evidence) => evidence.evidenceId),
+              rationale: "Human-labeled fixture response.",
+            },
+          ],
+        })),
+      ];
 
-    const report = await measureGoldAgreement({
-      model: fakeModel(responses),
-      fixture,
-    });
+      const systemPrompts: string[] = [];
+      const report = await measureGoldAgreement({
+        model: fakeModel(responses, systemPrompts),
+        fixture,
+      });
 
-    expect(report).toMatchObject({
-      extraction: { agreement: 1 },
-      grounding: { agreement: 1 },
-      floor: 0.9,
-      passed: true,
-    });
-    expect(() => assertGoldAgreement(report)).not.toThrow();
+      expect(report).toMatchObject({
+        extraction: { agreement: 1 },
+        grounding: { agreement: 1 },
+        floor: 0.9,
+        passed: true,
+      });
+      expect(() => assertGoldAgreement(report)).not.toThrow();
+      // Grounding uses the judgment prompt for the fixture's grounding mode.
+      const groundingPrompt =
+        name === "personal"
+          ? PRECISION_DATED_JUDGMENT_SYSTEM
+          : PRECISION_JUDGMENT_SYSTEM;
+      expect(
+        systemPrompts
+          .slice(1)
+          .every((prompt) => prompt.includes(groundingPrompt)),
+      ).toBe(systemPrompts.length > 1);
+    },
+  );
+
+  test("labels every personal grounding case consistently", async () => {
+    const fixture = await loadPrecisionGoldFixture("personal");
+
+    expect(fixture.groundingMode).toBe("dated-evidence");
+    for (const item of fixture.groundingCases) {
+      expect(
+        item.evidence.every(
+          (evidence) => evidence.current && evidence.sourceDate,
+        ),
+      ).toBe(true);
+      expect(
+        new Set(item.evidence.map((evidence) => evidence.evidenceId)).size,
+      ).toBe(item.evidence.length);
+      if (item.expected.verdict === "contradicted") {
+        expect(typeof item.expected.formerlyTrue).toBe("boolean");
+      } else {
+        expect(item.expected.formerlyTrue).toBeUndefined();
+      }
+    }
   });
 
   test("fails the gate when one stage falls below the shared floor", () => {
@@ -64,5 +116,80 @@ describe("precision gold agreement", () => {
         passed: false,
       }),
     ).toThrow(/gold agreement below 0\.9/u);
+  });
+});
+
+describe("extraction agreement", () => {
+  const fixture = {
+    description: "quote boundary cases",
+    extractionCases: [
+      {
+        content: "The Lisbon trip was cancelled.",
+        expected: {
+          classification: "factual" as const,
+          assertions: [
+            {
+              statement: "The Lisbon trip was cancelled.",
+              sourceQuote: "The Lisbon trip was cancelled",
+              tense: "historical" as const,
+            },
+          ],
+        },
+      },
+      {
+        content: "The deck is due Monday, March 9.",
+        expected: {
+          classification: "factual" as const,
+          assertions: [
+            {
+              statement: "The deck is due Monday, March 9.",
+              sourceQuote: "The deck is due Monday, March 9",
+              tense: "current" as const,
+            },
+          ],
+        },
+      },
+    ],
+    groundingCases: [],
+  };
+
+  test("ignores trailing punctuation in quotes but not different quoted text", async () => {
+    const report = await measureGoldAgreement({
+      model: fakeModel([
+        {
+          units: [
+            {
+              unitId: "gold-unit-0",
+              classification: "factual",
+              assertions: [
+                {
+                  statement: "The Lisbon trip was cancelled.",
+                  sourceQuote: "The Lisbon trip was cancelled. ",
+                  tense: "historical",
+                },
+              ],
+              rationale: "Same span with its final period.",
+            },
+            {
+              unitId: "gold-unit-1",
+              classification: "factual",
+              assertions: [
+                {
+                  statement: "The deck is due Monday, March 9.",
+                  sourceQuote: "due Monday, March 9",
+                  tense: "current",
+                },
+              ],
+              rationale: "A shorter span is a different quote.",
+            },
+          ],
+        },
+      ]),
+      fixture,
+    });
+
+    expect(report.extraction).toMatchObject({ correct: 1, total: 2 });
+    expect(report.extraction.mismatches).toHaveLength(1);
+    expect(report.extraction.mismatches[0]).toMatch(/^case 1:/u);
   });
 });

@@ -49,7 +49,7 @@ export function createOpenWikiConnectorTools(
         properties: {},
         additionalProperties: false,
       } as const,
-      func: async () => stringifyToolResult(await listConnectors()),
+      func: async () => reportToolResult(() => listConnectors()),
     }),
     new DynamicStructuredTool({
       name: "openwiki_list_mcp_tools",
@@ -66,8 +66,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await listMcpToolsForConnector(getConnectorId(input, "connectorId")),
+        reportToolResult(() =>
+          listMcpToolsForConnector(getConnectorId(input, "connectorId")),
         ),
     }),
     new DynamicStructuredTool({
@@ -92,8 +92,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await callMcpToolForConnector(
+        reportToolResult(() =>
+          callMcpToolForConnector(
             getConnectorId(input, "connectorId"),
             getStringInput(input, "toolName"),
             getRecordInput(input, "args") ?? {},
@@ -130,8 +130,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await ingestConnector(
+        reportToolResult(() =>
+          ingestConnector(
             getConnectorId(input, "connectorId"),
             getIngestOptions(input),
           ),
@@ -146,7 +146,7 @@ export function createOpenWikiConnectorTools(
         properties: {},
         additionalProperties: false,
       } as const,
-      func: async () => stringifyToolResult(await ingestAllConnectors()),
+      func: async () => reportToolResult(() => ingestAllConnectors()),
     }),
     new DynamicStructuredTool({
       name: "openwiki_list_raw_items",
@@ -173,8 +173,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await listRawItems(getConnectorId(input, "connectorId")),
+        reportToolResult(() =>
+          listRawItems(getConnectorId(input, "connectorId")),
         ),
     }),
     new DynamicStructuredTool({
@@ -208,8 +208,8 @@ export function createOpenWikiConnectorTools(
         additionalProperties: false,
       } as const,
       func: async (input) =>
-        stringifyToolResult(
-          await readRawItem(
+        reportToolResult(() =>
+          readRawItem(
             getConnectorId(input, "connectorId"),
             getStringInput(input, "path"),
             getNumberInput(input, "maxBytes") ?? 100_000,
@@ -325,7 +325,28 @@ function ingestFailureResult(
   };
 }
 
-async function listRawItems(connectorId: ConnectorId) {
+/**
+ * A refused raw-item access: a path outside the connector raw directory, a
+ * symbolic link, or a path that is not a regular file.
+ */
+export class RawItemAccessError extends Error {
+  /**
+   * @param message - Refusal reason, safe to show to the caller.
+   */
+  constructor(message: string) {
+    super(message);
+    this.name = "RawItemAccessError";
+  }
+}
+
+/**
+ * Lists one connector's raw files, newest run first. A missing raw directory
+ * lists nothing; a symlinked one is refused.
+ *
+ * @param connectorId - Connector whose raw directory is listed.
+ * @returns Raw file paths relative to the raw directory, and the newest run.
+ */
+export async function listRawItems(connectorId: ConnectorId) {
   const rawDir = getConnectorRawDir(connectorId);
   const files = (await assertExistingRawDirHasNoSymlink(rawDir))
     ? await listFiles(rawDir, rawDir)
@@ -345,13 +366,30 @@ async function listRawItems(connectorId: ConnectorId) {
   };
 }
 
-async function readRawItem(
+/**
+ * Reads one raw file without following symbolic links, capped at 500,000
+ * characters.
+ *
+ * @param connectorId - Connector whose raw directory holds the file.
+ * @param relativePath - File path relative to the raw directory.
+ * @param maxBytes - Requested cap, clamped to 1–500,000.
+ * @returns The file's content, possibly truncated.
+ * @throws {RawItemAccessError} When the path is refused.
+ */
+export async function readRawItem(
   connectorId: ConnectorId,
   relativePath: string,
   maxBytes: number,
 ) {
   const rawDir = getConnectorRawDir(connectorId);
-  const filePath = resolveConnectorRawPath(connectorId, relativePath);
+  let filePath: string;
+  try {
+    filePath = resolveConnectorRawPath(connectorId, relativePath);
+  } catch (error) {
+    throw new RawItemAccessError(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
   await assertRawItemPathHasNoSymlinks(rawDir, filePath);
   const fileHandle = await open(filePath, getRawItemOpenFlags());
 
@@ -359,7 +397,7 @@ async function readRawItem(
     const fileStat = await fileHandle.stat();
 
     if (!fileStat.isFile()) {
-      throw new Error("Raw item path must point to a file.");
+      throw new RawItemAccessError("Raw item path must point to a file.");
     }
 
     const content = await fileHandle.readFile("utf8");
@@ -444,7 +482,9 @@ async function assertPathIsNotSymlink(filePath: string): Promise<void> {
   const entryStat = await lstat(filePath);
 
   if (entryStat.isSymbolicLink()) {
-    throw new Error("Raw item path must not contain symbolic links.");
+    throw new RawItemAccessError(
+      "Raw item path must not contain symbolic links.",
+    );
   }
 }
 
@@ -547,6 +587,24 @@ function getStringArrayInput(
 
 function stringifyToolResult(value: unknown): string {
   return JSON.stringify(value, null, 2);
+}
+
+/**
+ * Run a connector tool and return its result as JSON, reporting any failure to
+ * the model as `{ "error": "..." }` instead of throwing. OpenWiki's middleware
+ * wraps every tool call, and LangChain re-raises errors that pass through
+ * middleware, so a thrown error here would end the whole agent run, for
+ * example when the model lists the tools of an MCP connector that is not
+ * configured. Refusals still return no data.
+ */
+async function reportToolResult(run: () => Promise<unknown>): Promise<string> {
+  try {
+    return stringifyToolResult(await run());
+  } catch (error) {
+    return stringifyToolResult({
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

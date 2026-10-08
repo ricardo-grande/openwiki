@@ -16,7 +16,7 @@ import {
 import { isFileNotFoundError } from "../platform/fs-errors.js";
 import { createConnectorRegistry } from "../connectors/registry.js";
 import { UPDATE_METADATA_PATH } from "../config/constants.js";
-import { createConnectorSynthesisGuidance } from "./ingestion.js";
+import { createConnectorSynthesisGuidance } from "../agent/prompts/personal-guidance.js";
 import type { OpenWikiRunEvent } from "../agent/types.js";
 
 const OPENWIKI_AGENTS_SNIPPET_START = "<!-- OPENWIKI:START -->";

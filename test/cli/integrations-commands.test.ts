@@ -17,6 +17,7 @@ describe("parseCommand host integrations", () => {
       scope: "user",
       projectRoot: null,
       force: false,
+      component: "code",
     });
     expect(
       parseCommand(["integrations", "list", "--project", "../project"]),
@@ -28,6 +29,7 @@ describe("parseCommand host integrations", () => {
       scope: "project",
       projectRoot: "../project",
       force: false,
+      component: "code",
     });
     expect(parseCommand(["integrations", "list", "--project"])).toMatchObject({
       kind: "integrations",
@@ -55,6 +57,7 @@ describe("parseCommand host integrations", () => {
         scope: "project",
         projectRoot: "../project",
         force: true,
+        component: "code",
       });
       expect(
         parseCommand([
@@ -72,6 +75,7 @@ describe("parseCommand host integrations", () => {
         scope: "project",
         projectRoot: "../project",
         force: false,
+        component: "code",
       });
     },
   );
@@ -107,8 +111,48 @@ describe("parseCommand host integrations", () => {
     });
   });
 
+  test("parses the personal component for install and uninstall", () => {
+    expect(
+      parseCommand(["integrations", "install", "claude", "--personal"]),
+    ).toEqual({
+      kind: "integrations",
+      action: "install",
+      exitCode: 0,
+      target: "claude",
+      scope: "user",
+      projectRoot: null,
+      force: false,
+      component: "personal",
+    });
+    expect(
+      parseCommand(["integrations", "uninstall", "codex", "--personal"]),
+    ).toMatchObject({ action: "uninstall", component: "personal" });
+    expect(
+      parseCommand([
+        "integrations",
+        "install",
+        "codex",
+        "--force",
+        "--personal",
+      ]),
+    ).toMatchObject({ force: true, component: "personal" });
+  });
+
   test.each([
     [["integrations"], /Usage: openwiki integrations/u],
+    [
+      ["integrations", "install", "claude", "--personal", "--project"],
+      /--personal cannot be combined with --project/u,
+    ],
+    [
+      ["integrations", "uninstall", "claude", "--project=repo", "--personal"],
+      /--personal cannot be combined with --project/u,
+    ],
+    [
+      ["integrations", "install", "claude", "--personal", "--personal"],
+      /--personal may only be specified once/u,
+    ],
+    [["integrations", "list", "--personal"], /list reports both components/u],
     [["integrations", "unknown"], /Usage: openwiki integrations/u],
     [["integrations", "install"], /Integration target is required/u],
     [
@@ -163,6 +207,7 @@ describe("parseCommand MCP", () => {
       kind: "mcp",
       exitCode: 0,
       host: "unknown",
+      server: "code",
     });
   });
 
@@ -171,15 +216,34 @@ describe("parseCommand MCP", () => {
       kind: "mcp",
       exitCode: 0,
       host: "claude",
+      server: "code",
     });
     expect(parseCommand(["mcp", "--host=custom-host-2"])).toEqual({
       kind: "mcp",
       exitCode: 0,
       host: "custom-host-2",
+      server: "code",
+    });
+  });
+
+  test("parses the personal server", () => {
+    expect(parseCommand(["mcp", "personal", "--host", "claude"])).toEqual({
+      kind: "mcp",
+      exitCode: 0,
+      host: "claude",
+      server: "personal",
+    });
+    expect(parseCommand(["mcp", "personal"])).toEqual({
+      kind: "mcp",
+      exitCode: 0,
+      host: "unknown",
+      server: "personal",
     });
   });
 
   test.each([
+    [["mcp", "--host", "claude", "personal"], /Unexpected argument for mcp/u],
+    [["mcp", "personal", "personal"], /Unexpected argument for mcp/u],
     [["mcp", "--host"], /--host requires a host identifier/u],
     [["mcp", "--host="], /--host requires a host identifier/u],
     [
@@ -204,7 +268,9 @@ describe("host command isolation", () => {
   test.each([
     ["integrations", "list"],
     ["integrations", "install", "codex"],
+    ["integrations", "install", "codex", "--personal"],
     ["mcp"],
+    ["mcp", "personal", "--host", "claude"],
   ])("%j bypasses credentials and telemetry", (...argv) => {
     const command = parseCommand(argv);
 

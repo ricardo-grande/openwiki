@@ -94,7 +94,7 @@ function shortHash(statement: string): string {
  *
  * @returns The assembled surface item.
  */
-function makeItem(
+export function makeItem(
   factId: string,
   kind: SurfaceKind,
   name: string,

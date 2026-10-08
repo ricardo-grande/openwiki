@@ -3,10 +3,8 @@ import {
   CONNECTOR_IDS,
   createConnectorRegistry,
 } from "../../src/connectors/registry.ts";
-import {
-  createConnectorSynthesisGuidance,
-  parseIngestionTarget,
-} from "../../src/ingestion/ingestion.ts";
+import { createConnectorSynthesisGuidance } from "../../src/agent/prompts/personal-guidance.ts";
+import { parseIngestionTarget } from "../../src/ingestion/ingestion.ts";
 
 // These cover the pure, dependency-free surface of ingestion.ts. The
 // runOpenWikiIngestion orchestrator loads env, ensures the home dir, and drives

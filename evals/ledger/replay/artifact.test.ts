@@ -13,7 +13,7 @@ import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { captureArtifact } from "./artifact.js";
-import { OPEN_WIKI_DIR } from "../core/paths.js";
+import { OPEN_WIKI_DIR, wikiDirFor } from "../core/paths.js";
 
 /**
  * SHA-256 of the empty input: the fingerprint of a run that produced no
@@ -69,7 +69,11 @@ describe("captureArtifact", () => {
       ".git/config": "no",
     });
 
-    const artifact = await captureArtifact("T0", worktreeDir, artifactsRoot);
+    const artifact = await captureArtifact(
+      "T0",
+      wikiDirFor(worktreeDir),
+      artifactsRoot,
+    );
 
     // Sorted by relativePath; the dot-file and the dot-directory are both skipped.
     expect(artifact.documents).toEqual([
@@ -87,7 +91,11 @@ describe("captureArtifact", () => {
       "sub/c.md": "gamma",
     });
 
-    const artifact = await captureArtifact("T0", worktreeDir, artifactsRoot);
+    const artifact = await captureArtifact(
+      "T0",
+      wikiDirFor(worktreeDir),
+      artifactsRoot,
+    );
 
     // The snapshot copy the evaluator later reads is a private duplicate under the
     // artifacts root, not the worktree file itself.
@@ -102,7 +110,7 @@ describe("captureArtifact", () => {
     });
 
     await expect(
-      captureArtifact("../escaped", worktreeDir, artifactsRoot),
+      captureArtifact("../escaped", wikiDirFor(worktreeDir), artifactsRoot),
     ).rejects.toThrow(/Refusing to write checkpoint artifact outside/u);
   });
 
@@ -111,11 +119,19 @@ describe("captureArtifact", () => {
     const two = await scratch({ "a.md": "alpha", "b.md": "beta" });
     const three = await scratch({ "a.md": "alpha", "b.md": "BETA" });
 
-    const a = await captureArtifact("T0", one.worktreeDir, one.artifactsRoot);
-    const b = await captureArtifact("T0", two.worktreeDir, two.artifactsRoot);
+    const a = await captureArtifact(
+      "T0",
+      wikiDirFor(one.worktreeDir),
+      one.artifactsRoot,
+    );
+    const b = await captureArtifact(
+      "T0",
+      wikiDirFor(two.worktreeDir),
+      two.artifactsRoot,
+    );
     const c = await captureArtifact(
       "T0",
-      three.worktreeDir,
+      wikiDirFor(three.worktreeDir),
       three.artifactsRoot,
     );
 
@@ -130,7 +146,11 @@ describe("captureArtifact", () => {
     cleanups.push(worktreeDir, artifactsRoot);
 
     // No openwiki/ directory exists in this worktree at all.
-    const artifact = await captureArtifact("T1", worktreeDir, artifactsRoot);
+    const artifact = await captureArtifact(
+      "T1",
+      wikiDirFor(worktreeDir),
+      artifactsRoot,
+    );
 
     expect(artifact.documents).toEqual([]);
     expect(artifact.fingerprint).toBe(EMPTY_SHA256);
@@ -147,7 +167,11 @@ describe("captureArtifact", () => {
     await writeFile(secret, "do not read", "utf8");
     await symlink(secret, path.join(worktreeDir, OPEN_WIKI_DIR, "link.md"));
 
-    const artifact = await captureArtifact("T0", worktreeDir, artifactsRoot);
+    const artifact = await captureArtifact(
+      "T0",
+      wikiDirFor(worktreeDir),
+      artifactsRoot,
+    );
 
     // The symlink is neither a regular file nor a directory to the walker, so it
     // is skipped: capture never reads through a link out of the wiki.

@@ -27,6 +27,7 @@ import {
 import {
   openWikiHomeDisplayPath,
   openWikiLocalWikiDir,
+  openWikiLocalWikiDisplayPath,
 } from "../config/openwiki-home.js";
 import { requireResolvedLanguage } from "../platform/language.js";
 import {
@@ -58,6 +59,16 @@ import {
   CONVERSATION_HISTORY_MOUNT,
   createAgentBackend,
 } from "./agent-backend.js";
+import {
+  createPersonalChatTools,
+  PERSONAL_CHAT_WIKI_TOOLS,
+  type PersonalChatEditRunner,
+} from "./personal-chat.js";
+import { createPersonalChatPrompt } from "./personal-prompts.js";
+import {
+  isPersonalCoreEnabled,
+  runNativePersonalGeneration,
+} from "./personal-runner.js";
 import { runNativeRepositoryGeneration } from "./repository-runner.js";
 import {
   createVertexAuthFetch,
@@ -187,56 +198,48 @@ export async function runOpenWikiAgent(
     outputMode === "repository" && (command === "init" || command === "update");
 
   if (isRepositoryGeneration) {
-    const debugFetchCapture = installOpenRouterDebugFetch(options);
-    try {
-      const config = await resolveRunConfig(options, (resolved) => {
-        telemetryContext.provider = resolved;
-      });
-      debugFetchCapture.setRetryAttempts(config.providerRetryAttempts);
-      const model = inStageSync(
-        "build",
-        () =>
-          createModel(
-            config.provider,
-            config.modelId,
-            config.providerRetryAttempts,
-            config.maxOutputTokens,
-            config.streamIdleTimeout,
-          ),
-        { errorClass: "build_error", errorDetail: "model" },
-      );
-      const generation = await inStage(
-        "run",
-        () =>
-          runNativeRepositoryGeneration({
-            root: runtimeCwd,
-            mode: command,
-            language: options.language,
-            force: Boolean(options.userMessage?.trim()),
-            planningContext: options.userMessage,
-            modelId: config.modelId,
-            model,
-            pageConcurrency: config.pageConcurrency,
-            onEvent: options.onEvent,
-          }),
-        { errorClass: "agent_error" },
-      );
+    return runNativeGeneration(
+      command,
+      options,
+      telemetryContext,
+      (model, config) =>
+        runNativeRepositoryGeneration({
+          root: runtimeCwd,
+          mode: command,
+          language: options.language,
+          force: Boolean(options.userMessage?.trim()),
+          planningContext: options.userMessage,
+          modelId: config.modelId,
+          model,
+          pageConcurrency: config.pageConcurrency,
+          onEvent: options.onEvent,
+        }),
+    );
+  }
 
-      if (generation.skipped) {
-        telemetryContext.outcome = "noop";
-      }
+  const isPersonalCoreGeneration =
+    outputMode === "local-wiki" &&
+    (command === "init" || command === "update") &&
+    isPersonalCoreEnabled();
 
-      return {
-        command,
-        model: config.modelId,
-        ...(generation.skipped ? { skipped: true } : {}),
-      };
-    } catch (error) {
-      attachOpenRouterDebugInfo(error, debugFetchCapture.getLastFailure());
-      throw error;
-    } finally {
-      debugFetchCapture.restore();
-    }
+  if (isPersonalCoreGeneration) {
+    return runNativeGeneration(
+      command,
+      options,
+      telemetryContext,
+      (model, config) =>
+        runNativePersonalGeneration({
+          mode: command,
+          language: options.language,
+          instruction: options.userMessage,
+          ...(options.personalScope ? { scope: options.personalScope } : {}),
+          confirmTakeover: options.confirmPersonalTakeover,
+          modelId: config.modelId,
+          model,
+          pageConcurrency: config.pageConcurrency,
+          onEvent: options.onEvent,
+        }),
+    );
   }
 
   const openWikiIgnore =
@@ -278,6 +281,71 @@ export async function runOpenWikiAgent(
     // error already carries.
     attachOpenRouterDebugInfo(error, debugFetchCapture.getLastFailure());
 
+    throw error;
+  } finally {
+    debugFetchCapture.restore();
+  }
+}
+
+/**
+ * Runs a native lifecycle driver: resolves the run configuration, builds the
+ * model, and records a no-op outcome.
+ *
+ * @param command - Init or update.
+ * @param options - Run options of the caller.
+ * @param telemetryContext - Shared telemetry context the provider and outcome
+ *   are recorded on.
+ * @param generate - Driver to run with the built model.
+ * @returns The run result, marked skipped for a no-op.
+ */
+async function runNativeGeneration(
+  command: OpenWikiCommand,
+  options: OpenWikiRunOptions,
+  telemetryContext: RunTelemetryContext,
+  generate: (
+    model: BaseChatModel,
+    config: Awaited<ReturnType<typeof resolveRunConfig>>,
+  ) => Promise<{
+    skipped: boolean;
+    lastUpdateStatus?: OpenWikiRunResult["lastUpdateStatus"];
+  }>,
+): Promise<OpenWikiRunResult> {
+  const debugFetchCapture = installOpenRouterDebugFetch(options);
+  try {
+    const config = await resolveRunConfig(options, (resolved) => {
+      telemetryContext.provider = resolved;
+    });
+    debugFetchCapture.setRetryAttempts(config.providerRetryAttempts);
+    const model = inStageSync(
+      "build",
+      () =>
+        createModel(
+          config.provider,
+          config.modelId,
+          config.providerRetryAttempts,
+          config.maxOutputTokens,
+          config.streamIdleTimeout,
+        ),
+      { errorClass: "build_error", errorDetail: "model" },
+    );
+    const generation = await inStage("run", () => generate(model, config), {
+      errorClass: "agent_error",
+    });
+
+    if (generation.skipped) {
+      telemetryContext.outcome = "noop";
+    }
+
+    return {
+      command,
+      model: config.modelId,
+      ...(generation.skipped ? { skipped: true } : {}),
+      ...(generation.lastUpdateStatus
+        ? { lastUpdateStatus: generation.lastUpdateStatus }
+        : {}),
+    };
+  } catch (error) {
+    attachOpenRouterDebugInfo(error, debugFetchCapture.getLastFailure());
     throw error;
   } finally {
     debugFetchCapture.restore();
@@ -463,11 +531,23 @@ type OpenWikiAgentGraphOptions = OpenWikiAgentOptions & {
    * Single provenance time shared by generated and verified events.
    */
   runTimestamp: string;
+
+  /**
+   * Makes a personal chat read-only on the lifecycle core: an edit request
+   * runs through this one-page update instead of writing the wiki directly.
+   *
+   * @default undefined - the legacy chat, which may write the wiki.
+   */
+  personalChatEdit?: PersonalChatEditRunner;
 };
 
 function createOpenWikiAgentGraph(
   options: OpenWikiAgentGraphOptions,
 ): ReturnType<typeof createDeepAgent> {
+  if (options.personalChatEdit) {
+    return createPersonalChatGraph(options, options.personalChatEdit);
+  }
+
   const wikiBackend = new OpenWikiLocalShellBackend({
     docsOnly: options.command !== "chat",
     openWikiIgnore: options.openWikiIgnore,
@@ -572,6 +652,48 @@ function createOpenWikiAgentGraph(
   });
 }
 
+/**
+ * Creates the read-only personal chat of the lifecycle core: wiki read tools,
+ * the reading connector tools, and the one-page edit tool. It has no write,
+ * shell, pull, or ingest tool, and no middleware that writes the wiki.
+ *
+ * @param options - Graph options of the chat turn.
+ * @param editPage - Runs a one-page update for an edit request.
+ * @returns Configured chat graph.
+ */
+function createPersonalChatGraph(
+  options: OpenWikiAgentGraphOptions,
+  editPage: PersonalChatEditRunner,
+): ReturnType<typeof createDeepAgent> {
+  const wikiBackend = new OpenWikiLocalShellBackend({
+    docsOnly: true,
+    writableWikiPages: [],
+    maxOutputBytes: 100_000,
+    outputMode: "local-wiki",
+    rootDir: options.cwd,
+    timeout: 120,
+    virtualMode: true,
+  });
+  const backend = createAgentBackend(wikiBackend);
+  return createDeepAgent({
+    model: options.model,
+    tools: createPersonalChatTools(editPage),
+    checkpointer: options.checkpointer,
+    backend,
+    middleware: [
+      createFilesystemMiddleware({
+        backend,
+        permissions: AGENT_FILESYSTEM_PERMISSIONS,
+        tools: [...PERSONAL_CHAT_WIKI_TOOLS],
+      }),
+    ],
+    skills: ["/skills/"],
+    subagents: [],
+    permissions: AGENT_FILESYSTEM_PERMISSIONS,
+    systemPrompt: createPersonalChatPrompt(openWikiLocalWikiDisplayPath),
+  });
+}
+
 async function runOpenWikiAgentCore(
   command: OpenWikiCommand,
   cwd: string,
@@ -642,6 +764,17 @@ async function runOpenWikiAgentCore(
         context,
         openWikiIgnore,
         runTimestamp,
+        ...(command === "chat" &&
+        outputMode === "local-wiki" &&
+        isPersonalCoreEnabled()
+          ? {
+              personalChatEdit: createPersonalChatEditRunner(
+                model,
+                modelId,
+                options,
+              ),
+            }
+          : {}),
       }),
     { errorClass: "build_error", errorDetail: "agent" },
   );
@@ -813,6 +946,38 @@ async function runOpenWikiAgentCore(
   return {
     command,
     model: modelId,
+  };
+}
+
+/**
+ * Binds the one-page update of a read-only personal chat to the chat's model.
+ *
+ * @param model - Chat model, reused by the run's workers.
+ * @param modelId - Model identity written to `.last-update.json`.
+ * @param options - Run options of the chat turn.
+ * @returns A runner for `begin(update, scope.pages = [page])` and the native
+ *   driver.
+ */
+function createPersonalChatEditRunner(
+  model: BaseChatModel,
+  modelId: string,
+  options: OpenWikiRunOptions,
+): PersonalChatEditRunner {
+  return async ({ page, request }) => {
+    const result = await runNativePersonalGeneration({
+      mode: "update",
+      language: options.language,
+      instruction: request,
+      scope: { connectors: [], pages: [page] },
+      confirmTakeover: options.confirmPersonalTakeover,
+      modelId,
+      model,
+      pageConcurrency: resolvePageConcurrency(),
+      onEvent: options.onEvent,
+    });
+    return {
+      status: result.skipped ? "noop" : (result.lastUpdateStatus ?? "complete"),
+    };
   };
 }
 

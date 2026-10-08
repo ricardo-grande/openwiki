@@ -1,0 +1,20 @@
+{
+  "fetchedAt": "2026-03-10T07:00:00.000Z",
+  "team": "Harbor Analytics",
+  "teamId": "T0HARBOR1",
+  "teamUrl": "https://harbor-analytics.slack.example.com/",
+  "user": {
+    "id": "U0ALEXM01",
+    "team_id": "T0HARBOR1",
+    "name": "alex",
+    "deleted": false,
+    "real_name": "Alex Morgan",
+    "is_bot": false,
+    "profile": {
+      "title": "Product Lead",
+      "real_name": "Alex Morgan",
+      "display_name": "alex"
+    }
+  },
+  "userId": "U0ALEXM01"
+}

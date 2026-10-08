@@ -81,3 +81,20 @@ describe("openwiki_ingest_all_connectors isolates failures", () => {
     expect(failure?.warnings).toContain("token expired");
   });
 });
+
+describe("ingest tools on the lifecycle core", () => {
+  test("the read-only personal chat keeps no ingest or MCP fetch tool", async () => {
+    const { createPersonalChatTools } =
+      await import("../src/agent/personal-chat.ts");
+    const names = createPersonalChatTools(() =>
+      Promise.resolve({ status: "noop" }),
+    ).map(({ name }) => name);
+
+    // Pulls belong to `openwiki ingest`, which runs them all before one run.
+    expect(names).not.toContain("openwiki_ingest_all_connectors");
+    expect(names).not.toContain("openwiki_ingest_connector");
+    expect(names).not.toContain("openwiki_call_mcp_tool");
+    expect(names).not.toContain("openwiki_list_mcp_tools");
+    expect(names).toContain("openwiki_edit_page");
+  });
+});

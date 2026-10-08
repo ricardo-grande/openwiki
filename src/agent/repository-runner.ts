@@ -1,20 +1,7 @@
-import { scheduler } from "node:timers/promises";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import {
-  AIMessage,
-  AIMessageChunk,
-  ChatMessage,
-  ChatMessageChunk,
-  ToolMessage,
-  collapseToolCallChunks,
-  defaultToolCallParser,
-  type InvalidToolCall,
-  type ToolCall,
-  type ToolCallChunk,
-} from "@langchain/core/messages";
+import { ToolMessage } from "@langchain/core/messages";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { createDeepAgent, createFilesystemMiddleware } from "deepagents";
-import { createMiddleware } from "langchain";
 import { z } from "zod";
 import { resolveTraceThreadId } from "../config/constants.js";
 import { RepositoryRunError } from "../generation/errors.js";
@@ -42,6 +29,14 @@ import {
 } from "./agent-backend.js";
 import { OpenWikiLocalShellBackend } from "./docs-only-backend.js";
 import { OpenWikiIgnore } from "./openwiki-ignore.js";
+import {
+  createWorkerToolEventParser,
+  DEFAULT_WORKER_START_STAGGER_MS,
+  NO_DELEGATION_MIDDLEWARE,
+  runPageWorkers,
+  streamWorkerTools,
+  type PageWorkerAttemptOutcome,
+} from "./page-workers.js";
 import {
   createRepositoryPagePrompt,
   createRepositoryPlannerPrompt,
@@ -97,128 +92,19 @@ const WORKER_TOOL_NAMES = new Set<string>([
   "submit_page",
 ]);
 
-// DeepAgents 1.12 adds a general-purpose task tool even when subagents is
-// empty. Repository workers are deliberately non-delegating, so remove that
-// model-facing capability after all tool-contributing middleware has run.
-const NO_DELEGATION_MIDDLEWARE = createMiddleware({
-  name: "OpenWikiRepositoryWorkerNoDelegation",
-  wrapModelCall: async (request, handler) => {
-    const response = await handler({
-      ...request,
-      tools: request.tools?.filter(({ name }) => name !== "task"),
-    });
-
-    return coerceRepositoryWorkerModelResponse(response);
-  },
-});
+/**
+ * Normalizes a DeepAgents tools-stream chunk from an approved worker tool.
+ *
+ * @param chunk - Unknown streamed graph chunk.
+ * @returns Bounded tool lifecycle event or `null` for narration/unknown tools.
+ */
+export const parseWorkerToolEvent =
+  createWorkerToolEventParser(WORKER_TOOL_NAMES);
 
 type PendingPageJob = Extract<
   NextRepositoryPageResult,
   { status: "pending" }
 >["job"];
-
-/**
- * Normalizes provider-streaming aggregates that are assistant output but were
- * typed as generic chat messages because the first OpenAI-compatible SSE delta
- * arrived without `role:"assistant"` (for example reasoning-only first deltas).
- *
- * LangChain validates each wrapModelCall response before the agent node can
- * continue. Coerce only this repository-worker boundary so provider transport
- * handling stays owned by the model client.
- */
-function coerceRepositoryWorkerModelResponse(response: AIMessage): AIMessage {
-  const candidate: unknown = response;
-
-  if (AIMessage.isInstance(candidate)) {
-    return candidate;
-  }
-
-  if (
-    ChatMessageChunk.isInstance(candidate) &&
-    isGenericAssistantModelResponse(candidate)
-  ) {
-    const rawToolCalls = getOpenAiRawToolCalls(candidate.additional_kwargs);
-    const toolCallFields =
-      rawToolCalls === null
-        ? {}
-        : collapseToolCallChunks(rawToolCalls.map(toToolCallChunk));
-
-    return new AIMessageChunk({
-      content: candidate.content,
-      additional_kwargs: candidate.additional_kwargs,
-      response_metadata: candidate.response_metadata,
-      id: candidate.id,
-      name: candidate.name,
-      ...toolCallFields,
-    });
-  }
-
-  if (
-    ChatMessage.isInstance(candidate) &&
-    isGenericAssistantModelResponse(candidate)
-  ) {
-    const rawToolCalls = getOpenAiRawToolCalls(candidate.additional_kwargs);
-    const toolCallFields =
-      rawToolCalls === null ? {} : parseRawOpenAiToolCalls(rawToolCalls);
-
-    return new AIMessage({
-      content: candidate.content,
-      additional_kwargs: candidate.additional_kwargs,
-      response_metadata: candidate.response_metadata,
-      id: candidate.id,
-      name: candidate.name,
-      ...toolCallFields,
-    });
-  }
-
-  return response;
-}
-
-function isGenericAssistantModelResponse(response: { role?: string }): boolean {
-  return response.role === undefined || response.role === "assistant";
-}
-
-function getOpenAiRawToolCalls(
-  additionalKwargs: Record<string, unknown> | undefined,
-): Record<string, unknown>[] | null {
-  const rawToolCalls = additionalKwargs?.tool_calls;
-
-  if (!Array.isArray(rawToolCalls)) {
-    return null;
-  }
-
-  return rawToolCalls.filter(isRecord);
-}
-
-function parseRawOpenAiToolCalls(rawToolCalls: Record<string, unknown>[]): {
-  invalid_tool_calls: InvalidToolCall[];
-  tool_calls: ToolCall[];
-} {
-  const [toolCalls, invalidToolCalls] = defaultToolCallParser(rawToolCalls);
-
-  return {
-    invalid_tool_calls: invalidToolCalls,
-    tool_calls: toolCalls,
-  };
-}
-
-function toToolCallChunk(rawToolCall: Record<string, unknown>): ToolCallChunk {
-  const rawFunction = rawToolCall.function;
-  const functionFields = isRecord(rawFunction) ? rawFunction : {};
-
-  return {
-    id: typeof rawToolCall.id === "string" ? rawToolCall.id : undefined,
-    index:
-      typeof rawToolCall.index === "number" ? rawToolCall.index : undefined,
-    name:
-      typeof functionFields.name === "string" ? functionFields.name : undefined,
-    args:
-      typeof functionFields.arguments === "string"
-        ? functionFields.arguments
-        : undefined,
-    type: "tool_call_chunk",
-  };
-}
 
 /**
  * Converts a bounded submission rejection into a failed tool result.
@@ -516,6 +402,7 @@ async function runPlanningAgent(
     agent,
     [{ role: "user", content: "Plan this repository wiki now." }],
     resolveTraceThreadId(run.state.runId),
+    parseWorkerToolEvent,
     onEvent,
   );
 
@@ -538,60 +425,6 @@ export function workerAgentName(page: string): string {
 }
 
 const QUICKSTART_PAGE_PATH = "/openwiki/quickstart.md";
-const DEFAULT_WORKER_START_STAGGER_MS = 1_000;
-
-/**
- * Result of one bounded page worker.
- */
-type PageAgentOutcome =
-  | { status: "submitted" }
-  | { status: "skipped"; snapshot: RepositoryPageSnapshot; error?: unknown };
-
-/**
- * Process-local bookkeeping shared by the worker loops of one run.
- *
- * Nothing here is durable: the checkpoint only records pending, skipped, and
- * complete jobs, and a resumed run rebuilds ownership from scratch.
- */
-interface PageWorkerPool {
-  /**
-   * Whether the run was configured with more than one worker.
-   */
-  concurrent: boolean;
-
-  /**
-   * Job ids handed to a worker in this process; never offered again.
-   */
-  claimed: Set<string>;
-
-  /**
-   * Serializes job acquisition so two loops never select the same job.
-   *
-   * `nextRepositoryPage` selects before its first await, so concurrent calls
-   * in one tick would all see the same unclaimed head of the queue.
-   */
-  acquiring: Promise<void>;
-
-  /**
-   * Canonical pages currently being written, in start order.
-   */
-  inFlight: string[];
-
-  /**
-   * Live worker limit; lowered after rate-limit failures, never below 1.
-   */
-  size: number;
-
-  /**
-   * First fatal error; once set, loops stop taking new jobs.
-   */
-  fatal: { error: unknown } | null;
-
-  /**
-   * Snapshots of pages whose worker exited without submitting.
-   */
-  skipped: RepositoryPageSnapshot[];
-}
 
 /**
  * Runs every remaining page job with fresh bounded workers, up to
@@ -620,158 +453,28 @@ async function runPendingPageAgents(
   pageConcurrency: number,
   workerStartStaggerMs: number,
 ): Promise<RepositoryPageSnapshot[]> {
-  const size = Math.max(1, Math.floor(pageConcurrency));
-  const pool: PageWorkerPool = {
-    concurrent: size > 1,
-    claimed: new Set(),
-    acquiring: Promise.resolve(),
-    inFlight: [],
-    size,
-    fatal: null,
-    skipped: [],
-  };
   const pages = run.state.plan?.pages ?? [];
-  const heldBack = new Set(
-    pool.concurrent
-      ? pages
+  return runPageWorkers<PendingPageJob, RepositoryPageSnapshot>(
+    {
+      next: (options) => nextRepositoryPage(run, options),
+      snapshot: (jobId) => captureRepositoryPageSnapshot(run, jobId),
+      restore: (snapshot) => restoreRepositoryPage(run, snapshot),
+      skip: (snapshot) => skipRepositoryPage(run, snapshot),
+      attempt: (job) => runPageWorkerAttempt(run, job, model, onEvent),
+    },
+    {
+      concurrency: pageConcurrency,
+      workerStartStaggerMs,
+      finalJobIds: new Set(
+        pages
           .filter(({ path }) => path === QUICKSTART_PAGE_PATH)
-          .map(({ id }) => id)
-      : [],
-  );
-
-  await runWorkerLoops(
-    run,
-    model,
-    onEvent,
-    view,
-    pool,
-    heldBack,
-    workerStartStaggerMs,
-  );
-  if (!pool.fatal && heldBack.size > 0) {
-    pool.size = 1;
-    await runWorkerLoops(run, model, onEvent, view, pool, new Set(), 0);
-  }
-
-  if (pool.fatal) throw pool.fatal.error;
-  return pool.skipped;
-}
-
-/**
- * Runs `pool.size` worker loops to completion over the jobs not held back.
- */
-async function runWorkerLoops(
-  run: ActiveRepositoryRun,
-  model: BaseChatModel,
-  onEvent: ((event: OpenWikiRunEvent) => void) | undefined,
-  view: ActiveBeginView,
-  pool: PageWorkerPool,
-  heldBack: ReadonlySet<string>,
-  workerStartStaggerMs: number,
-): Promise<void> {
-  await Promise.all(
-    Array.from({ length: pool.size }, (_, slot) =>
-      runWorkerLoop(
-        slot,
-        run,
-        model,
-        onEvent,
-        view,
-        pool,
-        heldBack,
-        workerStartStaggerMs,
+          .map(({ id }) => id),
       ),
-    ),
+      onEvent,
+      onProgress: (focusPage, inFlightPages) =>
+        emitGeneratingProgress(run, view, focusPage, inFlightPages, onEvent),
+    },
   );
-}
-
-/**
- * One worker slot: claims the next unowned pending job, documents it with a
- * fresh agent, and repeats until the queue is drained, a fatal error is
- * recorded, or the live pool size no longer includes this slot.
- */
-async function runWorkerLoop(
-  slot: number,
-  run: ActiveRepositoryRun,
-  model: BaseChatModel,
-  onEvent: ((event: OpenWikiRunEvent) => void) | undefined,
-  view: ActiveBeginView,
-  pool: PageWorkerPool,
-  heldBack: ReadonlySet<string>,
-  workerStartStaggerMs: number,
-): Promise<void> {
-  if (slot > 0 && workerStartStaggerMs > 0) {
-    await scheduler.wait(slot * workerStartStaggerMs);
-  }
-
-  while (!pool.fatal && slot < pool.size) {
-    const next = await acquireNextJob(run, pool, heldBack);
-    // Another worker can fail fatally while this loop waits for serialized job
-    // acquisition. Do not start model work for that newly claimed page.
-    if (pool.fatal || slot >= pool.size) return;
-    if (next.status === "complete") return;
-
-    pool.inFlight.push(next.job.path);
-    emitGeneratingProgress(run, view, pool, next.job.path, onEvent);
-
-    let outcome: PageAgentOutcome;
-    try {
-      outcome = await runPageAgent(run, next.job, model, onEvent);
-    } catch (error) {
-      pool.fatal ??= { error };
-      removeInFlightPage(pool, next.job.path);
-      return;
-    }
-    removeInFlightPage(pool, next.job.path);
-
-    if (outcome.status === "skipped") {
-      pool.skipped.push(outcome.snapshot);
-      if (pool.size > 1 && isRateLimitError(outcome.error)) {
-        pool.size -= 1;
-        onEvent?.({
-          type: "text",
-          source: "main",
-          text: `Reduced page concurrency to ${pool.size} after a provider rate limit while documenting ${next.job.path}.\n`,
-        });
-      }
-    }
-
-    if (pool.concurrent && pool.inFlight.length > 0) {
-      emitGeneratingProgress(run, view, pool, pool.inFlight.at(-1), onEvent);
-    }
-  }
-}
-
-/**
- * Selects and claims the next unowned pending job, one loop at a time.
- *
- * @param run - Active run containing the persisted queue.
- * @param pool - Shared worker bookkeeping holding the claim set.
- * @param heldBack - Job ids deferred to a later pass.
- * @returns The claimed job with its worker context, or queue completion.
- */
-function acquireNextJob(
-  run: ActiveRepositoryRun,
-  pool: PageWorkerPool,
-  heldBack: ReadonlySet<string>,
-): Promise<NextRepositoryPageResult> {
-  const acquisition = pool.acquiring.then(async () => {
-    const next = await nextRepositoryPage(run, {
-      exclude: new Set([...pool.claimed, ...heldBack]),
-    });
-    if (next.status === "pending") pool.claimed.add(next.job.id);
-    return next;
-  });
-  pool.acquiring = acquisition.then(
-    () => undefined,
-    () => undefined,
-  );
-  return acquisition;
-}
-
-function removeInFlightPage(pool: PageWorkerPool, page: string): void {
-  const index = pool.inFlight.indexOf(page);
-  if (index >= 0) pool.inFlight.splice(index, 1);
 }
 
 /**
@@ -784,8 +487,8 @@ function removeInFlightPage(pool: PageWorkerPool, page: string): void {
 function emitGeneratingProgress(
   run: ActiveRepositoryRun,
   view: ActiveBeginView,
-  pool: PageWorkerPool,
   focusPage: string | undefined,
+  inFlightPages: readonly string[] | undefined,
   onEvent: ((event: OpenWikiRunEvent) => void) | undefined,
 ): void {
   const pages = run.state.plan?.pages ?? [];
@@ -797,100 +500,14 @@ function emitGeneratingProgress(
     page: focusPage,
     pageIndex,
     pageCount: pages.length,
-    ...(pool.concurrent
+    ...(inFlightPages
       ? {
           completedCount: pages.filter(({ status }) => status !== "pending")
             .length,
-          inFlightPages: [...pool.inFlight],
+          inFlightPages: [...inFlightPages],
         }
       : {}),
   });
-}
-
-/**
- * Recognizes provider rate limiting in an error raised by a page worker.
- *
- * Checks HTTP 429 status fields, common provider error codes, and message
- * text, following `cause` chains so wrapped SDK errors are recognized too.
- *
- * @param error - Unknown error thrown by a worker's agent stream.
- * @returns Whether the failure was a rate limit rather than a page problem.
- */
-export function isRateLimitError(error: unknown): boolean {
-  const seen = new Set<unknown>();
-  let candidate: unknown = error;
-  while (isRecord(candidate) && !seen.has(candidate)) {
-    seen.add(candidate);
-    const status = candidate.status ?? candidate.statusCode;
-    if (status === 429 || candidate.code === 429) return true;
-    if (
-      typeof candidate.code === "string" &&
-      /rate.?limit/iu.test(candidate.code)
-    ) {
-      return true;
-    }
-    if (
-      typeof candidate.message === "string" &&
-      /\b429\b|rate.?limit|too many requests/iu.test(candidate.message)
-    ) {
-      return true;
-    }
-    candidate = candidate.cause;
-  }
-  return false;
-}
-
-/** Worker attempts per pending page before it is given up on. */
-const PAGE_WORKER_ATTEMPT_LIMIT = 2;
-
-/**
- * Runs one page job with a fresh bounded worker per attempt, retrying a worker
- * that exits without submitting once before the page is skipped.
- *
- * @param run - Active durable repository run.
- * @param job - Pending page job owned by this worker.
- * @param model - Initialized model reused across attempts.
- * @param onEvent - Optional bounded worker event consumer.
- * @returns Whether the page was submitted, or the snapshot restored on skip.
- */
-async function runPageAgent(
-  run: ActiveRepositoryRun,
-  job: PendingPageJob,
-  model: BaseChatModel,
-  onEvent?: (event: OpenWikiRunEvent) => void,
-): Promise<PageAgentOutcome> {
-  const snapshot = await captureRepositoryPageSnapshot(run, job.id);
-  let skipped: PageAgentOutcome = { status: "skipped", snapshot };
-
-  for (let attempt = 1; attempt <= PAGE_WORKER_ATTEMPT_LIMIT; attempt += 1) {
-    const outcome = await runPageWorkerAttempt(
-      run,
-      job,
-      snapshot,
-      model,
-      onEvent,
-    );
-    if (outcome.status === "submitted") return outcome;
-    skipped = outcome;
-
-    // A rate limit means the provider is asking for less traffic, so it is
-    // surfaced to the pool immediately instead of being retried at once.
-    if (
-      attempt >= PAGE_WORKER_ATTEMPT_LIMIT ||
-      isRateLimitError(outcome.error)
-    ) {
-      break;
-    }
-
-    // A worker that exits without submitting never banked its page edits, so
-    // reset the page and its Claims to the pre-run snapshot before the retry.
-    // Both attempts then start from the same state.
-    await restoreRepositoryPage(run, snapshot);
-  }
-
-  await skipRepositoryPage(run, snapshot);
-  emitDeferredPageWarning(job.path, onEvent);
-  return skipped;
 }
 
 /**
@@ -898,7 +515,6 @@ async function runPageAgent(
  *
  * @param run - Active durable repository run.
  * @param job - Pending page job owned by this worker.
- * @param snapshot - Page state captured before the first attempt.
  * @param model - Initialized model used only for this attempt.
  * @param onEvent - Optional bounded worker event consumer.
  * @returns Whether this attempt submitted the page, or its skip outcome.
@@ -906,10 +522,9 @@ async function runPageAgent(
 async function runPageWorkerAttempt(
   run: ActiveRepositoryRun,
   job: PendingPageJob,
-  snapshot: RepositoryPageSnapshot,
   model: BaseChatModel,
   onEvent?: (event: OpenWikiRunEvent) => void,
-): Promise<PageAgentOutcome> {
+): Promise<PageWorkerAttemptOutcome> {
   const ignore = await OpenWikiIgnore.load(run.root);
   const wikiBackend = new OpenWikiLocalShellBackend({
     docsOnly: true,
@@ -1001,6 +616,7 @@ async function runPageWorkerAttempt(
         },
       ],
       resolveTraceThreadId(run.state.runId),
+      parseWorkerToolEvent,
       onEvent,
       job.path,
     );
@@ -1009,115 +625,10 @@ async function runPageWorkerAttempt(
     // A fatal submission failure is not retried: the store itself is refusing,
     // so a second attempt would fail the same way and the run should stop.
     if (fatalSubmissionFailure) throw error;
-    return { status: "skipped", snapshot, error };
+    return { status: "failed", error };
   }
 
   if (submitted) return { status: "submitted" };
 
-  return { status: "skipped", snapshot };
-}
-
-function emitDeferredPageWarning(
-  page: string,
-  onEvent?: (event: OpenWikiRunEvent) => void,
-): void {
-  onEvent?.({
-    type: "text",
-    source: "main",
-    text: `${page} was restored after its worker exited without submitting. It was skipped for this update and will be reconsidered on the next update.\n`,
-  });
-}
-
-/**
- * Streams only bounded worker tool lifecycle events, never worker narration.
- *
- * @param agent - Fresh planner or page agent.
- * @param messages - Single worker instruction message.
- * @param traceThreadId - LangSmith thread shared by every worker of this run.
- * @param onEvent - Optional CLI event consumer.
- * @param page - Canonical page owned by a page worker, tagged onto its events.
- */
-async function streamWorkerTools(
-  agent: ReturnType<typeof createDeepAgent>,
-  messages: Array<{ role: "user"; content: string }>,
-  traceThreadId: string,
-  onEvent?: (event: OpenWikiRunEvent) => void,
-  page?: string,
-): Promise<void> {
-  // LangGraph copies `configurable.thread_id` into every run's metadata, which
-  // is what LangSmith groups a thread by. Safe to share across concurrent
-  // workers only because they have no checkpointer.
-  const stream = await agent.stream(
-    { messages },
-    {
-      streamMode: ["tools"],
-      subgraphs: true,
-      configurable: { thread_id: traceThreadId },
-    },
-  );
-
-  for await (const chunk of stream) {
-    const event = parseWorkerToolEvent(chunk);
-    if (!event) continue;
-    onEvent?.(
-      page !== undefined &&
-        (event.type === "tool_start" || event.type === "tool_end")
-        ? { ...event, page }
-        : event,
-    );
-    await scheduler.yield();
-  }
-}
-
-/**
- * Normalizes a DeepAgents tools-stream chunk from an approved worker tool.
- *
- * @param chunk - Unknown streamed graph chunk.
- * @returns Bounded tool lifecycle event or `null` for narration/unknown tools.
- */
-export function parseWorkerToolEvent(chunk: unknown): OpenWikiRunEvent | null {
-  if (
-    !Array.isArray(chunk) ||
-    chunk.length !== 3 ||
-    chunk[1] !== "tools" ||
-    !isRecord(chunk[2])
-  ) {
-    return null;
-  }
-
-  const payload = chunk[2];
-  const name = typeof payload.name === "string" ? payload.name : "";
-  if (!WORKER_TOOL_NAMES.has(name)) return null;
-
-  const id = typeof payload.toolCallId === "string" ? payload.toolCallId : name;
-  if (payload.event === "on_tool_start") {
-    return {
-      type: "tool_start",
-      call: name,
-      id,
-      input: payload.input,
-      name,
-    };
-  }
-
-  if (payload.event === "on_tool_end" || payload.event === "on_tool_error") {
-    return {
-      type: "tool_end",
-      id,
-      name,
-      status: payload.event === "on_tool_error" ? "error" : "finished",
-    };
-  }
-
-  return null;
-}
-
-/**
- * Narrows an unknown value to an object with string keys.
- *
- * @param value - Unknown candidate value.
- * @returns Whether the value is a non-array object.
- */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
+  return { status: "failed" };
 }

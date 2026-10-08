@@ -4,6 +4,7 @@ import path from "node:path";
 import { WorktreeSafetyError } from "../core/errors.js";
 import { isContainedBy } from "../core/paths.js";
 import type {
+  CheckpointResult,
   EvidenceCorpus,
   LedgerRunResult,
   KnowledgeArtifact,
@@ -133,6 +134,30 @@ export async function writeEvidenceCorpus(
   await writeFile(
     path.join(evidenceDir, `${checkpointSlug}.json`),
     `${JSON.stringify(evidence, null, 2)}\n`,
+    "utf8",
+  );
+}
+
+/**
+ * Persist one scored checkpoint, verdicts and rationales included, as soon as
+ * it is evaluated, so a long run can be audited before it finishes and keeps
+ * its completed checkpoints if a later one fails.
+ *
+ * @param runDir - Prepared confined run directory.
+ * @param checkpoint - Complete scored checkpoint result.
+ *
+ * @returns Nothing after the checkpoint result is durable.
+ */
+export async function writeCheckpointResult(
+  runDir: string,
+  checkpoint: CheckpointResult,
+): Promise<void> {
+  const checkpointSlug = nameSlug(checkpoint.checkpointId);
+  const checkpointsDir = path.join(runDir, "checkpoints");
+  await mkdir(checkpointsDir, { recursive: true });
+  await writeFile(
+    path.join(checkpointsDir, `${checkpointSlug}.json`),
+    `${JSON.stringify(checkpoint, null, 2)}\n`,
     "utf8",
   );
 }

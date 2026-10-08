@@ -1,8 +1,14 @@
 import path from "node:path";
 
 import { BenchmarkValidationError } from "../core/errors.js";
-import type { LedgerBenchmark, LedgerCheckpoint } from "../core/types.js";
+import type {
+  AnyLedgerCheckpoint,
+  LedgerBenchmark,
+  LedgerCheckpoint,
+  RepositoryBenchmark,
+} from "../core/types.js";
 import { COMMIT_PATTERN, git } from "../replay/git.js";
+import { validatePersonalBenchmark } from "./personal-validation.js";
 
 /** Safe single-segment checkpoint identifier accepted from benchmark JSON. */
 const CHECKPOINT_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/u;
@@ -18,22 +24,29 @@ const CHECKPOINT_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/u;
  *
  * @returns True when `value` is a non-null object.
  */
-function isObject(value: unknown): value is Record<string, unknown> {
+export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
 /**
  * Validate a benchmark's trace structurally, throwing on the first problem: a
- * non-empty trace with unique checkpoint ids and well-formed commit SHAs. The
- * public surface each checkpoint yields is not the manifest's concern (source is
- * now the ground truth), so this no longer inspects a hand-authored census; the
- * loader's surface preflight confirms each checkpoint has a scorable surface.
+ * non-empty trace with unique checkpoint ids and, for a repository benchmark,
+ * well-formed commit SHAs. The public surface each checkpoint yields is not the
+ * manifest's concern (source is now the ground truth), so this no longer
+ * inspects a hand-authored census; the loader's surface preflight confirms each
+ * checkpoint has a scorable surface. Personal benchmarks are validated by
+ * `validatePersonalBenchmark`.
  *
  * @param benchmark - The assembled benchmark to check.
  *
  * @throws BenchmarkValidationError on the first inconsistency found.
  */
 export function validateBenchmark(benchmark: LedgerBenchmark): void {
+  if (benchmark.kind === "personal") {
+    validatePersonalBenchmark(benchmark);
+    return;
+  }
+
   const checkpoints = benchmark.trace?.checkpoints;
 
   if (!Array.isArray(checkpoints) || checkpoints.length === 0) {
@@ -58,7 +71,7 @@ function evidenceSelectorPath(selector: string): string {
  * are rejected as likely authoring mistakes.
  */
 export async function validateEvidenceMapSources(
-  benchmark: LedgerBenchmark,
+  benchmark: RepositoryBenchmark,
 ): Promise<void> {
   if (benchmark.evidenceMap === undefined) {
     return;
@@ -211,6 +224,34 @@ function validateEvidenceMap(
 function buildCheckpointIndex(
   checkpoints: LedgerCheckpoint[],
 ): Map<string, number> {
+  const index = buildCheckpointIdIndex(checkpoints);
+
+  for (const checkpoint of checkpoints) {
+    if (
+      typeof checkpoint.commit !== "string" ||
+      !COMMIT_PATTERN.test(checkpoint.commit)
+    ) {
+      throw new BenchmarkValidationError(
+        `Checkpoint "${checkpoint.id}" has an invalid commit SHA.`,
+      );
+    }
+  }
+
+  return index;
+}
+
+/**
+ * Build a map from checkpoint id to its position in the trace, rejecting
+ * non-object entries, empty or unsafe ids, and duplicate ids. Shared by every
+ * benchmark kind.
+ *
+ * @param checkpoints - The trace checkpoints in order.
+ *
+ * @returns A map from checkpoint id to zero-based index.
+ */
+export function buildCheckpointIdIndex(
+  checkpoints: readonly AnyLedgerCheckpoint[],
+): Map<string, number> {
   const index = new Map<string, number>();
 
   checkpoints.forEach((checkpoint, position) => {
@@ -234,15 +275,6 @@ function buildCheckpointIndex(
     if (index.has(checkpoint.id)) {
       throw new BenchmarkValidationError(
         `Duplicate checkpoint id "${checkpoint.id}".`,
-      );
-    }
-
-    if (
-      typeof checkpoint.commit !== "string" ||
-      !COMMIT_PATTERN.test(checkpoint.commit)
-    ) {
-      throw new BenchmarkValidationError(
-        `Checkpoint "${checkpoint.id}" has an invalid commit SHA.`,
       );
     }
 

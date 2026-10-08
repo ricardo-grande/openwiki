@@ -30,21 +30,27 @@ export function formatRepositoryProgress(
   progress: RepositoryGenerationProgressEvent | RunRepositoryProgressLogItem,
   command: OpenWikiCommand,
 ): string {
+  const wiki =
+    progress.wiki === "personal" ? "personal wiki" : "repository wiki";
   switch (progress.stage) {
+    case "gathering":
+      return progress.resumed
+        ? "Resuming evidence gathering for the personal wiki"
+        : "Gathering evidence for the personal wiki";
     case "planning":
       return progress.resumed
-        ? "Resuming repository wiki planning"
-        : "Planning repository wiki";
+        ? `Resuming ${wiki} planning`
+        : `Planning ${wiki}`;
     case "replanning":
       return "Repository changed during generation · rebuilding the plan";
     case "generating":
       return formatPageProgress(progress);
     case "finalizing":
-      return "Finalizing repository wiki";
+      return `Finalizing ${wiki}`;
     case "noop":
       return command === "update"
-        ? "Repository wiki is already current"
-        : "Repository wiki needs no changes";
+        ? `${capitalize(wiki)} is already current`
+        : `${capitalize(wiki)} needs no changes`;
   }
 }
 
@@ -81,9 +87,15 @@ function formatPageProgress(
     return `Documenting ${completed} of ${progress.pageCount} · ${inFlight.length} in flight: ${inFlight.join(", ")}`;
   }
 
-  const page = progress.page ?? "repository page";
+  const page =
+    progress.page ??
+    (progress.wiki === "personal" ? "personal page" : "repository page");
   if (progress.pageIndex && progress.pageCount !== undefined) {
     return `Documenting page ${progress.pageIndex} of ${progress.pageCount} · ${page}`;
   }
   return `Documenting ${page}`;
+}
+
+function capitalize(text: string): string {
+  return `${text[0]?.toUpperCase() ?? ""}${text.slice(1)}`;
 }

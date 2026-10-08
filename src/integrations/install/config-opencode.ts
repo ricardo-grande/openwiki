@@ -5,7 +5,6 @@ import { writeTextAtomic } from "./atomic-file.js";
 import type { HostIntegrationStatus, HostMcpServerCommand } from "./types.js";
 
 const ENTRY_INDENT = "  ";
-const SERVER_NAME = "openwiki";
 const SERVER_TYPE = "local";
 const COMMENT_PATTERN = /\/\/|\/\*/u;
 
@@ -33,11 +32,12 @@ function findProperty(object: Node | undefined, key: string): Node | undefined {
 }
 
 /**
- * Locates the root object, `mcp` value, and `openwiki` property nodes.
+ * Locates the root object, `mcp` value, and managed server property nodes.
  */
 function locateNodes(
   root: Node | undefined,
   filePath: string,
+  serverName: string,
 ): {
   rootObject: Node;
   mcpObject: Node | undefined;
@@ -61,7 +61,7 @@ function locateNodes(
     return {
       rootObject: root,
       mcpObject: mcpValue,
-      openwikiProperty: findProperty(mcpValue, SERVER_NAME),
+      openwikiProperty: findProperty(mcpValue, serverName),
     };
   }
   return {
@@ -156,8 +156,11 @@ function insertionFor(object: Node): { index: number; prefix: string } {
 /**
  * Renders a complete fresh config owning only the managed entry.
  */
-function renderFullConfig(entry: HostMcpServerCommand): string {
-  return `{\n${ENTRY_INDENT}"mcp": {\n${ENTRY_INDENT}${ENTRY_INDENT}"${SERVER_NAME}": ${renderEntry(
+function renderFullConfig(
+  entry: HostMcpServerCommand,
+  serverName: string,
+): string {
+  return `{\n${ENTRY_INDENT}"mcp": {\n${ENTRY_INDENT}${ENTRY_INDENT}"${serverName}": ${renderEntry(
     entry,
     2,
   )}\n${ENTRY_INDENT}}\n}\n`;
@@ -188,21 +191,26 @@ export async function installOpencodeMcpEntry(
   filePath: string,
   entry: HostMcpServerCommand,
   replaceableEntry?: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<boolean> {
   const current = await readOptional(filePath);
   if (current.trim().length === 0) {
-    await writeTextAtomic(filePath, renderFullConfig(entry));
+    await writeTextAtomic(filePath, renderFullConfig(entry, serverName));
     return true;
   }
 
   const root = parseValidTree(current, filePath);
   if (!root) {
-    await writeTextAtomic(filePath, `${current}\n${renderFullConfig(entry)}`);
+    await writeTextAtomic(
+      filePath,
+      `${current}\n${renderFullConfig(entry, serverName)}`,
+    );
     return true;
   }
   const { rootObject, mcpObject, openwikiProperty } = locateNodes(
     root,
     filePath,
+    serverName,
   );
 
   if (openwikiProperty) {
@@ -221,7 +229,7 @@ export async function installOpencodeMcpEntry(
       if (hasComment(raw)) {
         throw new HostIntegrationError(
           "conflict",
-          `Refusing to replace a modified openwiki MCP entry in ${filePath}.`,
+          `Refusing to replace a modified ${serverName} MCP entry in ${filePath}.`,
         );
       }
       const replacement = renderEntry(entry, objectDepth(valueNode) - 1);
@@ -235,7 +243,7 @@ export async function installOpencodeMcpEntry(
     }
     throw new HostIntegrationError(
       "conflict",
-      `An openwiki MCP server already exists in ${filePath}.`,
+      `An ${serverName} MCP server already exists in ${filePath}.`,
     );
   }
 
@@ -244,8 +252,8 @@ export async function installOpencodeMcpEntry(
   const propertyIndent = ENTRY_INDENT.repeat(propertyLevel);
   const propertyText =
     mcpObject === undefined
-      ? `"mcp": {\n${ENTRY_INDENT.repeat(propertyLevel + 1)}"${SERVER_NAME}": ${renderEntry(entry, propertyLevel + 1)}\n${propertyIndent}}`
-      : `"${SERVER_NAME}": ${renderEntry(entry, propertyLevel)}`;
+      ? `"mcp": {\n${ENTRY_INDENT.repeat(propertyLevel + 1)}"${serverName}": ${renderEntry(entry, propertyLevel + 1)}\n${propertyIndent}}`
+      : `"${serverName}": ${renderEntry(entry, propertyLevel)}`;
 
   const { index, prefix } = insertionFor(targetObject);
   const { insertAt, removeEnd, insertText } = resolveInsert(
@@ -269,20 +277,25 @@ export async function installOpencodeMcpEntry(
 export async function uninstallOpencodeMcpEntry(
   filePath: string,
   expected: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<boolean> {
   const current = await readOptional(filePath);
   if (current.trim().length === 0) return false;
 
   const root = parseValidTree(current, filePath);
   if (!root) return false;
-  const { mcpObject, openwikiProperty } = locateNodes(root, filePath);
+  const { mcpObject, openwikiProperty } = locateNodes(
+    root,
+    filePath,
+    serverName,
+  );
   if (!openwikiProperty) return false;
 
   const valueNode = propertyValue(openwikiProperty);
   if (!matchesEntry(parsedEntry(valueNode), expected)) {
     throw new HostIntegrationError(
       "conflict",
-      `Refusing to remove a modified openwiki MCP entry from ${filePath}.`,
+      `Refusing to remove a modified ${serverName} MCP entry from ${filePath}.`,
     );
   }
   if (
@@ -293,7 +306,7 @@ export async function uninstallOpencodeMcpEntry(
   ) {
     throw new HostIntegrationError(
       "conflict",
-      `Refusing to remove a modified openwiki MCP entry from ${filePath}.`,
+      `Refusing to remove a modified ${serverName} MCP entry from ${filePath}.`,
     );
   }
 
@@ -331,13 +344,14 @@ export async function uninstallOpencodeMcpEntry(
 export async function getOpencodeMcpEntryStatus(
   filePath: string,
   expected: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<HostIntegrationStatus> {
   try {
     const current = await readOptional(filePath);
     if (current.trim().length === 0) return "not-installed";
     const root = parseValidTree(current, filePath);
     if (!root) return "not-installed";
-    const { openwikiProperty } = locateNodes(root, filePath);
+    const { openwikiProperty } = locateNodes(root, filePath, serverName);
     if (!openwikiProperty) return "not-installed";
     const valueNode = propertyValue(openwikiProperty);
     if (!valueNode) return "modified";

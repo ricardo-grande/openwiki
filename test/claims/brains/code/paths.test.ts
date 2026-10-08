@@ -90,6 +90,26 @@ describe("code-brain claim paths", () => {
     },
   );
 
+  test("canonicalizes pages of a wiki rooted at its directory", () => {
+    expect(normalizeWikiPagePath("people//ana.md", "/")).toBe("/people/ana.md");
+    expect(normalizeWikiToolPagePath("commitments.md", "/")).toBe(
+      "/commitments.md",
+    );
+    expect(normalizeClaimsToolPagePath("/people/ana.md", "/")).toBe(
+      "/people/ana.md",
+    );
+    expect(toRepositoryPagePath("/people/ana.md", "/")).toBe("people/ana.md");
+    expect(toClaimsSidecarRelativePath("/people/ana.md", "/")).toBe(
+      "people/ana.json",
+    );
+    expect(isGroundedWikiPage("/commitments.md", "/")).toBe(true);
+    expect(isGroundedWikiPage("/index.md", "/")).toBe(false);
+    expect(isGroundedWikiPage("/commitments.md")).toBe(false);
+    expect(() => normalizeWikiPagePath("/notes.txt", "/")).toThrow(
+      "Markdown file below /:",
+    );
+  });
+
   test("exports stable structural names", () => {
     expect(CLAIMS_DIRECTORY).toBe(".claims");
     expect(RESERVED_WIKI_FILES).toContain("index.md");

@@ -80,7 +80,7 @@ function skillPath(
 ): string {
   const destinations = target[scope];
   if (!destinations) throw new Error(`${target.id} does not support ${scope}.`);
-  return path.join(root, destinations.skillDirectory);
+  return path.join(root, destinations.skillsRoot, "openwiki");
 }
 
 /**
@@ -391,25 +391,25 @@ describe("host integration registry", () => {
       bob: {
         producerActor: "bob",
         user: {
-          skillDirectory: ".agents/skills/openwiki",
+          skillsRoot: ".agents/skills",
           mcpConfig: { kind: "json", relativePath: ".bob/settings/mcp.json" },
         },
         project: {
-          skillDirectory: ".agents/skills/openwiki",
+          skillsRoot: ".agents/skills",
           mcpConfig: { kind: "json", relativePath: ".bob/mcp.json" },
         },
       },
       codex: {
         producerActor: "codex",
         user: {
-          skillDirectory: ".agents/skills/openwiki",
+          skillsRoot: ".agents/skills",
           mcpConfig: {
             kind: "codex-toml",
             relativePath: ".codex/config.toml",
           },
         },
         project: {
-          skillDirectory: ".agents/skills/openwiki",
+          skillsRoot: ".agents/skills",
           mcpConfig: {
             kind: "codex-toml",
             relativePath: ".codex/config.toml",
@@ -419,25 +419,25 @@ describe("host integration registry", () => {
       claude: {
         producerActor: "claude-code",
         user: {
-          skillDirectory: ".claude/skills/openwiki",
+          skillsRoot: ".claude/skills",
           mcpConfig: { kind: "json", relativePath: ".claude.json" },
         },
         project: {
-          skillDirectory: ".claude/skills/openwiki",
+          skillsRoot: ".claude/skills",
           mcpConfig: { kind: "json", relativePath: ".mcp.json" },
         },
       },
       opencode: {
         producerActor: "opencode",
         user: {
-          skillDirectory: ".config/opencode/skills/openwiki",
+          skillsRoot: ".config/opencode/skills",
           mcpConfig: {
             kind: "opencode-json",
             relativePath: ".config/opencode/opencode.jsonc",
           },
         },
         project: {
-          skillDirectory: ".opencode/skills/openwiki",
+          skillsRoot: ".opencode/skills",
           mcpConfig: {
             kind: "opencode-json",
             relativePath: "opencode.jsonc",
@@ -447,25 +447,25 @@ describe("host integration registry", () => {
       cursor: {
         producerActor: "cursor",
         user: {
-          skillDirectory: ".cursor/skills/openwiki",
+          skillsRoot: ".cursor/skills",
           mcpConfig: { kind: "json", relativePath: ".cursor/mcp.json" },
         },
         project: {
-          skillDirectory: ".cursor/skills/openwiki",
+          skillsRoot: ".cursor/skills",
           mcpConfig: { kind: "json", relativePath: ".cursor/mcp.json" },
         },
       },
       kiro: {
         producerActor: "kiro",
         user: {
-          skillDirectory: ".kiro/skills/openwiki",
+          skillsRoot: ".kiro/skills",
           mcpConfig: {
             kind: "json",
             relativePath: ".kiro/settings/mcp.json",
           },
         },
         project: {
-          skillDirectory: ".kiro/skills/openwiki",
+          skillsRoot: ".kiro/skills",
           mcpConfig: {
             kind: "json",
             relativePath: ".kiro/settings/mcp.json",
@@ -475,25 +475,25 @@ describe("host integration registry", () => {
       omp: {
         producerActor: "omp",
         user: {
-          skillDirectory: ".omp/agent/skills/openwiki",
+          skillsRoot: ".omp/agent/skills",
           mcpConfig: { kind: "json", relativePath: ".omp/agent/mcp.json" },
         },
         project: {
-          skillDirectory: ".omp/skills/openwiki",
+          skillsRoot: ".omp/skills",
           mcpConfig: { kind: "json", relativePath: ".omp/mcp.json" },
         },
       },
       antigravity: {
         producerActor: "antigravity",
         user: {
-          skillDirectory: ".gemini/antigravity-cli/skills/openwiki",
+          skillsRoot: ".gemini/antigravity-cli/skills",
           mcpConfig: {
             kind: "json",
             relativePath: ".gemini/config/mcp_config.json",
           },
         },
         project: {
-          skillDirectory: ".agents/skills/openwiki",
+          skillsRoot: ".agents/skills",
           mcpConfig: {
             kind: "json",
             relativePath: ".agents/mcp_config.json",
@@ -503,14 +503,14 @@ describe("host integration registry", () => {
       copilot: {
         producerActor: "copilot",
         user: {
-          skillDirectory: ".copilot/skills/openwiki",
+          skillsRoot: ".copilot/skills",
           mcpConfig: {
             kind: "json",
             relativePath: ".copilot/mcp-config.json",
           },
         },
         project: {
-          skillDirectory: ".github/skills/openwiki",
+          skillsRoot: ".github/skills",
           mcpConfig: { kind: "json", relativePath: ".github/mcp.json" },
         },
       },
@@ -528,12 +528,12 @@ describe("host integration registry", () => {
       "antigravity",
       "copilot",
     ]);
-    expect(HOST_TARGETS.bob.user.skillDirectory).toBe(
-      HOST_TARGETS.codex.user.skillDirectory,
+    expect(HOST_TARGETS.bob.user.skillsRoot).toBe(
+      HOST_TARGETS.codex.user.skillsRoot,
     );
     const otherUserSkillDirs = TARGETS.filter(
       (target) => target.user !== null && target.id !== "bob",
-    ).map((target) => target.user?.skillDirectory);
+    ).map((target) => target.user?.skillsRoot);
     expect(new Set(otherUserSkillDirs).size).toBe(otherUserSkillDirs.length);
   });
 });
@@ -592,6 +592,7 @@ describe.each(TARGETS)("$displayName host integration", (target) => {
     await expect(installer.install(target, options)).resolves.toEqual({
       target: target.id,
       scope: "user",
+      component: "code",
       skillDirectory: skillPath(fakeHome, target, "user"),
       mcpConfig: configPath(fakeHome, target, "user"),
       changed: true,
@@ -622,6 +623,7 @@ describe.each(TARGETS)("$displayName host integration", (target) => {
     expect(installed).toEqual({
       target: target.id,
       scope: "project",
+      component: "code",
       skillDirectory: skillPath(root, target),
       mcpConfig: configPath(root, target),
       changed: true,
@@ -666,7 +668,7 @@ describe.each(TARGETS)("$displayName host integration", (target) => {
     expect(remainingConfig).not.toContain("openwiki");
     const protectedDirectory = path.join(
       root,
-      target.project.skillDirectory.split("/", 1)[0] ?? "",
+      target.project.skillsRoot.split("/", 1)[0] ?? "",
     );
     expect((await lstat(protectedDirectory)).isDirectory()).toBe(true);
   });
@@ -748,6 +750,7 @@ describe.each(TARGETS)("$displayName host integration", (target) => {
     ).resolves.toEqual({
       target: target.id,
       scope: "project",
+      component: "code",
       skillDirectory: skillPath(root, target),
       mcpConfig: configPath(root, target),
       changed: true,
@@ -954,7 +957,7 @@ describe.each(TARGETS)("$displayName host integration", (target) => {
   test("rejects symlinked destination components", async () => {
     const root = await createProject();
     const outside = await createDirectory();
-    const topLevel = target.project.skillDirectory.split("/", 1)[0] ?? "";
+    const topLevel = target.project.skillsRoot.split("/", 1)[0] ?? "";
     await symlink(outside, path.join(root, topLevel));
     const installer = new HostIntegrationInstaller();
 
@@ -1001,7 +1004,7 @@ describe("project integration root resolution", () => {
       expect(result.mcpConfig).toBe(configPath(root, target));
       await access(skillPath(root, target));
       await expect(
-        access(path.join(nested, target.project.skillDirectory)),
+        access(path.join(nested, target.project.skillsRoot, "openwiki")),
       ).rejects.toThrow();
     },
   );
@@ -1048,5 +1051,226 @@ describe("canonical skill bundle resolution", () => {
 
     expect(resolveCanonicalSkillBundle(sourceUrl)).toBe(expected);
     expect(resolveCanonicalSkillBundle(builtUrl)).toBe(expected);
+  });
+});
+
+/**
+ * Builds user-scoped options for the personal component.
+ *
+ * @param root - Temporary fake home directory.
+ * @returns Personal-component installation options.
+ */
+function personalOptions(root: string): InstallOptions {
+  return { scope: "user", root, component: "personal" };
+}
+
+/**
+ * Resolves the personal skill directory below a fake home.
+ *
+ * @param root - Test home root.
+ * @param target - Registry target with user scope.
+ * @returns Absolute personal skill destination.
+ */
+function personalSkillPath(root: string, target: HostTarget): string {
+  if (!target.user) throw new Error(`${target.id} has no user scope.`);
+  return path.join(root, target.user.skillsRoot, "openwiki-personal");
+}
+
+/**
+ * Extracts one server's managed config entry as exact text.
+ *
+ * @param root - Test home root.
+ * @param target - Registry target with user scope.
+ * @param serverName - Managed server key.
+ * @returns The entry text, or `undefined` when absent.
+ */
+async function managedEntry(
+  root: string,
+  target: HostTarget,
+  serverName: string,
+): Promise<string | undefined> {
+  const content = await readFile(configPath(root, target, "user"), "utf8");
+  const kind = target.user?.mcpConfig.kind;
+  if (kind === "codex-toml") {
+    const marker = `# ${serverName.toUpperCase()}:MCP`;
+    const start = content.indexOf(`${marker}:START`);
+    const end = content.indexOf(`${marker}:END`);
+    return start === -1 ? undefined : content.slice(start, end);
+  }
+  const parsed: unknown = JSON.parse(content.replace(/^\s*\/\/.*$/gmu, ""));
+  if (!isRecord(parsed)) throw new Error("Expected a config object.");
+  const servers = kind === "opencode-json" ? parsed.mcp : parsed.mcpServers;
+  if (!isRecord(servers)) return undefined;
+  const entry = servers[serverName];
+  return entry === undefined ? undefined : JSON.stringify(entry);
+}
+
+/**
+ * Captures one component's config entry, skill files, and receipt.
+ *
+ * @param root - Test home root.
+ * @param target - Registry target with user scope.
+ * @param component - Component to capture.
+ * @returns Exact entry text and skill tree.
+ */
+async function componentSnapshot(
+  root: string,
+  target: HostTarget,
+  component: "code" | "personal",
+): Promise<{ entry: string | undefined; tree: Record<string, string> }> {
+  const serverName = component === "code" ? "openwiki" : "openwiki-personal";
+  const skill =
+    component === "code"
+      ? skillPath(root, target, "user")
+      : personalSkillPath(root, target);
+  return {
+    entry: await managedEntry(root, target, serverName),
+    tree: await readTree(skill),
+  };
+}
+
+describe.each(TARGETS.filter((target) => target.user !== null))(
+  "$displayName personal component",
+  (target) => {
+    test("installs its own skill, server entry, and receipt", async () => {
+      const home = await createDirectory();
+      const installer = new HostIntegrationInstaller();
+      const options = personalOptions(home);
+
+      await expect(installer.status(target, options)).resolves.toBe(
+        "not-installed",
+      );
+      await expect(installer.install(target, options)).resolves.toEqual({
+        target: target.id,
+        scope: "user",
+        component: "personal",
+        skillDirectory: personalSkillPath(home, target),
+        mcpConfig: configPath(home, target, "user"),
+        changed: true,
+      });
+      await expect(installer.status(target, options)).resolves.toBe(
+        "installed",
+      );
+      await expect(installer.status(target, userOptions(home))).resolves.toBe(
+        "not-installed",
+      );
+
+      const copied = await readTree(personalSkillPath(home, target));
+      const receipt: unknown = JSON.parse(copied[RECEIPT_FILE] ?? "");
+      delete copied[RECEIPT_FILE];
+      expect(copied).toEqual(
+        await readTree(
+          path.join(process.cwd(), "integrations/openwiki-personal"),
+        ),
+      );
+      expect(receipt).toMatchObject({
+        target: target.id,
+        mcpServerCommand: {
+          command: "openwiki",
+          args: ["mcp", "personal", "--host", target.id],
+        },
+      });
+      expect(defaultMcpServerCommand(target.id, "personal")).toEqual({
+        command: "openwiki",
+        args: ["mcp", "personal", "--host", target.id],
+      });
+      expect(
+        await managedEntry(home, target, "openwiki-personal"),
+      ).toBeDefined();
+      expect(await managedEntry(home, target, "openwiki")).toBeUndefined();
+
+      await expect(installer.uninstall(target, options)).resolves.toMatchObject(
+        { component: "personal", changed: true },
+      );
+      await expect(installer.status(target, options)).resolves.toBe(
+        "not-installed",
+      );
+      await expect(access(personalSkillPath(home, target))).rejects.toThrow();
+    });
+
+    test("leaves the code component byte-identical (PHM-002)", async () => {
+      const home = await createDirectory();
+      const installer = new HostIntegrationInstaller();
+      await installer.install(target, userOptions(home));
+      const code = await componentSnapshot(home, target, "code");
+
+      await installer.install(target, personalOptions(home));
+      expect(await componentSnapshot(home, target, "code")).toEqual(code);
+
+      await markReceiptOld(personalSkillPath(home, target));
+      await expect(
+        installer.install(target, personalOptions(home)),
+      ).resolves.toMatchObject({ changed: true });
+      expect(await componentSnapshot(home, target, "code")).toEqual(code);
+
+      await installer.uninstall(target, personalOptions(home));
+      expect(await componentSnapshot(home, target, "code")).toEqual(code);
+      await expect(installer.status(target, userOptions(home))).resolves.toBe(
+        "installed",
+      );
+    });
+
+    test("is left byte-identical by the code component (PHM-002)", async () => {
+      const home = await createDirectory();
+      const installer = new HostIntegrationInstaller();
+      await installer.install(target, personalOptions(home));
+      const personal = await componentSnapshot(home, target, "personal");
+
+      await installer.install(target, userOptions(home));
+      expect(await componentSnapshot(home, target, "personal")).toEqual(
+        personal,
+      );
+
+      await markReceiptOld(skillPath(home, target, "user"));
+      await expect(
+        installer.install(target, userOptions(home)),
+      ).resolves.toMatchObject({ changed: true });
+      expect(await componentSnapshot(home, target, "personal")).toEqual(
+        personal,
+      );
+
+      await installer.uninstall(target, userOptions(home));
+      expect(await componentSnapshot(home, target, "personal")).toEqual(
+        personal,
+      );
+      await expect(
+        installer.status(target, personalOptions(home)),
+      ).resolves.toBe("installed");
+    });
+
+    test("rejects project scope without writing (PHM-002)", async () => {
+      const root = await createProject();
+      const installer = new HostIntegrationInstaller();
+      const options: InstallOptions = {
+        scope: "project",
+        root,
+        component: "personal",
+      };
+
+      await expect(installer.install(target, options)).rejects.toMatchObject({
+        code: "invalid_input",
+        message: expect.stringContaining("--project") as unknown,
+      });
+      await expect(installer.uninstall(target, options)).rejects.toMatchObject({
+        code: "invalid_input",
+      });
+      await expect(installer.status(target, options)).resolves.toBe(
+        "unsupported",
+      );
+      expect(await readdir(root)).toEqual([".git"]);
+    });
+  },
+);
+
+describe("personal skill bundle resolution", () => {
+  test("resolves the personal bundle beside the code bundle", () => {
+    const packageRoot = process.cwd();
+    const sourceUrl = pathToFileURL(
+      path.join(packageRoot, "src/integrations/install/installer.ts"),
+    ).href;
+
+    expect(resolveCanonicalSkillBundle(sourceUrl, "personal")).toBe(
+      path.join(packageRoot, "integrations/openwiki-personal"),
+    );
   });
 });

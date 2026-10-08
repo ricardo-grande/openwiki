@@ -135,3 +135,71 @@ describe("listAuthProviderTools", () => {
     );
   });
 });
+
+describe("connectAuthProviderSource", () => {
+  test("creates a connected source instance for the provider's connector (PHM-004)", async () => {
+    const home = await createTempHome();
+    const { connectAuthProviderSource } = await loadConfigure(home);
+    const now = () => new Date("2026-10-08T09:00:00.000Z");
+
+    const first = await connectAuthProviderSource("gmail", now);
+    const second = await connectAuthProviderSource("gmail", now);
+
+    expect(first).toEqual({
+      sourceInstanceIds: ["google-1"],
+      status: "created",
+    });
+    expect(second).toEqual({
+      sourceInstanceIds: ["google-1"],
+      status: "unchanged",
+    });
+    const onboarding = await readJson(
+      path.join(home, ".openwiki", "onboarding.json"),
+    );
+    expect(onboarding.sourceInstances).toEqual([
+      {
+        connectedAt: "2026-10-08T09:00:00.000Z",
+        connectorId: "google",
+        id: "google-1",
+        name: "Gmail 1",
+      },
+    ]);
+  });
+
+  test("connects existing instances that lack connectedAt and keeps the rest", async () => {
+    const home = await createTempHome();
+    const { connectAuthProviderSource } = await loadConfigure(home);
+    const { readOpenWikiOnboardingConfig, saveOpenWikiOnboardingConfig } =
+      await import("../../src/setup/onboarding.ts");
+    await saveOpenWikiOnboardingConfig({
+      ...(await readOpenWikiOnboardingConfig()),
+      sourceInstances: [
+        { connectorId: "slack", id: "slack-1", name: "Team Slack" },
+        {
+          connectedAt: "2026-01-01T00:00:00.000Z",
+          connectorId: "slack",
+          id: "slack-2",
+        },
+        { connectorId: "x", id: "x-1" },
+      ],
+    });
+
+    const result = await connectAuthProviderSource(
+      "slack",
+      () => new Date("2026-10-08T09:00:00.000Z"),
+    );
+
+    expect(result).toEqual({
+      sourceInstanceIds: ["slack-1", "slack-2"],
+      status: "updated",
+    });
+    const config = await readOpenWikiOnboardingConfig();
+    expect(
+      config.sourceInstances.map(({ id, connectedAt }) => [id, connectedAt]),
+    ).toEqual([
+      ["slack-1", "2026-10-08T09:00:00.000Z"],
+      ["slack-2", "2026-01-01T00:00:00.000Z"],
+      ["x-1", undefined],
+    ]);
+  });
+});

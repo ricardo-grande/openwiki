@@ -70,17 +70,21 @@ export interface InstallationInspection {
 }
 
 /**
- * Resolves the canonical host skill from a source or built installer module.
+ * Resolves a canonical host skill from a source or built installer module.
  *
  * @param moduleUrl - Source or built installer module URL.
+ * @param skillName - Bundle directory below the package's `integrations/`.
  * @returns Absolute canonical skill bundle path.
  */
-export function resolveCanonicalSkillBundle(moduleUrl: string): string {
+export function resolveCanonicalSkillBundle(
+  moduleUrl: string,
+  skillName = "openwiki",
+): string {
   const packageRoot = path.resolve(
     path.dirname(fileURLToPath(moduleUrl)),
     "../../../",
   );
-  return path.join(packageRoot, "integrations", "openwiki");
+  return path.join(packageRoot, "integrations", skillName);
 }
 
 /**

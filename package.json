@@ -45,7 +45,7 @@
   },
   "scripts": {
     "openwiki": "node dist/cli/cli.js",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/copy-visualize-assets.cjs",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/copy-visualize-assets.cjs && node scripts/generate-personal-reference.mjs",
     "changeset:version": "changeset version",
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "coverage": "vitest run --coverage",
@@ -74,7 +74,7 @@
     "@langchain/anthropic": "^1.5.8",
     "@langchain/aws": "^1.4.4",
     "@langchain/core": "^1.2.9",
-    "@langchain/google": "^0.2.3",
+    "@langchain/google": "^0.2.8",
     "@langchain/langgraph-checkpoint-sqlite": "^1.0.4",
     "@langchain/openai": "^1.5.11",
     "@langchain/openrouter": "^0.4.10",

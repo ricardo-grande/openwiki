@@ -35,7 +35,20 @@ export interface RunRepositoryProgressLogItem extends RunLogItemBase {
   /**
    * Current native repository-generation lifecycle stage.
    */
-  stage: "planning" | "generating" | "finalizing" | "replanning" | "noop";
+  stage:
+    | "gathering"
+    | "planning"
+    | "generating"
+    | "finalizing"
+    | "replanning"
+    | "noop";
+
+  /**
+   * Wiki the lifecycle maintains.
+   *
+   * @default "repository"
+   */
+  wiki?: "repository" | "personal";
 
   /**
    * Whether this stage continues an interrupted durable run.

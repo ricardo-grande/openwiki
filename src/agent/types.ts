@@ -5,6 +5,14 @@ export type OpenWikiRunResult = {
   command: OpenWikiCommand;
   model: string;
   skipped?: boolean;
+
+  /**
+   * Status a lifecycle-core personal run wrote to `.last-update.json`:
+   * `interrupted` when a page job was skipped and the next run retries it.
+   *
+   * @default undefined - not a lifecycle-core personal run, or a no-op.
+   */
+  lastUpdateStatus?: "complete" | "interrupted";
 };
 
 /**
@@ -19,7 +27,21 @@ export interface RepositoryGenerationProgressEvent {
   /**
    * Current native repository-generation lifecycle stage.
    */
-  stage: "planning" | "generating" | "finalizing" | "replanning" | "noop";
+  stage:
+    | "gathering"
+    | "planning"
+    | "generating"
+    | "finalizing"
+    | "replanning"
+    | "noop";
+
+  /**
+   * Wiki the lifecycle maintains. Only the personal wiki has a gathering
+   * stage.
+   *
+   * @default "repository"
+   */
+  wiki?: "repository" | "personal";
 
   /**
    * Whether this stage is continuing a previously interrupted durable run.
@@ -114,7 +136,65 @@ export type OpenWikiRunOptions = {
   threadId?: string;
   userMessage?: string | null;
   telemetryFile?: string;
+
+  /**
+   * Narrowing of a new personal run on the lifecycle core: the connectors an
+   * ingest pulled, or the one page a chat edit request names.
+   *
+   * @default undefined - every connected source and no page restriction.
+   */
+  personalScope?: PersonalRunScopeRequest;
+
+  /**
+   * Asks the user whether to take over an expired personal wiki lock. Only
+   * interactive callers pass it; without it an expired lock fails the run
+   * with `conflict`, as a fresh one does.
+   *
+   * @default undefined - never take over.
+   */
+  confirmPersonalTakeover?: PersonalTakeoverConfirmation;
 };
+
+/**
+ * Connectors and pages a personal run may consume and edit.
+ */
+export type PersonalRunScopeRequest = {
+  /**
+   * Connectors whose evidence the run consumes.
+   *
+   * @default undefined - every connected source.
+   */
+  connectors?: string[];
+
+  /**
+   * Pages the plan may name.
+   *
+   * @default undefined - no page restriction.
+   */
+  pages?: string[];
+};
+
+/**
+ * The expired lock a takeover would replace.
+ */
+export type ExpiredPersonalLock = {
+  /**
+   * Holder ID recorded in the lock, `<driver>:<hostname>:<pid>`.
+   */
+  holder: string;
+
+  /**
+   * Time since the holder last renewed the lock, in milliseconds.
+   */
+  ageMs: number;
+};
+
+/**
+ * Resolves to `true` when the user confirms taking over an expired lock.
+ */
+export type PersonalTakeoverConfirmation = (
+  lock: ExpiredPersonalLock,
+) => Promise<boolean>;
 
 export type UpdateRunStatus = "complete" | "interrupted";
 

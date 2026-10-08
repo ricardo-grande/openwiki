@@ -4,7 +4,10 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { installHostIntegration } from "../dist/integrations/install/installer.js";
-import { getHostTarget } from "../dist/integrations/install/registry.js";
+import {
+  getHostTarget,
+  HOST_INTEGRATION_COMPONENTS,
+} from "../dist/integrations/install/registry.js";
 import { getErrorMessage } from "../dist/platform/diagnostics.js";
 
 /**
@@ -13,13 +16,20 @@ import { getErrorMessage } from "../dist/platform/diagnostics.js";
  * @returns {Promise<void>} Completion after the skill and MCP config are installed.
  */
 async function main() {
-  const hostId = process.argv[2];
+  const [hostId, ...options] = process.argv.slice(2);
   const target = hostId ? getHostTarget(hostId) : undefined;
-  if (!target || process.argv.length !== 3) {
+  const personal = options.length === 1 && options[0] === "--personal";
+  if (!target || (options.length > 0 && !personal)) {
     throw new Error(
-      "Usage: pnpm integrations:dev <bob|codex|claude|opencode|cursor|kiro|omp|antigravity|copilot>",
+      "Usage: pnpm integrations:dev <bob|codex|claude|opencode|cursor|kiro|omp|antigravity|copilot> [--personal]",
     );
   }
+  if (personal && !target.user) {
+    throw new Error(
+      `${target.displayName} has no user scope; the personal integration is user-scoped only.`,
+    );
+  }
+  const component = personal ? "personal" : "code";
 
   const repositoryRoot = await realpath(
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."),
@@ -28,7 +38,7 @@ async function main() {
     command: await realpath(process.execPath),
     args: [
       await realpath(path.join(repositoryRoot, "dist", "cli", "cli.js")),
-      "mcp",
+      ...HOST_INTEGRATION_COMPONENTS[component].serverArgs,
       "--host",
       target.id,
     ],
@@ -37,6 +47,7 @@ async function main() {
     scope: target.user ? "user" : "project",
     root: target.user ? os.homedir() : repositoryRoot,
     mcpServerCommand,
+    component,
   });
 
   process.stdout.write(

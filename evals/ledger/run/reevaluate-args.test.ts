@@ -25,6 +25,19 @@ describe("resolveReevaluationConfig", () => {
     });
   });
 
+  test("ignores the -- that pnpm forwards to the script", () => {
+    expect(
+      resolveReevaluationConfig(
+        ["--", "--benchmark", "bench", "--run", "old-run"],
+        {
+          OPENWIKI_PROVIDER: "anthropic",
+          LEDGER_EVALUATOR_MODEL_ID: "judge",
+        },
+        "/evals/ledger",
+      ).sourceRunDir,
+    ).toBe(path.resolve("old-run"));
+  });
+
   test("enables verbose claim output", () => {
     expect(
       resolveReevaluationConfig(

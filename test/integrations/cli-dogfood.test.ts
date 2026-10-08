@@ -62,6 +62,7 @@ describe("host integration CLI dogfood", () => {
       scope: "project",
       projectRoot,
       force: false,
+      component: "code",
     });
 
     expect(stdout.join("")).toContain("install Codex\n");
@@ -82,17 +83,27 @@ describe("host integration CLI dogfood", () => {
       scope: "project",
       projectRoot,
       force: false,
+      component: "code",
     });
     expect(stdout.join("")).toBe(
-      "bob\tmodified\tIBM Bob\n" +
-        "codex\tinstalled\tCodex\n" +
-        "claude\tnot-installed\tClaude Code\n" +
-        "opencode\tnot-installed\tOpenCode\n" +
-        "cursor\tnot-installed\tCursor\n" +
-        "kiro\tnot-installed\tKiro\n" +
-        "omp\tnot-installed\tOh My Pi\n" +
-        "antigravity\tmodified\tAntigravity CLI\n" +
-        "copilot\tnot-installed\tGitHub Copilot CLI\n",
+      "bob\tcode\tmodified\tIBM Bob\n" +
+        "bob\tpersonal\tunsupported\tIBM Bob\n" +
+        "codex\tcode\tinstalled\tCodex\n" +
+        "codex\tpersonal\tunsupported\tCodex\n" +
+        "claude\tcode\tnot-installed\tClaude Code\n" +
+        "claude\tpersonal\tunsupported\tClaude Code\n" +
+        "opencode\tcode\tnot-installed\tOpenCode\n" +
+        "opencode\tpersonal\tunsupported\tOpenCode\n" +
+        "cursor\tcode\tnot-installed\tCursor\n" +
+        "cursor\tpersonal\tunsupported\tCursor\n" +
+        "kiro\tcode\tnot-installed\tKiro\n" +
+        "kiro\tpersonal\tunsupported\tKiro\n" +
+        "omp\tcode\tnot-installed\tOh My Pi\n" +
+        "omp\tpersonal\tunsupported\tOh My Pi\n" +
+        "antigravity\tcode\tmodified\tAntigravity CLI\n" +
+        "antigravity\tpersonal\tunsupported\tAntigravity CLI\n" +
+        "copilot\tcode\tnot-installed\tGitHub Copilot CLI\n" +
+        "copilot\tpersonal\tunsupported\tGitHub Copilot CLI\n",
     );
 
     stdout = [];
@@ -104,6 +115,7 @@ describe("host integration CLI dogfood", () => {
       scope: "project",
       projectRoot,
       force: false,
+      component: "code",
     });
     expect(stdout.join("")).toContain("unchanged Codex\n");
 
@@ -116,6 +128,7 @@ describe("host integration CLI dogfood", () => {
       scope: "project",
       projectRoot,
       force: false,
+      component: "code",
     });
     expect(stdout.join("")).toContain("uninstall Codex\n");
     await expect(
@@ -131,8 +144,9 @@ describe("host integration CLI dogfood", () => {
       scope: "project",
       projectRoot,
       force: false,
+      component: "code",
     });
-    expect(stdout.join("")).toContain("codex\tnot-installed\tCodex\n");
+    expect(stdout.join("")).toContain("codex\tcode\tnot-installed\tCodex\n");
     expect(process.exitCode).toBe(0);
     expect(stderr.join("")).toBe("");
   });
@@ -180,6 +194,7 @@ async function install(target: HostTarget): Promise<void> {
     scope: "project",
     projectRoot,
     force: false,
+    component: "code",
   });
   expect(process.exitCode).toBe(0);
 }
@@ -199,6 +214,7 @@ async function uninstall(target: HostTarget): Promise<void> {
     scope: "project",
     projectRoot,
     force: false,
+    component: "code",
   });
   expect(stdout.join("")).toContain(`uninstall ${target.displayName}\n`);
   expect(process.exitCode).toBe(0);
@@ -223,9 +239,10 @@ async function expectListStatus(
     scope: "project",
     projectRoot,
     force: false,
+    component: "code",
   });
   expect(stdout.join("")).toContain(
-    `${target.id}\t${status}\t${target.displayName}\n`,
+    `${target.id}\tcode\t${status}\t${target.displayName}\n`,
   );
   expect(process.exitCode).toBe(0);
 }
@@ -236,7 +253,7 @@ async function expectListStatus(
  * @param target - Host integration whose skill should be removed.
  */
 async function removeSkill(target: HostTarget): Promise<void> {
-  await rm(path.join(projectRoot, target.project.skillDirectory), {
+  await rm(path.join(projectRoot, target.project.skillsRoot, "openwiki"), {
     force: true,
     recursive: true,
   });

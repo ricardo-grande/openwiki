@@ -61,6 +61,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
+
+    // pnpm 7+ forwards the `--` in `pnpm run <script> -- <args>` to the script.
+    if (token === "--") {
+      continue;
+    }
     const eq = token.indexOf("=");
     const flag = eq === -1 ? token : token.slice(0, eq);
 

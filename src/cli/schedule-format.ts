@@ -10,11 +10,17 @@ import type {
  * configuration, and warnings.
  */
 export function formatScheduleMutationResult(
-  action: "delete" | "pause" | "resume",
+  action: "delete" | "pause" | "pull-only" | "resume",
   result: ScheduleMutationResult,
 ): string {
   const actionLabel =
-    action === "delete" ? "Deleted" : action === "pause" ? "Paused" : "Resumed";
+    action === "delete"
+      ? "Deleted"
+      : action === "pause"
+        ? "Paused"
+        : action === "pull-only"
+          ? "Updated"
+          : "Resumed";
   const changed =
     result.connectorIds.length > 0 ? result.connectorIds.join(", ") : "none";
   const skipped =
@@ -126,6 +132,7 @@ export function formatScheduleStatus(
     ["Schedule", schedule.description],
     ["Cron", schedule.expression],
     ["Launchd", launchdStatus],
+    ["Runs", schedule.pullOnly ? "pull only" : "pull and update"],
     ["Updated", schedule.updatedAt],
   ];
 

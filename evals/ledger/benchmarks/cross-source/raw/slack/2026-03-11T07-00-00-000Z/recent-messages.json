@@ -1,0 +1,222 @@
+{
+  "coverage": {
+    "conversationScanLimit": 500,
+    "conversationTypes": [
+      "public_channel",
+      "private_channel",
+      "im",
+      "mpim"
+    ],
+    "hasMoreAfterScan": false,
+    "maxConversations": 50,
+    "messagesPerConversation": 50,
+    "note": "Bounded recent conversation history. Slack conversations are scanned first, sorted by updated timestamp descending, then the selected conversations' recent histories are fetched.",
+    "scannedConversationCount": 4,
+    "selectedConversationCount": 4,
+    "sort": "updated_desc",
+    "source": "conversations.history"
+  },
+  "fetchedAt": "2026-03-11T07:00:00.000Z",
+  "userId": "U0ALEXM01",
+  "conversations": [
+    {
+      "conversation": {
+        "id": "D0LEEPRK1",
+        "is_channel": false,
+        "is_group": false,
+        "is_im": true,
+        "is_mpim": false,
+        "is_archived": false,
+        "user": "U0LEEPRK1",
+        "updated": 1773155640000
+      },
+      "messages": [
+        {
+          "type": "message",
+          "user": "U0ALEXM01",
+          "text": "Happy to. I'll book travel tomorrow.",
+          "ts": "1773155640.000106",
+          "user_profile": {
+            "real_name": "Alex Morgan",
+            "display_name": "alex"
+          }
+        },
+        {
+          "type": "message",
+          "user": "U0LEEPRK1",
+          "text": "Thanks for taking the Bayview customer visit in Lisbon next week, March 16 to 18.",
+          "ts": "1773155400.000105",
+          "user_profile": {
+            "real_name": "Lee Park",
+            "display_name": "lee"
+          }
+        }
+      ],
+      "userMessages": [
+        {
+          "type": "message",
+          "user": "U0ALEXM01",
+          "text": "Happy to. I'll book travel tomorrow.",
+          "ts": "1773155640.000106",
+          "user_profile": {
+            "real_name": "Alex Morgan",
+            "display_name": "alex"
+          }
+        }
+      ]
+    },
+    {
+      "conversation": {
+        "id": "C0RANDOM1",
+        "name": "random",
+        "is_channel": true,
+        "is_group": false,
+        "is_im": false,
+        "is_mpim": false,
+        "is_archived": false,
+        "updated": 1773142200000
+      },
+      "messages": [
+        {
+          "type": "message",
+          "user": "U0LUNCHB1",
+          "text": "Lunchbot: today's lunch menu is ramen bowls.",
+          "ts": "1773142200.000107",
+          "user_profile": {
+            "real_name": "Lunchbot",
+            "display_name": "lunchbot"
+          }
+        },
+        {
+          "type": "message",
+          "user": "U0LUNCHB1",
+          "text": "Lunchbot: today's lunch menu is tacos in the 4th floor kitchen.",
+          "ts": "1773055800.000103",
+          "user_profile": {
+            "real_name": "Lunchbot",
+            "display_name": "lunchbot"
+          }
+        }
+      ],
+      "userMessages": []
+    },
+    {
+      "conversation": {
+        "id": "C0GENERAL",
+        "name": "general",
+        "is_channel": true,
+        "is_group": false,
+        "is_im": false,
+        "is_mpim": false,
+        "is_archived": false,
+        "updated": 1773133200000
+      },
+      "messages": [
+        {
+          "type": "message",
+          "user": "U0PCHEN01",
+          "text": "The office is closed Friday, March 13 for electrical maintenance. Please work from home that day.",
+          "ts": "1773133200.000104",
+          "user_profile": {
+            "real_name": "Pat Chen",
+            "display_name": "pat"
+          }
+        }
+      ],
+      "userMessages": []
+    },
+    {
+      "conversation": {
+        "id": "C0ATLAS01",
+        "name": "atlas",
+        "is_channel": true,
+        "is_group": false,
+        "is_im": false,
+        "is_mpim": false,
+        "is_archived": false,
+        "updated": 1773054000000
+      },
+      "messages": [
+        {
+          "type": "message",
+          "user": "U0JREYES1",
+          "text": "Hi all, Jordan here. As QA lead I'll own the Atlas regression suite.",
+          "ts": "1773054000.000102",
+          "user_profile": {
+            "real_name": "Jordan Reyes",
+            "display_name": "jordan"
+          }
+        },
+        {
+          "type": "message",
+          "user": "U0ALEXM01",
+          "text": "Do we need SOC 2 sign-off before the Atlas cutover? Nobody seems sure. I'll ask compliance.",
+          "ts": "1773051600.000101",
+          "user_profile": {
+            "real_name": "Alex Morgan",
+            "display_name": "alex"
+          }
+        },
+        {
+          "type": "message",
+          "user": "U0LEEPRK1",
+          "text": "Heads up: engineering is targeting Friday, March 27 for the Atlas cutover. We need the extra week for the data backfill.",
+          "ts": "1773050700.000100",
+          "user_profile": {
+            "real_name": "Lee Park",
+            "display_name": "lee"
+          }
+        }
+      ],
+      "userMessages": [
+        {
+          "type": "message",
+          "user": "U0ALEXM01",
+          "text": "Do we need SOC 2 sign-off before the Atlas cutover? Nobody seems sure. I'll ask compliance.",
+          "ts": "1773051600.000101",
+          "user_profile": {
+            "real_name": "Alex Morgan",
+            "display_name": "alex"
+          }
+        }
+      ]
+    }
+  ],
+  "userMessages": [
+    {
+      "conversation": {
+        "id": "D0LEEPRK1",
+        "is_im": true,
+        "is_mpim": false
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "text": "Happy to. I'll book travel tomorrow.",
+        "ts": "1773155640.000106",
+        "user_profile": {
+          "real_name": "Alex Morgan",
+          "display_name": "alex"
+        }
+      }
+    },
+    {
+      "conversation": {
+        "id": "C0ATLAS01",
+        "is_im": false,
+        "is_mpim": false,
+        "name": "atlas"
+      },
+      "message": {
+        "type": "message",
+        "user": "U0ALEXM01",
+        "text": "Do we need SOC 2 sign-off before the Atlas cutover? Nobody seems sure. I'll ask compliance.",
+        "ts": "1773051600.000101",
+        "user_profile": {
+          "real_name": "Alex Morgan",
+          "display_name": "alex"
+        }
+      }
+    }
+  ]
+}

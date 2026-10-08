@@ -1,0 +1,312 @@
+{
+  "fetchedAt": "2026-03-03T07:00:00.000Z",
+  "format": "full",
+  "includeSpamTrash": false,
+  "labelIds": [],
+  "listPages": [
+    {
+      "messageCount": 5,
+      "resultSizeEstimate": 5
+    }
+  ],
+  "maxMessages": 100,
+  "messageCount": 5,
+  "messages": [
+    {
+      "id": "7177ce81008e6e90",
+      "threadId": "d1b3731aeac93735",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PROMOTIONS"
+      ],
+      "snippet": "Spring into better posture! Every DeskMart standing desk is 30% off this week only. Free shipping on orders over $200.",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "DeskMart <deals@deskmart.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Spring sale: 30% off standing desks"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 02 Mar 2026 16:45:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<7177ce81008e6e90@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 118,
+              "data": "U3ByaW5nIGludG8gYmV0dGVyIHBvc3R1cmUhIEV2ZXJ5IERlc2tNYXJ0IHN0YW5kaW5nIGRlc2sgaXMgMzAlIG9mZiB0aGlzIHdlZWsgb25seS4gRnJlZSBzaGlwcGluZyBvbiBvcmRlcnMgb3ZlciAkMjAwLg"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1018,
+      "historyId": "336238",
+      "internalDate": "1772469900000"
+    },
+    {
+      "id": "77785a13461fe2e1",
+      "threadId": "9d28ba8f023922c2",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_UPDATES"
+      ],
+      "snippet": "This week in The Product Digest: three pricing experiments that worked, why annual plans churn less, and a reader questi",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "The Product Digest <newsletter@productdigest.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "The Product Digest #142: pricing experiments that worked"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 02 Mar 2026 14:00:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<77785a13461fe2e1@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 243,
+              "data": "VGhpcyB3ZWVrIGluIFRoZSBQcm9kdWN0IERpZ2VzdDogdGhyZWUgcHJpY2luZyBleHBlcmltZW50cyB0aGF0IHdvcmtlZCwgd2h5IGFubnVhbCBwbGFucyBjaHVybiBsZXNzLCBhbmQgYSByZWFkZXIgcXVlc3Rpb24gYWJvdXQgZnJlZW1pdW0gbGltaXRzLgoKWW91IGFyZSByZWNlaXZpbmcgdGhpcyBiZWNhdXNlIHlvdSBzdWJzY3JpYmVkIGF0IHByb2R1Y3RkaWdlc3QuZXhhbXBsZS5jb20uIFVuc3Vic2NyaWJlIGFueXRpbWUu"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1143,
+      "historyId": "729594",
+      "internalDate": "1772460000000"
+    },
+    {
+      "id": "6a8e745124457a93",
+      "threadId": "a8be07455765800b",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Hi Sam, Your dental cleaning with Dr. Okafor is confirmed for Tuesday, March 10 at 8:30 AM at Bright Smile Dental, 410 H",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Bright Smile Dental <appointments@brightsmile-dental.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Appointment confirmed: Tuesday, March 10"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 02 Mar 2026 12:30:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<6a8e745124457a93@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 154,
+              "data": "SGkgU2FtLAoKWW91ciBkZW50YWwgY2xlYW5pbmcgd2l0aCBEci4gT2thZm9yIGlzIGNvbmZpcm1lZCBmb3IgVHVlc2RheSwgTWFyY2ggMTAgYXQgODozMCBBTSBhdCBCcmlnaHQgU21pbGUgRGVudGFsLCA0MTAgSGFyYm9yIFN0cmVldC4KClJlcGx5IEMgdG8gY2FuY2VsLg"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1054,
+      "historyId": "783284",
+      "internalDate": "1772454600000"
+    },
+    {
+      "id": "e7ab494e49812d39",
+      "threadId": "795b58fab72550d3",
+      "labelIds": [
+        "SENT"
+      ],
+      "snippet": "Will do. You'll have it by Thursday. Sam",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Priya Shah <priya.shah@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Re: Q2 roadmap review deck"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 02 Mar 2026 10:03:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<e7ab494e49812d39@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 41,
+              "data": "V2lsbCBkby4gWW91J2xsIGhhdmUgaXQgYnkgVGh1cnNkYXkuCgpTYW0"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 941,
+      "historyId": "882665",
+      "internalDate": "1772445780000"
+    },
+    {
+      "id": "235ace41cc78a86b",
+      "threadId": "795b58fab72550d3",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Hi Sam, Could you put together the Q2 roadmap review deck and send it to me by Thursday, March 5? I want to go through i",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Priya Shah <priya.shah@northwind.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Q2 roadmap review deck"
+          },
+          {
+            "name": "Date",
+            "value": "Mon, 02 Mar 2026 09:12:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<235ace41cc78a86b@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 168,
+              "data": "SGkgU2FtLAoKQ291bGQgeW91IHB1dCB0b2dldGhlciB0aGUgUTIgcm9hZG1hcCByZXZpZXcgZGVjayBhbmQgc2VuZCBpdCB0byBtZSBieSBUaHVyc2RheSwgTWFyY2ggNT8gSSB3YW50IHRvIGdvIHRocm91Z2ggaXQgYmVmb3JlIHRoZSBsZWFkZXJzaGlwIG9mZnNpdGUuCgpUaGFua3MsClByaXlh"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1068,
+      "historyId": "617006",
+      "internalDate": "1772442720000"
+    }
+  ],
+  "query": "newer_than:1d",
+  "windowHours": 24
+}

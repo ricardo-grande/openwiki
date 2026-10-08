@@ -639,4 +639,36 @@ describe("runOpenWikiIngestion", () => {
     expect(result.results).toEqual([]);
     expect(connector.ingest).not.toHaveBeenCalled();
   });
+
+  test("pulls from an injected connector registry instead of creating one", async () => {
+    // LEDGER replays recorded pulls by injecting its own registry; the default
+    // factory must not run, and the injected connector feeds the agent message.
+    const defaultConnector = makeConnector("google");
+    const injectedConnector = makeConnector("google");
+    const pull = makeIngestResult("google", {
+      rawFiles: [
+        path.join(getConnectorRawDir("google"), "run-1", "gmail-messages.json"),
+      ],
+    });
+    vi.mocked(injectedConnector.ingest).mockResolvedValue(pull);
+    primeRun(
+      makeConfig([makeSourceInstance({ connectorId: "google", id: "google" })]),
+      { google: defaultConnector },
+    );
+
+    const result = await runOpenWikiIngestion(undefined, {
+      connectorRegistry: { google: injectedConnector } as Record<
+        ConnectorId,
+        ConnectorRuntime
+      >,
+      target: "google",
+    });
+
+    expect(createConnectorRegistry).not.toHaveBeenCalled();
+    expect(defaultConnector.ingest).not.toHaveBeenCalled();
+    expect(injectedConnector.ingest).toHaveBeenCalledTimes(1);
+    expect(result.results[0]?.rawFiles).toEqual(pull.rawFiles);
+    const message = vi.mocked(runOpenWikiAgent).mock.calls[0][2].userMessage;
+    expect(message).toContain('- "run-1/gmail-messages.json"');
+  });
 });

@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, useApp, useInput } from "ink";
 import { scheduler } from "node:timers/promises";
 import { createOpenWikiThreadId, runOpenWikiAgent } from "../../agent/index.js";
 import type {
+  ExpiredPersonalLock,
   OpenWikiCommand,
   OpenWikiRunEvent,
   OpenWikiRunOptions,
+  PersonalTakeoverConfirmation,
 } from "../../agent/types.js";
 import {
   getDefaultModelId,
@@ -34,7 +36,10 @@ import {
   ensureCodeModeRepoSetup,
   runCodeModeConnectors,
 } from "../../ingestion/code-mode.js";
-import { runOpenWikiIngestion } from "../../ingestion/ingestion.js";
+import {
+  ingestionFailed,
+  runOpenWikiIngestion,
+} from "../../ingestion/ingestion.js";
 import { getErrorMessage } from "../../platform/diagnostics.js";
 import { InitSetup, needsCredentialSetup } from "../../setup/credentials.js";
 import {
@@ -55,6 +60,7 @@ import {
 } from "../components/chat.js";
 import { IngestionSummary, RunView } from "../components/run-view.js";
 import { PromptBlock, StatusLine } from "../components/primitives.js";
+import { TakeoverPrompt } from "../components/takeover-prompt.js";
 import type { CompletedRun } from "../components/types.js";
 import { isDebugMode, shouldShowCredentialDiagnostics } from "../debug.js";
 import { getAuthFix } from "../diagnostics/auth-fix.js";
@@ -140,7 +146,35 @@ export function App({ command }: AppProps) {
     null,
   );
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
+  const [takeoverQuestion, setTakeoverQuestion] = useState<{
+    lock: ExpiredPersonalLock;
+    answer: (takeOver: boolean) => void;
+  } | null>(null);
   const [completedRuns, setCompletedRuns] = useState<CompletedRun[]>([]);
+
+  /**
+   * Asks in the TUI whether to take over an expired personal wiki lock. The
+   * run waits for the answer.
+   */
+  const confirmPersonalTakeover = useCallback<PersonalTakeoverConfirmation>(
+    (lock) =>
+      new Promise((resolve) => {
+        setTakeoverQuestion({
+          lock,
+          answer: (takeOver) => {
+            setTakeoverQuestion(null);
+            resolve(takeOver);
+          },
+        });
+      }),
+    [],
+  );
+  const takeoverPrompt = takeoverQuestion ? (
+    <TakeoverPrompt
+      lock={takeoverQuestion.lock}
+      onAnswer={takeoverQuestion.answer}
+    />
+  ) : null;
   const [activeUserMessage, setActiveUserMessage] = useState<string | null>(
     command.kind === "run" ? command.userMessage : null,
   );
@@ -238,6 +272,7 @@ export function App({ command }: AppProps) {
       debug: isDebugMode(),
       modelId,
       target: "all",
+      confirmTakeover: confirmPersonalTakeover,
       onEvent: (event) => {
         if (!mountedRef.current || activeRunId.current !== runId) {
           return;
@@ -263,9 +298,7 @@ export function App({ command }: AppProps) {
           return;
         }
 
-        if (
-          result.results.some((sourceResult) => sourceResult.status === "error")
-        ) {
+        if (ingestionFailed(result)) {
           process.exitCode = 1;
         }
 
@@ -564,6 +597,7 @@ export function App({ command }: AppProps) {
       threadId: sessionThreadId.current,
       telemetryFile: command.telemetryFile ?? undefined,
       onEvent: handleRunEvent,
+      confirmPersonalTakeover,
     };
 
     // withRunTelemetry is the single boundary that records this run. It wraps repo
@@ -678,6 +712,7 @@ export function App({ command }: AppProps) {
     app,
     command,
     activeMessageIsFollowup,
+    confirmPersonalTakeover,
     activeUserMessage,
     initWizardConsumed,
     isInitCommand,
@@ -706,11 +741,7 @@ export function App({ command }: AppProps) {
     }
 
     if (runState.status === "ingestion-success" && autoExitOnSuccess) {
-      process.exitCode = runState.result.results.some(
-        (sourceResult) => sourceResult.status === "error",
-      )
-        ? 1
-        : 0;
+      process.exitCode = ingestionFailed(runState.result) ? 1 : 0;
       app.exit();
     }
   }, [app, autoExitOnSuccess, runState]);
@@ -876,6 +907,7 @@ export function App({ command }: AppProps) {
           message={activeUserMessage}
           modelId={displayModelId}
         />
+        {takeoverPrompt}
       </Box>
     );
   }
@@ -891,6 +923,7 @@ export function App({ command }: AppProps) {
           message={activeUserMessage}
           modelId={displayModelId}
         />
+        {takeoverPrompt}
       </Box>
     );
   }

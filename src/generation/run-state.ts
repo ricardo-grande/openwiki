@@ -1,12 +1,10 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import type { PersistedPreparedWikiState } from "../agent/wiki-finalizer.js";
 import type { UpdateMetadata } from "../agent/types.js";
 import { OPEN_WIKI_DIR } from "../config/constants.js";
-import { isFileNotFoundError } from "../platform/fs-errors.js";
-import { RepositoryRunError } from "./errors.js";
+import { readJsonState, writeJsonState } from "./shared/json-state.js";
 
 /**
  * Basename of the one durable repository-generation checkpoint.
@@ -314,20 +312,11 @@ export async function readRepositoryRunState(
   root: string,
 ): Promise<RepositoryRunState | null> {
   const file = repositoryRunStatePath(root);
-  try {
-    const parsed: unknown = JSON.parse(await readFile(file, "utf8"));
-    return RepositoryRunStateSchema.parse(parsed);
-  } catch (error) {
-    if (isFileNotFoundError(error)) return null;
-
-    if (error instanceof SyntaxError || error instanceof z.ZodError) {
-      throw new RepositoryRunError(
-        "invalid_state",
-        `OpenWiki run state is malformed at ${file}; refusing to discard resumable work.`,
-      );
-    }
-    throw error;
-  }
+  return readJsonState(
+    file,
+    RepositoryRunStateSchema,
+    `OpenWiki run state is malformed at ${file}; refusing to discard resumable work.`,
+  );
 }
 
 /**
@@ -339,20 +328,11 @@ export async function writeRepositoryRunState(
   root: string,
   state: RepositoryRunState,
 ): Promise<void> {
-  RepositoryRunStateSchema.parse(state);
-  const file = repositoryRunStatePath(root);
-  await mkdir(path.dirname(file), { recursive: true });
-
-  const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`;
-  try {
-    await writeFile(temporary, `${JSON.stringify(state, null, 2)}\n`, {
-      encoding: "utf8",
-      flag: "wx",
-    });
-    await rename(temporary, file);
-  } finally {
-    await rm(temporary, { force: true }).catch(() => undefined);
-  }
+  await writeJsonState(
+    repositoryRunStatePath(root),
+    RepositoryRunStateSchema,
+    state,
+  );
 }
 
 /**

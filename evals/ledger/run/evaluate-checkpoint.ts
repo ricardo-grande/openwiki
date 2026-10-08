@@ -1,3 +1,4 @@
+import { trapSurfaceAt } from "../benchmark/personal.js";
 import {
   advanceObsoleteWatchSet,
   diffSurface,
@@ -9,12 +10,13 @@ import type {
   CheckpointResult,
   EvaluationBackend,
   EvidenceCorpus,
+  GroundingMode,
   KnowledgeArtifact,
-  LedgerCheckpoint,
+  LedgerBenchmark,
   LedgerExecutionMetrics,
   ObsoleteFactTarget,
+  StructuralCheck,
   SurfaceItem,
-  SemanticEvidenceMap,
 } from "../core/types.js";
 import {
   computeClaimState,
@@ -82,18 +84,14 @@ export function initialCarry(): CheckpointCarry {
  */
 export interface EvaluateCheckpointInputs {
   /**
-   * Absolute path to the benchmark's source repository, read at the checkpoint
-   * commit to extract the scorable surface.
+   * The benchmark being run. Its kind decides where the scorable surface comes
+   * from (repository source at the checkpoint commit, or the personal trap
+   * manifest) and how the grounding judge resolves time.
    */
-  sourceRepoPath: string;
+  benchmark: LedgerBenchmark;
 
   /**
-   * The checkpoint being evaluated (its id and commit are used).
-   */
-  checkpoint: LedgerCheckpoint;
-
-  /**
-   * Zero-based position of this checkpoint in the trace. Index 0 has no inbound
+   * Zero-based position of the checkpoint in the trace. Index 0 has no inbound
    * transition, so no surface diff or obsolete facts are produced for it.
    */
   index: number;
@@ -107,9 +105,6 @@ export interface EvaluateCheckpointInputs {
    * The source evidence (current and historical) grounding precision judgments.
    */
   evidence: EvidenceCorpus;
-
-  /** Evaluator-only semantic topic-to-source routing metadata. */
-  evidenceMap?: SemanticEvidenceMap;
 
   /**
    * The evaluation backend that produces the per-item verdicts.
@@ -128,9 +123,83 @@ export interface EvaluateCheckpointInputs {
   efficiency: LedgerExecutionMetrics;
 
   /**
+   * Model-free structural checks already run on the system's output, recorded
+   * next to the score.
+   *
+   * @default undefined the replay defines no structural checks
+   */
+  structuralChecks?: StructuralCheck[];
+
+  /**
    * Lifecycle observer for progress events.
    */
   reportProgress: BenchmarkProgressReporter;
+}
+
+/**
+ * The scorable surface at one checkpoint: public API extracted from source at
+ * the commit for a repository benchmark, the trap facts in force for a
+ * personal one.
+ *
+ * @param benchmark - The benchmark.
+ * @param index - Zero-based checkpoint position.
+ *
+ * @returns The surface items.
+ */
+export async function surfaceAt(
+  benchmark: LedgerBenchmark,
+  index: number,
+): Promise<SurfaceItem[]> {
+  if (benchmark.kind === "personal") {
+    return trapSurfaceAt(
+      benchmark.traps,
+      benchmark.trace.checkpoints.map((checkpoint) => checkpoint.id),
+      index,
+    );
+  }
+
+  return extractSurface(
+    benchmark.sourceRepoPath,
+    benchmark.trace.checkpoints[index].commit,
+  );
+}
+
+/**
+ * Short label naming what a checkpoint replays, for progress output: a commit
+ * SHA prefix for repository benchmarks, the pulled sources and their dates for
+ * personal ones.
+ *
+ * @param benchmark - The benchmark.
+ * @param index - Zero-based checkpoint position.
+ *
+ * @returns The label.
+ */
+export function checkpointRevision(
+  benchmark: LedgerBenchmark,
+  index: number,
+): string {
+  if (benchmark.kind !== "personal") {
+    return benchmark.trace.checkpoints[index].commit.slice(0, 7);
+  }
+
+  const pulls = benchmark.trace.checkpoints[index].pulls;
+
+  return pulls.length === 0
+    ? "onboarding"
+    : pulls
+        .map((pull) => `${pull.connectorId}@${pull.rawRunId.slice(0, 10)}`)
+        .join(", ");
+}
+
+/**
+ * How the grounding judge resolves time for a benchmark kind.
+ *
+ * @param benchmark - The benchmark.
+ *
+ * @returns `dated-evidence` for personal benchmarks, else `checkpoint`.
+ */
+export function groundingModeFor(benchmark: LedgerBenchmark): GroundingMode {
+  return benchmark.kind === "personal" ? "dated-evidence" : "checkpoint";
 }
 
 /**
@@ -177,19 +246,19 @@ export async function evaluateCheckpoint(
   inputs: EvaluateCheckpointInputs,
 ): Promise<EvaluatedCheckpoint> {
   const {
-    sourceRepoPath,
-    checkpoint,
+    benchmark,
     index,
     artifact,
     evidence,
-    evidenceMap,
     evaluationBackend,
     carry,
     efficiency,
+    structuralChecks,
     reportProgress,
   } = inputs;
+  const checkpoint = benchmark.trace.checkpoints[index];
 
-  const surface = await extractSurface(sourceRepoPath, checkpoint.commit);
+  const surface = await surfaceAt(benchmark, index);
 
   let newlyObsolete: ObsoleteFactTarget[] = [];
 
@@ -224,7 +293,11 @@ export async function evaluateCheckpoint(
     {
       artifact,
       evidence,
-      evidenceMap,
+      evidenceMap: benchmark.evidenceMap,
+      // Omitted for repository runs so their evaluation input is unchanged.
+      ...(benchmark.kind === "personal"
+        ? { groundingMode: groundingModeFor(benchmark) }
+        : {}),
       obsoleteFacts,
     },
     {
@@ -300,6 +373,7 @@ export async function evaluateCheckpoint(
       forgettingEvaluations: evaluation.forgettingEvaluations,
       warnings: evaluation.warnings ?? [],
     },
+    ...(structuralChecks !== undefined ? { structuralChecks } : {}),
   };
 
   const history: CheckpointEvaluationRecord = {

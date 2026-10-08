@@ -7,6 +7,7 @@ import { compareStrings } from "../core/order.js";
 import type {
   EvidenceCorpus,
   EvaluationWarning,
+  GroundingMode,
   PrecisionAssertionEvaluation,
   PrecisionClaimTense,
 } from "../core/types.js";
@@ -26,6 +27,7 @@ import {
   PRECISION_JUDGMENT_SYSTEM,
   precisionExtractionPrompt,
   precisionJudgmentPrompt,
+  precisionJudgmentSystemFor,
   type PrecisionArtifactContext,
   type PrecisionEvidenceExcerpt,
   type PrecisionExtractionUnit,
@@ -419,6 +421,14 @@ export interface PrecisionPassInput {
   verdictCache?: PrecisionVerdictCache;
 
   /**
+   * How grounding resolves time across evidence: the active checkpoint against
+   * earlier ones, or the newest relevant dated item.
+   *
+   * @default "checkpoint"
+   */
+  groundingMode?: GroundingMode;
+
+  /**
    * Optional sink for the assertion inventory once extraction completes.
    *
    * @default undefined the inventory is not surfaced
@@ -512,7 +522,7 @@ interface ClassifiedPrecisionTextUnit extends PrecisionTextUnit {
 /**
  * A source-evidence section annotated with its checkpoint provenance.
  */
-interface EvidenceSection extends ArtifactSection {
+export interface EvidenceSection extends ArtifactSection {
   /**
    * Checkpoint at which the evidence was observed.
    */
@@ -522,12 +532,19 @@ interface EvidenceSection extends ArtifactSection {
    * Whether the evidence is current source truth.
    */
   current: boolean;
+
+  /**
+   * ISO-8601 time the source item was sent or written.
+   *
+   * @default absent for undated evidence
+   */
+  sourceDate?: string;
 }
 
 /**
  * One assertion paired with the evidence visible to its grounding judgment.
  */
-interface PrecisionJudgmentTarget {
+export interface PrecisionJudgmentTarget {
   /**
    * Assertion being grounded against source evidence.
    */
@@ -934,6 +951,9 @@ function toEvidenceSections(corpus: EvidenceCorpus): EvidenceSection[] {
       searchableText: `${record.sourceRef}\n${record.content}`,
       observedAtCheckpoint: record.observedAtCheckpoint,
       current: record.current,
+      ...(record.sourceDate !== undefined
+        ? { sourceDate: record.sourceDate }
+        : {}),
     }));
 }
 
@@ -1205,6 +1225,9 @@ function toJudgmentEvidence(
         sourceRef: section.relativePath,
         observedAtCheckpoint: section.observedAtCheckpoint,
         current: section.current,
+        ...(section.sourceDate !== undefined
+          ? { sourceDate: section.sourceDate }
+          : {}),
         content: section.content,
       });
     }
@@ -1217,11 +1240,14 @@ function toJudgmentEvidence(
  * adjudicated by source, `contradicted` claims map to `stale` or `invented` by
  * their formerly-true flag, and `not-addressed` claims fall through to
  * `unverified`. Enforces the citation and current/historical evidence rules for
- * each verdict class.
+ * each verdict class. In `dated-evidence` mode every record is current, so
+ * former truth is instead proven by citing items with different source dates:
+ * an older one that established the claim and a newer one that changed it.
  */
-function resolveJudgments(
+export function resolveJudgments(
   targets: PrecisionJudgmentTarget[],
   output: PrecisionJudgmentOutput,
+  groundingMode: GroundingMode = "checkpoint",
 ): PrecisionAssertionEvaluation[] {
   const requested = new Set(targets.map((target) => target.assertion.id));
   const byId = new Map<
@@ -1323,7 +1349,21 @@ function resolveJudgments(
         `Precision contradiction lacks current evidence for assertionId "${target.assertion.id}".`,
       );
     }
-    if (evaluation.formerlyTrue && !cited.some((item) => !item.current)) {
+    if (groundingMode === "dated-evidence") {
+      const citedDates = new Set(
+        cited.flatMap((item) =>
+          item.sourceDate === undefined ? [] : [item.sourceDate],
+        ),
+      );
+      if (evaluation.formerlyTrue && citedDates.size < 2) {
+        throw new EvaluationError(
+          `Precision formerlyTrue must cite an older establishing item and a newer contradicting item with different dates for assertionId "${target.assertion.id}".`,
+        );
+      }
+    } else if (
+      evaluation.formerlyTrue &&
+      !cited.some((item) => !item.current)
+    ) {
       throw new EvaluationError(
         `Precision formerlyTrue lacks historical evidence for assertionId "${target.assertion.id}".`,
       );
@@ -1357,10 +1397,11 @@ async function repairPrecisionJudgment(
       toJudgmentArtifactContexts([target]),
     ),
     schema: precisionJudgmentOutputSchema,
-    validate: (parsed) => resolveJudgments([target], parsed),
+    validate: (parsed) =>
+      resolveJudgments([target], parsed, input.groundingMode),
     timeoutMs: input.timeoutMs,
   });
-  return resolveJudgments([target], output)[0];
+  return resolveJudgments([target], output, input.groundingMode)[0];
 }
 
 /**
@@ -1424,7 +1465,13 @@ async function resolvePrecisionBatchResilient(
       const matching = output.evaluations.filter(
         (item) => item.assertionId === target.assertion.id,
       );
-      results.push(...resolveJudgments([target], { evaluations: matching }));
+      results.push(
+        ...resolveJudgments(
+          [target],
+          { evaluations: matching },
+          input.groundingMode,
+        ),
+      );
     } catch (initialError) {
       try {
         results.push(
@@ -1670,9 +1717,10 @@ export async function runPrecisionPass(
 
   // Current claims see only current source. Historical narration may require
   // both sides of a transition, so it retains the combined bounded corpus.
+  const judgmentSystem = precisionJudgmentSystemFor(input.groundingMode);
   const [currentJudgments, historicalClaimJudgments] = await Promise.all([
-    judgeTargets(currentTargets, PRECISION_JUDGMENT_SYSTEM),
-    judgeTargets(historicalClaimTargets, PRECISION_JUDGMENT_SYSTEM),
+    judgeTargets(currentTargets, judgmentSystem),
+    judgeTargets(historicalClaimTargets, judgmentSystem),
   ]);
   const pendingFormerTruth: Array<{
     target: PrecisionJudgmentTarget;

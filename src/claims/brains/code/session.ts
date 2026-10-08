@@ -132,7 +132,9 @@ export class ClaimSession {
   constructor(options: ClaimSessionOptions) {
     this.resolver = options.resolver;
     this.orphanPages = [
-      ...new Set(options.orphanPages.map(normalizeWikiPagePath)),
+      ...new Set(
+        options.orphanPages.map((page) => normalizeWikiPagePath(page)),
+      ),
     ].sort((left, right) => left.localeCompare(right));
     this.createClaimId =
       options.createClaimId ??

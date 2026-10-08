@@ -45,7 +45,7 @@ const definition: ConnectorDefinition = {
   id: "git-repo",
   mode: "personal",
   requiredEnv: [],
-  supportsAgenticDiscovery: true,
+  supportsAgenticDiscovery: false,
 };
 
 export function createGitRepoConnector(): ConnectorRuntime {

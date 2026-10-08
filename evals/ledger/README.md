@@ -138,6 +138,96 @@ invalid after isolated repair falls back to `unverified`; a failed extraction
 unit contributes no claims. Both cases lower the separately reported evaluator
 completeness rate and remain visible as warnings in the audit report.
 
+## Personal benchmarks
+
+A benchmark with `"kind": "personal"` replays recorded connector pulls through
+OpenWiki's personal path instead of a Git history. `inbox-week` (Gmail, medium)
+and `cross-source` (Gmail and Slack, hard) are checked in. Repository benchmarks
+omit `kind`, which defaults to `"repository"`.
+
+```text
+benchmarks/<name>/
+  benchmark.json      kind, wikiGoal, connectors, trace of pulls per checkpoint
+  traps.json          evaluator-only: facts planted/changed/retired, canaries, noise
+  raw/<connectorId>/<rawRunId>/   files exactly as the real connector writes them
+  build-fixtures.mjs  deterministic builder for all of the above
+```
+
+- **Replay.** Each run builds a temporary OpenWiki home with the onboarding
+  config and wiki brief. T0 is `personal --init` with no data. Every later
+  checkpoint copies its pulls into `connectors/<id>/raw/<runId>/` and runs one
+  `openwiki ingest`: `all` when the checkpoint pulls every source, otherwise
+  one source at a time. A replay connector returns the recorded pull instead of
+  fetching, so the real source-update prompt and agent run are exercised.
+- **Isolation.** OpenWiki runs in a child process with `OPENWIKI_CONFIG_DIR`
+  pointed at the temporary home, connector credentials removed, and telemetry
+  off. Provider credentials come from the parent environment. The user's
+  `~/.openwiki` is never read or written.
+- **Evidence.** One record per email or Slack message, plus the wiki brief and
+  connected sources. The corpus is cumulative, deduplicated across re-delivered
+  items, and every record is current and dated.
+- **Grounding.** Personal runs use the `dated-evidence` judgment prompt: the
+  newest relevant item decides, a claim an older item established and a newer
+  one changed is stale, and a fact independent sources disagree on is contested.
+  `formerlyTrue` must cite items with different dates.
+- **Forgetting.** Trap facts are the scorable surface. A changed or retired
+  fact's former version joins the forgetting watch set, exactly as changed API
+  surface does for repository benchmarks.
+- **Structural checks** are model-free and reported next to the score: a
+  quickstart exists and every page has valid front matter, `.last-update.json`
+  is complete, no canary reaches the wiki, nothing outside the wiki and
+  OpenWiki's own state changed in the home, no page is dedicated to planted
+  noise, and placement traps stay off the pages they don't belong on.
+
+Fixtures are synthetic and must match the connectors byte for byte.
+`benchmarks/personal-fixtures.test.ts` runs each recorded pull back through the
+real Gmail or Slack connector with a stubbed API and requires identical output,
+and checks that each builder is deterministic. After changing a builder:
+
+```bash
+node evals/ledger/benchmarks/inbox-week/build-fixtures.mjs
+node evals/ledger/benchmarks/cross-source/build-fixtures.mjs
+```
+
+The dated-evidence prompt is calibrated against
+`evaluator/fixtures/precision-gold-personal.json` by the live gold-agreement
+test (`LEDGER_LIVE=1`).
+
+### Legacy personal baseline
+
+The three-run baseline is deferred: live runs cost more than the extra
+precision was worth, since every shakedown landed at about 5% supported. The
+one recorded run is a single partial `inbox-week` run (T0–T2), not a baseline.
+Any later comparison needs fresh runs of both the legacy path and the change,
+with the same system and evaluator models.
+
+- System model: `gemini-3.8-flash` (provider `gemini`)
+- Evaluator model: `gemini-3.1-pro-preview` (provider `gemini`)
+- Evaluator gold agreement (`precision-gold-personal.json`): extraction 1.00
+  (9/9), grounding 1.00 (13/13), measured 2026-10-07, before the two
+  wiki-identifier cases were added. Recalibrate before relying on it. On the
+  repository set (`precision-gold.json`) it scored extraction 0.71 and
+  grounding 0.86 before the quote-boundary scoring fix, so it is not valid for
+  repository runs.
+
+| Checkpoint | Claims | Supported | Stale | Hallucinated | Unverified | Structural checks |
+| ---------- | ------ | --------- | ----- | ------------ | ---------- | ----------------- |
+| T0         | 415    | 0%        | 0%    | 0%           | 100%       | 6/6               |
+| T1         | 420    | 5% (23)   | 0%    | 0%           | 95%        | 6/6               |
+| T2         | 444    | 5% (24)   | 0%    | 0%           | 95%        | 6/6               |
+
+`inbox-week`, run 2026-10-08, judged before the wiki-identifier grounding fix.
+Every planted fact through T2 was handled correctly: the deck moving to March 9
+(and the March 5 version forgotten), the March 11 research presentation, and
+the March 10 dentist appointment. The low score comes from about 400 claims the
+legacy init invents with no source: placeholder commitments and appointments,
+people who appear in no message, and pages describing triage rules, connectors,
+and themes.
+
+An evaluator is valid only for the benchmark kinds whose gold set it passes at
+the 0.9 floor. A judge that passes the personal set but not the repository set
+may score personal runs, and must not be used for repository runs.
+
 ## LEDGER score
 
 The run-level score is opportunity-weighted claim health across the trace:
@@ -200,6 +290,13 @@ evaluation is genuinely complete.
 OPENWIKI_PROVIDER=anthropic \
 LEDGER_EVALUATOR_MODEL_ID=claude-sonnet-5 \
 pnpm run eval:ledger -- --benchmark evals/ledger/benchmarks/taskflow
+```
+
+Personal benchmarks run the same way:
+
+```bash
+pnpm run eval:ledger -- --benchmark evals/ledger/benchmarks/inbox-week
+pnpm run eval:ledger -- --benchmark evals/ledger/benchmarks/cross-source
 ```
 
 Provider credentials use the same environment configuration as OpenWiki. Add

@@ -1,0 +1,17 @@
+{
+  "fetchedAt": "2026-03-06T07:00:00.000Z",
+  "format": "full",
+  "includeSpamTrash": false,
+  "labelIds": [],
+  "listPages": [
+    {
+      "messageCount": 0,
+      "resultSizeEstimate": 0
+    }
+  ],
+  "maxMessages": 100,
+  "messageCount": 0,
+  "messages": [],
+  "query": "newer_than:1d",
+  "windowHours": 24
+}

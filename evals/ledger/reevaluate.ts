@@ -8,6 +8,7 @@ import {
   prepareRunDirectory,
   writeArtifactSnapshot,
   writeAssertionInventory,
+  writeCheckpointResult,
   writeEvidenceCorpus,
 } from "./run/persistence.js";
 import { createCliProgressReporter } from "./run/progress.js";
@@ -62,6 +63,7 @@ async function main(): Promise<void> {
       }),
       onArtifact: (artifact) => writeArtifactSnapshot(runDir, artifact),
       onEvidence: (evidence) => writeEvidenceCorpus(runDir, evidence),
+      onCheckpoint: (checkpoint) => writeCheckpointResult(runDir, checkpoint),
     });
     await finalizeRun({
       resultsDir: config.resultsDir,

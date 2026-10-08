@@ -24,6 +24,28 @@ export type ProtocolToolName =
   | "openwiki_finish";
 
 /**
+ * The personal MCP tools (host §3.2), served only by `openwiki mcp personal`.
+ */
+export type PersonalProtocolToolName =
+  | "openwiki_personal_search"
+  | "openwiki_personal_read"
+  | "openwiki_personal_list_pages"
+  | "openwiki_personal_status"
+  | "openwiki_personal_list_raw_items"
+  | "openwiki_personal_read_raw_item"
+  | "openwiki_personal_ingest"
+  | "openwiki_personal_list_mcp_tools"
+  | "openwiki_personal_call_mcp_tool"
+  | "openwiki_personal_close_gathering"
+  | "openwiki_personal_begin"
+  | "openwiki_personal_submit_plan"
+  | "openwiki_personal_next_page"
+  | "openwiki_personal_write_page"
+  | "openwiki_personal_edit_page"
+  | "openwiki_personal_submit_page"
+  | "openwiki_personal_finish";
+
+/**
  * Validated host request to start or resume a repository run.
  */
 export interface BeginRequest {
@@ -180,13 +202,13 @@ export function isValidHostId(value: string): boolean {
 }
 
 /**
- * One of the complete repository retrieval and generation MCP tools.
+ * One repository or personal MCP tool.
  */
 export interface ProtocolTool {
   /**
-   * Canonical MCP lifecycle tool name.
+   * Canonical MCP tool name.
    */
-  name: ProtocolToolName;
+  name: ProtocolToolName | PersonalProtocolToolName;
 
   /**
    * Model-facing description of the lifecycle operation.

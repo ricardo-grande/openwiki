@@ -25,6 +25,13 @@ describe("parseArgs", () => {
     );
   });
 
+  test("ignores the -- that pnpm forwards to the script", () => {
+    expect(parseArgs(["--", "--benchmark", "bench", "--verbose"])).toEqual({
+      benchmark: "bench",
+      verbose: true,
+    });
+  });
+
   test("returns an empty object for no arguments", () => {
     expect(parseArgs([])).toEqual({});
   });

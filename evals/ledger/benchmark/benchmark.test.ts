@@ -13,6 +13,10 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
+import {
+  isPersonalBenchmark,
+  type RepositoryBenchmark,
+} from "../core/types.js";
 import { git } from "../replay/git.js";
 import { loadBenchmark } from "./benchmark.js";
 import { extractSurface } from "./surface.js";
@@ -25,6 +29,25 @@ const COMMITTED_FIXTURE_DIR = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../benchmarks/calc",
 );
+
+/**
+ * Load a benchmark that must be the repository kind.
+ *
+ * @param benchmarkDir - Benchmark directory.
+ *
+ * @returns The repository benchmark.
+ */
+async function loadRepositoryBenchmark(
+  benchmarkDir: string,
+): Promise<RepositoryBenchmark> {
+  const benchmark = await loadBenchmark(benchmarkDir);
+
+  if (isPersonalBenchmark(benchmark)) {
+    throw new Error("Expected a repository benchmark.");
+  }
+
+  return benchmark;
+}
 
 /**
  * Whether a path exists.
@@ -71,7 +94,7 @@ describe("loadBenchmark on the committed calc fixture", () => {
   });
 
   test("loads the manifest and reconstructs the source from its bundle", async () => {
-    const benchmark = await loadBenchmark(fixtureDir);
+    const benchmark = await loadRepositoryBenchmark(fixtureDir);
 
     expect(benchmark.name).toBe("calc");
     expect(benchmark.difficulty).toBe("easy");
@@ -127,7 +150,7 @@ describe("loadBenchmark on the committed calc fixture", () => {
   });
 
   test("extracts the evolving public surface at each checkpoint", async () => {
-    const benchmark = await loadBenchmark(fixtureDir);
+    const benchmark = await loadRepositoryBenchmark(fixtureDir);
     const at = async (checkpointId: string) => {
       const checkpoint = benchmark.trace.checkpoints.find(
         (item) => item.id === checkpointId,

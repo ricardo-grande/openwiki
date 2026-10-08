@@ -233,7 +233,7 @@ export function createCliProgressReporter(
         const label = event.label ? ` · ${event.label}` : "";
         output.write("│\n");
         output.write(
-          `├ 📍 ${position} · ${event.checkpointId} · ${event.commit.slice(0, 7)}${label}\n`,
+          `├ 📍 ${position} · ${event.checkpointId} · ${event.revision}${label}\n`,
         );
         if (event.evaluationOnly !== true) {
           startSpinner(`🤖 Running OpenWiki ${event.command}`);
@@ -255,6 +255,20 @@ export function createCliProgressReporter(
             `🤖 OpenWiki ${completedSystem.command} ${status} · ${formatProgressDuration(completedSystem.durationMs)} · ${event.documentCount} document${event.documentCount === 1 ? "" : "s"}`,
           );
           completedSystem = undefined;
+        }
+        break;
+      }
+      case "structural-checks": {
+        const failed = event.checks.filter((check) => !check.passed);
+        output.write(
+          `│ 🧱 Structure ${event.checks.length - failed.length}/${event.checks.length}${failed.length > 0 ? ` · failed ${failed.map((check) => check.id).join(", ")}` : ""}\n`,
+        );
+        if (options.verbose === true) {
+          for (const check of failed) {
+            for (const detail of check.details) {
+              output.write(`│    ↳ ${check.id}: ${formatClaimText(detail)}\n`);
+            }
+          }
         }
         break;
       }

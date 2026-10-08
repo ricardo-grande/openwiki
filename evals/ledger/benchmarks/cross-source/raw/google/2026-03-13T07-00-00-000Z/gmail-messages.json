@@ -1,0 +1,195 @@
+{
+  "fetchedAt": "2026-03-13T07:00:00.000Z",
+  "format": "full",
+  "includeSpamTrash": false,
+  "labelIds": [],
+  "listPages": [
+    {
+      "messageCount": 3,
+      "resultSizeEstimate": 3
+    }
+  ],
+  "maxMessages": 100,
+  "messageCount": 3,
+  "messages": [
+    {
+      "id": "dc33fe367e4a7af7",
+      "threadId": "a583017967eddd7b",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_UPDATES"
+      ],
+      "snippet": "Wellness Weekly tips: how sleep shapes focus, and a two-minute breathing routine.",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Wellness Weekly <tips@wellness-weekly.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Wellness Weekly: sleep and focus"
+          },
+          {
+            "name": "Date",
+            "value": "Thu, 12 Mar 2026 16:00:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<dc33fe367e4a7af7@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 81,
+              "data": "V2VsbG5lc3MgV2Vla2x5IHRpcHM6IGhvdyBzbGVlcCBzaGFwZXMgZm9jdXMsIGFuZCBhIHR3by1taW51dGUgYnJlYXRoaW5nIHJvdXRpbmUu"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 981,
+      "historyId": "131230",
+      "internalDate": "1773331200000"
+    },
+    {
+      "id": "21e99cc81dff059e",
+      "threadId": "eeeef7f6c5369c04",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Your Lisbon trip (March 16-18) has been cancelled at your company's request. Flights SK 214 and SK 219 and the Alfama Ri",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Skyway Travel <bookings@skyway-travel.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Trip cancelled: Lisbon, March 16-18"
+          },
+          {
+            "name": "Date",
+            "value": "Thu, 12 Mar 2026 10:05:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<21e99cc81dff059e@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 157,
+              "data": "WW91ciBMaXNib24gdHJpcCAoTWFyY2ggMTYtMTgpIGhhcyBiZWVuIGNhbmNlbGxlZCBhdCB5b3VyIGNvbXBhbnkncyByZXF1ZXN0LiBGbGlnaHRzIFNLIDIxNCBhbmQgU0sgMjE5IGFuZCB0aGUgQWxmYW1hIFJpdmVyc2lkZSBib29raW5nIGFyZSByZWZ1bmRlZCBpbiBmdWxsLg"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1057,
+      "historyId": "522492",
+      "internalDate": "1773309900000"
+    },
+    {
+      "id": "da35199db5f224ce",
+      "threadId": "46e7393fb00155a5",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Hi Alex, We need to postpone the Lisbon visit; let's regroup in April. On the cutover, we are still planning on Friday, ",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Dana Kim <dana.kim@bayview-logistics.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Alex Morgan <alex.morgan@harbor.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Lisbon visit postponed"
+          },
+          {
+            "name": "Date",
+            "value": "Thu, 12 Mar 2026 09:20:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<da35199db5f224ce@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 136,
+              "data": "SGkgQWxleCwKCldlIG5lZWQgdG8gcG9zdHBvbmUgdGhlIExpc2JvbiB2aXNpdDsgbGV0J3MgcmVncm91cCBpbiBBcHJpbC4gT24gdGhlIGN1dG92ZXIsIHdlIGFyZSBzdGlsbCBwbGFubmluZyBvbiBGcmlkYXksIE1hcmNoIDIwLgoKRGFuYQ"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1036,
+      "historyId": "900441",
+      "internalDate": "1773307200000"
+    }
+  ],
+  "query": "newer_than:1d",
+  "windowHours": 24
+}

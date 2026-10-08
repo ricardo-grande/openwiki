@@ -168,6 +168,18 @@ describe("appendRunLogEvent repository progress", () => {
     }
     expect(ref.current).toBe(1);
   });
+
+  test("retains which wiki a lifecycle stage belongs to", () => {
+    const log = appendRunLogEvent(
+      [],
+      { type: "repository_progress", wiki: "personal", stage: "gathering" },
+      idRef(),
+    );
+
+    expect(log).toEqual([
+      expect.objectContaining({ wiki: "personal", stage: "gathering" }),
+    ]);
+  });
 });
 
 describe("appendRunLogEvent tool grouping", () => {

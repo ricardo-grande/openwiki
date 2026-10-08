@@ -358,6 +358,42 @@ describe("ClaimsStore", () => {
     );
   });
 
+  test("reads a wiki rooted at its directory with the root page prefix", async () => {
+    await writeFixture("commitments.md", "# Commitments\n");
+    await writeFixture("people/ana.md", "# Ana\n");
+    await writeFixture("index.md", "# Index\n");
+    await writeFixture("openwiki/stray.md", "# Stray\n");
+    const store = new ClaimsStore(rootDir, "/");
+
+    await expect(store.discoverPages()).resolves.toEqual([
+      "/commitments.md",
+      "/openwiki/stray.md",
+      "/people/ana.md",
+    ]);
+    await expect(store.readMarkdown("people/ana.md")).resolves.toBe("# Ana\n");
+    await expect(new ClaimsStore(rootDir).discoverPages()).resolves.toEqual([
+      "/openwiki/stray.md",
+    ]);
+  });
+
+  test("refuses a symlinked wiki rooted at its directory", async () => {
+    await writeFixture("commitments.md", "# Commitments\n");
+    const linkParent = await mkdtemp(
+      path.join(tmpdir(), "openwiki-claims-link-"),
+    );
+    cleanupDirectories.push(linkParent);
+    const linkedWiki = path.join(linkParent, "wiki");
+    await symlink(rootDir, linkedWiki);
+    const store = new ClaimsStore(linkedWiki, "/");
+
+    await expect(store.readMarkdown("/commitments.md")).rejects.toThrow(
+      ClaimsPersistenceSecurityError,
+    );
+    await expect(store.discoverPages()).rejects.toThrow(
+      ClaimsPersistenceSecurityError,
+    );
+  });
+
   test("requires an absolute repository root", () => {
     expect(() => new ClaimsStore("relative/repository")).toThrow(
       ClaimsPersistenceError,

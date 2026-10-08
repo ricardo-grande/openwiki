@@ -192,6 +192,7 @@ export class ModelEvaluationBackend implements EvaluationBackend {
         index,
         timeoutMs: this.timeoutMs,
         limit,
+        groundingMode: input.groundingMode,
         onProgress: (completed) => {
           forgettingCompleted = completed;
           reportEvaluationProgress();
@@ -204,6 +205,7 @@ export class ModelEvaluationBackend implements EvaluationBackend {
         sections,
         evidence: input.evidence,
         evidenceMap: input.evidenceMap,
+        groundingMode: input.groundingMode,
         timeoutMs: this.timeoutMs,
         limit,
         verdictCache: this.precisionVerdictCache,

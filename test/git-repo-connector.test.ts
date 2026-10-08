@@ -120,6 +120,19 @@ afterEach(async () => {
   );
 });
 
+describe("git-repo connector discovery mode", () => {
+  test("is deterministic, so ingest pulls it before the run (core §3.5)", async () => {
+    const { createGitRepoConnector } =
+      await import("../src/connectors/sources/git-repo.ts");
+    const { AGENTIC_PERSONAL_CONNECTORS } =
+      await import("../src/generation/personal-run-state.ts");
+
+    expect(createGitRepoConnector().supportsAgenticDiscovery).toBe(false);
+    // The core agrees: git-repo evidence is frozen at begin, never gathered.
+    expect(AGENTIC_PERSONAL_CONNECTORS.has("git-repo")).toBe(false);
+  });
+});
+
 describe("git-repo connector incremental diff", () => {
   test("first run has no previousHead and reports the working-tree diff only", async () => {
     const home = await createTempDir("openwiki-git-home-");

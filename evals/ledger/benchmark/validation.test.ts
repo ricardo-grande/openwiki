@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import type {
   LedgerBenchmark,
   LedgerCheckpoint,
+  RepositoryBenchmark,
   SemanticEvidenceMapEntry,
 } from "../core/types.js";
 import { BenchmarkValidationError } from "../core/errors.js";
@@ -16,7 +17,7 @@ import { validateBenchmark } from "./validation.js";
  *
  * @returns A structurally valid benchmark.
  */
-function valid(): LedgerBenchmark {
+function valid(): RepositoryBenchmark {
   return {
     name: "valid",
     description: "validation fixture",

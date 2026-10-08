@@ -1,8 +1,34 @@
 import type {
+  HostIntegrationComponent,
+  HostIntegrationComponentDefinition,
   HostMcpServerCommand,
   HostTarget,
   HostTargetId,
 } from "./types.js";
+
+/**
+ * The separately installed components. The personal wiki belongs to the user,
+ * so the personal component is user-scoped only (host §3.1).
+ */
+export const HOST_INTEGRATION_COMPONENTS = {
+  code: {
+    id: "code",
+    skillName: "openwiki",
+    serverName: "openwiki",
+    serverArgs: ["mcp"],
+    scopes: ["user", "project"],
+  },
+  personal: {
+    id: "personal",
+    skillName: "openwiki-personal",
+    serverName: "openwiki-personal",
+    serverArgs: ["mcp", "personal"],
+    scopes: ["user"],
+  },
+} as const satisfies Record<
+  HostIntegrationComponent,
+  HostIntegrationComponentDefinition
+>;
 
 /**
  * Complete immutable registry of supported host installation targets.
@@ -13,11 +39,11 @@ export const HOST_TARGETS = {
     displayName: "IBM Bob",
     producerActor: "bob",
     user: {
-      skillDirectory: ".agents/skills/openwiki",
+      skillsRoot: ".agents/skills",
       mcpConfig: { kind: "json", relativePath: ".bob/settings/mcp.json" },
     },
     project: {
-      skillDirectory: ".agents/skills/openwiki",
+      skillsRoot: ".agents/skills",
       mcpConfig: { kind: "json", relativePath: ".bob/mcp.json" },
     },
     documentationUrl:
@@ -28,14 +54,14 @@ export const HOST_TARGETS = {
     displayName: "Codex",
     producerActor: "codex",
     user: {
-      skillDirectory: ".agents/skills/openwiki",
+      skillsRoot: ".agents/skills",
       mcpConfig: {
         kind: "codex-toml",
         relativePath: ".codex/config.toml",
       },
     },
     project: {
-      skillDirectory: ".agents/skills/openwiki",
+      skillsRoot: ".agents/skills",
       mcpConfig: {
         kind: "codex-toml",
         relativePath: ".codex/config.toml",
@@ -48,11 +74,11 @@ export const HOST_TARGETS = {
     displayName: "Claude Code",
     producerActor: "claude-code",
     user: {
-      skillDirectory: ".claude/skills/openwiki",
+      skillsRoot: ".claude/skills",
       mcpConfig: { kind: "json", relativePath: ".claude.json" },
     },
     project: {
-      skillDirectory: ".claude/skills/openwiki",
+      skillsRoot: ".claude/skills",
       mcpConfig: { kind: "json", relativePath: ".mcp.json" },
     },
     documentationUrl: "https://docs.anthropic.com/en/docs/claude-code/mcp",
@@ -62,14 +88,14 @@ export const HOST_TARGETS = {
     displayName: "OpenCode",
     producerActor: "opencode",
     user: {
-      skillDirectory: ".config/opencode/skills/openwiki",
+      skillsRoot: ".config/opencode/skills",
       mcpConfig: {
         kind: "opencode-json",
         relativePath: ".config/opencode/opencode.jsonc",
       },
     },
     project: {
-      skillDirectory: ".opencode/skills/openwiki",
+      skillsRoot: ".opencode/skills",
       mcpConfig: {
         kind: "opencode-json",
         relativePath: "opencode.jsonc",
@@ -82,11 +108,11 @@ export const HOST_TARGETS = {
     displayName: "Cursor",
     producerActor: "cursor",
     user: {
-      skillDirectory: ".cursor/skills/openwiki",
+      skillsRoot: ".cursor/skills",
       mcpConfig: { kind: "json", relativePath: ".cursor/mcp.json" },
     },
     project: {
-      skillDirectory: ".cursor/skills/openwiki",
+      skillsRoot: ".cursor/skills",
       mcpConfig: { kind: "json", relativePath: ".cursor/mcp.json" },
     },
     documentationUrl: "https://cursor.com/docs/mcp",
@@ -96,11 +122,11 @@ export const HOST_TARGETS = {
     displayName: "Kiro",
     producerActor: "kiro",
     user: {
-      skillDirectory: ".kiro/skills/openwiki",
+      skillsRoot: ".kiro/skills",
       mcpConfig: { kind: "json", relativePath: ".kiro/settings/mcp.json" },
     },
     project: {
-      skillDirectory: ".kiro/skills/openwiki",
+      skillsRoot: ".kiro/skills",
       mcpConfig: { kind: "json", relativePath: ".kiro/settings/mcp.json" },
     },
     documentationUrl: "https://kiro.dev/docs/mcp/configuration/",
@@ -113,11 +139,11 @@ export const HOST_TARGETS = {
     // and PI_CODING_AGENT_DIR overrides use another directory; use --project
     // for those setups.
     user: {
-      skillDirectory: ".omp/agent/skills/openwiki",
+      skillsRoot: ".omp/agent/skills",
       mcpConfig: { kind: "json", relativePath: ".omp/agent/mcp.json" },
     },
     project: {
-      skillDirectory: ".omp/skills/openwiki",
+      skillsRoot: ".omp/skills",
       mcpConfig: { kind: "json", relativePath: ".omp/mcp.json" },
     },
     documentationUrl: "https://omp.sh",
@@ -127,14 +153,14 @@ export const HOST_TARGETS = {
     displayName: "Antigravity CLI",
     producerActor: "antigravity",
     user: {
-      skillDirectory: ".gemini/antigravity-cli/skills/openwiki",
+      skillsRoot: ".gemini/antigravity-cli/skills",
       mcpConfig: {
         kind: "json",
         relativePath: ".gemini/config/mcp_config.json",
       },
     },
     project: {
-      skillDirectory: ".agents/skills/openwiki",
+      skillsRoot: ".agents/skills",
       mcpConfig: { kind: "json", relativePath: ".agents/mcp_config.json" },
     },
     documentationUrl: "https://antigravity.google/docs/mcp?tab=cli",
@@ -144,11 +170,11 @@ export const HOST_TARGETS = {
     displayName: "GitHub Copilot CLI",
     producerActor: "copilot",
     user: {
-      skillDirectory: ".copilot/skills/openwiki",
+      skillsRoot: ".copilot/skills",
       mcpConfig: { kind: "json", relativePath: ".copilot/mcp-config.json" },
     },
     project: {
-      skillDirectory: ".github/skills/openwiki",
+      skillsRoot: ".github/skills",
       mcpConfig: { kind: "json", relativePath: ".github/mcp.json" },
     },
     documentationUrl:
@@ -176,16 +202,31 @@ export function listHostTargets(): HostTarget[] {
 }
 
 /**
- * Creates the default managed MCP command for one host.
+ * Lists the installable components in a stable order.
+ *
+ * @returns Independent array of component definitions.
+ */
+export function listHostIntegrationComponents(): HostIntegrationComponentDefinition[] {
+  return Object.values(HOST_INTEGRATION_COMPONENTS);
+}
+
+/**
+ * Creates the default managed MCP command for one host and component.
  *
  * @param target - Stable host identifier passed to the MCP process.
+ * @param component - Component whose server the command starts.
  * @returns Portable executable invocation used by published installations.
  */
 export function defaultMcpServerCommand(
   target: HostTargetId,
+  component: HostIntegrationComponent = "code",
 ): HostMcpServerCommand {
   return {
     command: "openwiki",
-    args: ["mcp", "--host", target],
+    args: [
+      ...HOST_INTEGRATION_COMPONENTS[component].serverArgs,
+      "--host",
+      target,
+    ],
   };
 }

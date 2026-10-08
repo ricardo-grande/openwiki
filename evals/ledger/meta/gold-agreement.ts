@@ -2,13 +2,13 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { readFile } from "node:fs/promises";
 
 import { EvaluationError } from "../core/errors.js";
-import type { PrecisionClaimTense } from "../core/types.js";
+import type { GroundingMode, PrecisionClaimTense } from "../core/types.js";
 import { invokeStructuredModel } from "../evaluator/direct-model.js";
 import {
   PRECISION_EXTRACTION_SYSTEM,
-  PRECISION_JUDGMENT_SYSTEM,
   precisionExtractionPrompt,
   precisionJudgmentPrompt,
+  precisionJudgmentSystemFor,
   type PrecisionEvidenceExcerpt,
 } from "../evaluator/prompts.js";
 import {
@@ -50,6 +50,14 @@ export interface PrecisionGoldFixture {
    * Human-readable summary of what the fixture covers.
    */
   description: string;
+
+  /**
+   * How the grounding judge resolves time for these cases, selecting the
+   * matching judgment prompt.
+   *
+   * @default "checkpoint"
+   */
+  groundingMode?: GroundingMode;
 
   /**
    * Extraction/classification calibration cases.
@@ -164,12 +172,30 @@ export interface GoldAgreementReport {
 }
 
 /**
- * Load the committed human-reviewed precision calibration set.
+ * Committed human-reviewed calibration sets: repository claims grounded against
+ * checkpoint source, and personal claims grounded against dated raw items.
  */
-export async function loadPrecisionGoldFixture(): Promise<PrecisionGoldFixture> {
+export const PRECISION_GOLD_FIXTURES = {
+  repository: "precision-gold.json",
+  personal: "precision-gold-personal.json",
+} as const;
+
+/**
+ * Load a committed human-reviewed precision calibration set.
+ *
+ * @param name - Which calibration set to load.
+ *
+ * @returns The fixture.
+ */
+export async function loadPrecisionGoldFixture(
+  name: keyof typeof PRECISION_GOLD_FIXTURES = "repository",
+): Promise<PrecisionGoldFixture> {
   return JSON.parse(
     await readFile(
-      new URL("../evaluator/fixtures/precision-gold.json", import.meta.url),
+      new URL(
+        `../evaluator/fixtures/${PRECISION_GOLD_FIXTURES[name]}`,
+        import.meta.url,
+      ),
       "utf8",
     ),
   ) as PrecisionGoldFixture;
@@ -211,6 +237,48 @@ function sameJson(first: unknown, second: unknown): boolean {
 }
 
 /**
+ * Trim the boundary of a source quote: surrounding whitespace and trailing
+ * sentence punctuation. Both "X was removed" and "X was removed." are exact
+ * verbatim spans of the same sentence and the extraction pipeline accepts
+ * either, so the gold comparison must not count that choice as disagreement.
+ * The quoted text itself is still compared exactly.
+ *
+ * @param quote - A source quote.
+ *
+ * @returns The quote without boundary whitespace or trailing punctuation.
+ */
+function normalizeQuoteBoundary(quote: string): string {
+  return quote.trim().replace(/[\s.,;:!?]+$/u, "");
+}
+
+/**
+ * Normalize extracted assertions for comparison: identical except for each
+ * source quote's boundary.
+ *
+ * @param assertions - Expected or received assertions.
+ *
+ * @returns The comparable assertions.
+ */
+function comparableAssertions(assertions: unknown): unknown {
+  if (!Array.isArray(assertions)) {
+    return assertions;
+  }
+
+  return assertions.map((assertion: unknown) =>
+    typeof assertion === "object" &&
+    assertion !== null &&
+    typeof (assertion as { sourceQuote?: unknown }).sourceQuote === "string"
+      ? {
+          ...assertion,
+          sourceQuote: normalizeQuoteBoundary(
+            (assertion as { sourceQuote: string }).sourceQuote,
+          ),
+        }
+      : assertion,
+  );
+}
+
+/**
  * Run every live semantic stage and report exact judge-vs-human agreement.
  */
 export async function measureGoldAgreement(inputs: {
@@ -244,7 +312,10 @@ export async function measureGoldAgreement(inputs: {
     const actual = extractionById.get(`gold-unit-${index}`);
     if (
       actual?.classification === item.expected.classification &&
-      sameJson(actual.assertions, item.expected.assertions)
+      sameJson(
+        comparableAssertions(actual.assertions),
+        comparableAssertions(item.expected.assertions),
+      )
     ) {
       extractionCorrect += 1;
     } else {
@@ -262,7 +333,7 @@ export async function measureGoldAgreement(inputs: {
       model: inputs.model,
       pass: "precision-judgment",
       checkpointId: "gold",
-      systemPrompt: PRECISION_JUDGMENT_SYSTEM,
+      systemPrompt: precisionJudgmentSystemFor(fixture.groundingMode),
       taskPrompt: precisionJudgmentPrompt(
         [
           {

@@ -1,0 +1,253 @@
+{
+  "fetchedAt": "2026-03-05T07:00:00.000Z",
+  "format": "full",
+  "includeSpamTrash": false,
+  "labelIds": [],
+  "listPages": [
+    {
+      "messageCount": 4,
+      "resultSizeEstimate": 4
+    }
+  ],
+  "maxMessages": 100,
+  "messageCount": 4,
+  "messages": [
+    {
+      "id": "7ad18b9e9dd925d9",
+      "threadId": "4faf88a4d169df8d",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PROMOTIONS"
+      ],
+      "snippet": "Final hours! The DeskMart standing desk sale ends at midnight.",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "DeskMart <deals@deskmart.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Last chance: standing desk sale ends tonight"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 04 Mar 2026 17:20:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<7ad18b9e9dd925d9@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 62,
+              "data": "RmluYWwgaG91cnMhIFRoZSBEZXNrTWFydCBzdGFuZGluZyBkZXNrIHNhbGUgZW5kcyBhdCBtaWRuaWdodC4"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 962,
+      "historyId": "949035",
+      "internalDate": "1772644800000"
+    },
+    {
+      "id": "d7dbf3f45d4faa01",
+      "threadId": "795b58fab72550d3",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Got it, thanks Sam. Looks great, nothing else needed before the offsite. Priya",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Priya Shah <priya.shah@northwind.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Re: Q2 roadmap review deck"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 04 Mar 2026 16:10:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<d7dbf3f45d4faa01@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 79,
+              "data": "R290IGl0LCB0aGFua3MgU2FtLiBMb29rcyBncmVhdCwgbm90aGluZyBlbHNlIG5lZWRlZCBiZWZvcmUgdGhlIG9mZnNpdGUuCgpQcml5YQ"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 979,
+      "historyId": "746547",
+      "internalDate": "1772640600000"
+    },
+    {
+      "id": "c085155ac210e89b",
+      "threadId": "795b58fab72550d3",
+      "labelIds": [
+        "SENT"
+      ],
+      "snippet": "Hi Priya, Here's the Q2 roadmap review deck (attached as Q2-roadmap-review.pdf). Happy to walk you through it. Sam",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Priya Shah <priya.shah@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Re: Q2 roadmap review deck"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 04 Mar 2026 15:30:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<c085155ac210e89b@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 116,
+              "data": "SGkgUHJpeWEsCgpIZXJlJ3MgdGhlIFEyIHJvYWRtYXAgcmV2aWV3IGRlY2sgKGF0dGFjaGVkIGFzIFEyLXJvYWRtYXAtcmV2aWV3LnBkZikuIEhhcHB5IHRvIHdhbGsgeW91IHRocm91Z2ggaXQuCgpTYW0"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1016,
+      "historyId": "116981",
+      "internalDate": "1772638200000"
+    },
+    {
+      "id": "47ceefe0acb7f932",
+      "threadId": "59d16cc6859276f1",
+      "labelIds": [
+        "INBOX",
+        "CATEGORY_PERSONAL"
+      ],
+      "snippet": "Hi Sam, Dr. Okafor is unavailable on March 10, so your dental cleaning has been moved to Thursday, March 12 at 4:00 PM. ",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "Bright Smile Dental <appointments@brightsmile-dental.example.com>"
+          },
+          {
+            "name": "To",
+            "value": "Sam Rivera <sam.rivera@northwind.example.com>"
+          },
+          {
+            "name": "Subject",
+            "value": "Appointment moved: Thursday, March 12"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 04 Mar 2026 10:00:00 +0000"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<47ceefe0acb7f932@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 163,
+              "data": "SGkgU2FtLAoKRHIuIE9rYWZvciBpcyB1bmF2YWlsYWJsZSBvbiBNYXJjaCAxMCwgc28geW91ciBkZW50YWwgY2xlYW5pbmcgaGFzIGJlZW4gbW92ZWQgdG8gVGh1cnNkYXksIE1hcmNoIDEyIGF0IDQ6MDAgUE0uIE5vIGFjdGlvbiBpcyBuZWVkZWQgaWYgdGhlIG5ldyB0aW1lIHdvcmtzLg"
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 1063,
+      "historyId": "306031",
+      "internalDate": "1772618400000"
+    }
+  ],
+  "query": "newer_than:1d",
+  "windowHours": 24
+}

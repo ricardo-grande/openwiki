@@ -270,11 +270,16 @@ describe("mcp tool delegation", () => {
     // is refused if the runtime does not classify it as MCP-backed.
     const tools = await loadToolsWithMockMcpRuntime({ isMcp: false });
 
-    await expect(
-      getTool(tools, "openwiki_list_mcp_tools").invoke({
-        connectorId: "notion",
-      }),
-    ).rejects.toThrow(/not MCP-backed/u);
+    const result = JSON.parse(
+      String(
+        await getTool(tools, "openwiki_list_mcp_tools").invoke({
+          connectorId: "notion",
+        }),
+      ),
+    ) as Record<string, unknown>;
+    // The refusal reaches the model as an error result carrying no data.
+    expect(Object.keys(result)).toEqual(["error"]);
+    expect(result.error).toMatch(/not MCP-backed/u);
   });
 
   test("call_mcp_tool forwards the exact tool name and args", async () => {

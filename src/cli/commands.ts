@@ -13,6 +13,7 @@ import {
   listHostTargets,
 } from "../integrations/install/registry.js";
 import type {
+  HostIntegrationComponent,
   HostIntegrationScope,
   HostTargetId,
 } from "../integrations/install/types.js";
@@ -77,6 +78,11 @@ export interface IntegrationsCliCommand {
    * Whether install may replace unmanaged skill content.
    */
   force: boolean;
+
+  /**
+   * Component an install or uninstall manages. List reports both.
+   */
+  component: HostIntegrationComponent;
 }
 
 /**
@@ -97,6 +103,11 @@ export interface McpCliCommand {
    * Host identifier written to run metadata.
    */
   host: string;
+
+  /**
+   * Server to start: `openwiki`, or `openwiki-personal` for `mcp personal`.
+   */
+  server: HostIntegrationComponent;
 }
 
 /**
@@ -197,6 +208,7 @@ export type CliCommand =
       exitCode: 0;
       modelId: string | null;
       print: boolean;
+      pullOnly: boolean;
       scheduledOnly: boolean;
       target: IngestionTarget;
     }
@@ -205,6 +217,13 @@ export type CliCommand =
       action: "delete" | "list" | "pause" | "resume";
       exitCode: 0;
       target: CronTarget | null;
+    }
+  | {
+      kind: "cron";
+      action: "pull-only";
+      exitCode: 0;
+      pullOnly: boolean;
+      target: CronTarget;
     }
   | { kind: "help"; exitCode: 0 }
   | {
@@ -503,12 +522,13 @@ export function parseCommand(argv: string[]): CliCommand {
         kind: "error",
         exitCode: 1,
         message:
-          "Usage: openwiki ingest <source|source-instance|all> [--scheduled] [--print] [--modelId <id>]",
+          "Usage: openwiki ingest <source|source-instance|all> [--pull-only] [--scheduled] [--print] [--modelId <id>]",
       };
     }
 
     let modelId: string | null = null;
     let print = false;
+    let pullOnly = false;
     let scheduledOnly = false;
     const optionArgs = argv.slice(2);
     for (let index = 0; index < optionArgs.length; index += 1) {
@@ -516,6 +536,11 @@ export function parseCommand(argv: string[]): CliCommand {
 
       if (arg === "--print" || arg === "-p") {
         print = true;
+        continue;
+      }
+
+      if (arg === "--pull-only") {
+        pullOnly = true;
         continue;
       }
 
@@ -575,12 +600,37 @@ export function parseCommand(argv: string[]): CliCommand {
       exitCode: 0,
       modelId,
       print,
+      pullOnly,
       scheduledOnly,
       target,
     };
   }
 
   if (argv[0] === "cron") {
+    if (argv[1] === "pull-only") {
+      const target = parseIngestionTarget(argv[2] ?? "");
+      const setting = argv[3];
+      if (
+        target !== "all" ||
+        (setting !== "on" && setting !== "off") ||
+        argv.length > 4
+      ) {
+        return {
+          kind: "error",
+          exitCode: 1,
+          message: "Usage: openwiki cron pull-only all <on|off>",
+        };
+      }
+
+      return {
+        kind: "cron",
+        action: "pull-only",
+        exitCode: 0,
+        pullOnly: setting === "on",
+        target,
+      };
+    }
+
     if (argv[1] === "list" && argv.length === 2) {
       return {
         kind: "cron",
@@ -613,7 +663,7 @@ export function parseCommand(argv: string[]): CliCommand {
         kind: "error",
         exitCode: 1,
         message:
-          "Usage: openwiki cron list | pause all | resume all | delete all",
+          "Usage: openwiki cron list | pause all | resume all | delete all | pull-only all <on|off>",
       };
     }
   }
@@ -661,12 +711,33 @@ function parseIntegrationsCommand(argv: string[]): CliCommand {
   }
 
   let force = false;
+  let component: HostIntegrationComponent = "code";
   let scope: HostIntegrationScope = "user";
   let projectRoot: string | null = null;
   let sawProject = false;
   const options = argv.slice(argumentIndex);
   for (let index = 0; index < options.length; index += 1) {
     const arg = options[index];
+    if (arg === "--personal") {
+      if (action === "list") {
+        return {
+          kind: "error",
+          exitCode: 1,
+          message:
+            "--personal is only valid for integrations install and uninstall; list reports both components.",
+        };
+      }
+      if (component === "personal") {
+        return {
+          kind: "error",
+          exitCode: 1,
+          message: "--personal may only be specified once.",
+        };
+      }
+      component = "personal";
+      continue;
+    }
+
     if (arg === "--force") {
       if (action !== "install") {
         return {
@@ -733,6 +804,15 @@ function parseIntegrationsCommand(argv: string[]): CliCommand {
     };
   }
 
+  if (component === "personal" && scope === "project") {
+    return {
+      kind: "error",
+      exitCode: 1,
+      message:
+        "--personal cannot be combined with --project: the personal wiki belongs to the user, not to a repository.",
+    };
+  }
+
   return {
     kind: "integrations",
     action,
@@ -741,16 +821,21 @@ function parseIntegrationsCommand(argv: string[]): CliCommand {
     scope,
     projectRoot,
     force,
+    component,
   };
 }
 
 /**
- * Parses the internal rootless MCP server command.
+ * Parses the internal rootless MCP server command, or `mcp personal` for the
+ * personal server.
  *
- * @param argv - Arguments following the `mcp` command.
+ * @param mcpArgv - Arguments following the `mcp` command.
  * @returns Parsed MCP command or a stable CLI error.
  */
-function parseMcpCommand(argv: string[]): CliCommand {
+function parseMcpCommand(mcpArgv: string[]): CliCommand {
+  const server: HostIntegrationComponent =
+    mcpArgv[0] === "personal" ? "personal" : "code";
+  const argv = server === "personal" ? mcpArgv.slice(1) : mcpArgv;
   let host = "unknown";
   let sawHost = false;
 
@@ -796,7 +881,7 @@ function parseMcpCommand(argv: string[]): CliCommand {
     };
   }
 
-  return { kind: "mcp", exitCode: 0, host };
+  return { kind: "mcp", exitCode: 0, host, server };
 }
 
 /**
@@ -810,8 +895,8 @@ function integrationUsageError(): CliCommand {
     exitCode: 1,
     message:
       "Usage: openwiki integrations list [--project [path]] | " +
-      `install <${formatSupportedHostTargets("|")}> [--force] [--project [path]] | ` +
-      `uninstall <${formatSupportedHostTargets("|")}> [--project [path]]`,
+      `install <${formatSupportedHostTargets("|")}> [--force] [--personal | --project [path]] | ` +
+      `uninstall <${formatSupportedHostTargets("|")}> [--personal | --project [path]]`,
   };
 }
 
@@ -1199,16 +1284,17 @@ export const helpContent: HelpContent = {
     "openwiki auth <provider>",
     "openwiki auth configure <provider> [--force]",
     "openwiki auth tools <provider>",
-    "openwiki ingest <source|source-instance|all> [--scheduled] [--print] [--modelId <id>]",
+    "openwiki ingest <source|source-instance|all> [--pull-only] [--scheduled] [--print] [--modelId <id>]",
     "openwiki cron list",
     "openwiki cron pause all",
     "openwiki cron resume all",
     "openwiki cron delete all",
+    "openwiki cron pull-only all <on|off>",
     "openwiki ngrok start [url] [--port <port>]",
     "openwiki visualize [path] [--port <port>] [--no-open] [--export <dir>]",
     "openwiki integrations list [--project [path]]",
-    `openwiki integrations install <${formatSupportedHostTargets("|")}> [--force] [--project [path]]`,
-    `openwiki integrations uninstall <${formatSupportedHostTargets("|")}> [--project [path]]`,
+    `openwiki integrations install <${formatSupportedHostTargets("|")}> [--force] [--personal | --project [path]]`,
+    `openwiki integrations uninstall <${formatSupportedHostTargets("|")}> [--personal | --project [path]]`,
   ],
   commands: [
     {
@@ -1274,6 +1360,11 @@ export const helpContent: HelpContent = {
         "Delete saved connector schedules and remove stale local schedule files.",
     },
     {
+      label: "openwiki cron pull-only all <on|off>",
+      description:
+        "Make scheduled ingestion only pull source data, leaving the wiki update to the next ingest or personal --update. Requires OPENWIKI_PERSONAL_CORE=1.",
+    },
+    {
       label: "openwiki ngrok start [url]",
       description:
         "Start an ngrok tunnel for Slack OAuth, optionally using a fixed HTTPS URL.",
@@ -1294,9 +1385,15 @@ export const helpContent: HelpContent = {
         "Install the OpenWiki skill and MCP config globally, or into one project with --project.",
     },
     {
-      label: "openwiki integrations uninstall <host> [--project [path]]",
+      label: "openwiki integrations install <host> --personal",
       description:
-        "Safely remove a global integration, or a project integration with --project.",
+        "Install the separate openwiki-personal skill and MCP server for your personal wiki (user scope only).",
+    },
+    {
+      label:
+        "openwiki integrations uninstall <host> [--personal | --project [path]]",
+      description:
+        "Safely remove a global integration, the personal integration with --personal, or a project integration with --project.",
     },
   ],
   options: [
@@ -1339,6 +1436,11 @@ export const helpContent: HelpContent = {
         "For ingest only: run scheduled-only ingestion for scheduler-managed runs.",
     },
     {
+      label: "--pull-only",
+      description:
+        "For ingest only: pull source data without updating the wiki. The next update reads it. Requires OPENWIKI_PERSONAL_CORE=1.",
+    },
+    {
       label: "--telemetry-file <path>",
       description:
         "Write the exact anonymous telemetry payload to a local JSON file.",
@@ -1378,12 +1480,14 @@ export const helpContent: HelpContent = {
     'openwiki personal --update "Refresh the wiki from configured connectors"',
     "openwiki ingest all",
     "openwiki ingest all --scheduled --print",
+    "openwiki ingest all --pull-only",
     "openwiki ingest web-search",
     "openwiki ingest web-search-2",
     "openwiki cron list",
     "openwiki cron pause all",
     "openwiki cron resume all",
     "openwiki cron delete all",
+    "openwiki cron pull-only all on",
     "openwiki auth slack",
     "openwiki auth gmail",
     "openwiki auth notion",

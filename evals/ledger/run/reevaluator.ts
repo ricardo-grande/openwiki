@@ -12,7 +12,11 @@ import type {
 } from "../core/types.js";
 import { computeDiagnostics } from "../metrics/claims.js";
 import { computeLedgerScore } from "../metrics/score.js";
-import { evaluateCheckpoint, initialCarry } from "./evaluate-checkpoint.js";
+import {
+  checkpointRevision,
+  evaluateCheckpoint,
+  initialCarry,
+} from "./evaluate-checkpoint.js";
 import type { BenchmarkProgressReporter } from "./progress-events.js";
 import {
   loadSavedArtifact,
@@ -74,6 +78,14 @@ export interface SavedRunReevaluationInputs {
    * @default undefined loaded evidence is not re-persisted
    */
   onEvidence?: (evidence: EvidenceCorpus) => void | Promise<void>;
+
+  /**
+   * Durable sink invoked after each checkpoint is scored, before the next
+   * checkpoint begins.
+   *
+   * @default undefined scored checkpoints are persisted only with the result
+   */
+  onCheckpoint?: (checkpoint: CheckpointResult) => void | Promise<void>;
 }
 
 /**
@@ -107,7 +119,7 @@ function savedCheckpoint(
 
 /**
  * Re-run only semantic evaluation over immutable artifacts and source evidence
- * from a completed LEDGER run. Source surface extraction, temporal transitions,
+ * from a completed LEDGER run. Surface extraction, temporal transitions,
  * forgetting watch sets, all per-item judgments, and every measurement are
  * recomputed. The System Under Test is never invoked.
  *
@@ -156,7 +168,7 @@ export async function reevaluateSavedRun(
         checkpointId: checkpoint.id,
         checkpointIndex: index,
         totalCheckpoints: checkpoints.length,
-        commit: checkpoint.commit,
+        revision: checkpointRevision(inputs.benchmark, index),
         label: checkpoint.label,
         command,
         evaluationOnly: true,
@@ -174,23 +186,32 @@ export async function reevaluateSavedRun(
       });
 
       const original = savedCheckpoint(savedResult, checkpoint.id);
+      // Structural checks observe the system's output, not the evaluator, so
+      // they are copied from the saved run like the efficiency observations.
+      if (original.structuralChecks !== undefined) {
+        reportProgress({
+          type: "structural-checks",
+          checkpointId: checkpoint.id,
+          checks: original.structuralChecks,
+        });
+      }
       const {
         checkpointResult,
         history: historyEntry,
         nextCarry,
       } = await evaluateCheckpoint({
-        sourceRepoPath: inputs.benchmark.sourceRepoPath,
-        checkpoint,
+        benchmark: inputs.benchmark,
         index,
         artifact,
         evidence,
-        evidenceMap: inputs.benchmark.evidenceMap,
         evaluationBackend: inputs.evaluationBackend,
         carry,
         efficiency: original.efficiency,
+        structuralChecks: original.structuralChecks,
         reportProgress,
       });
 
+      await inputs.onCheckpoint?.(checkpointResult);
       checkpointResults.push(checkpointResult);
       history.push(historyEntry);
       carry = nextCarry;
@@ -200,6 +221,7 @@ export async function reevaluateSavedRun(
       metadata: {
         benchmarkName: inputs.benchmark.name,
         difficulty: inputs.benchmark.difficulty,
+        benchmarkKind: inputs.benchmark.kind ?? "repository",
         startedAt: inputs.startedAt,
         system: savedResult.metadata.system,
         evaluatorModelId: inputs.evaluatorModelId,

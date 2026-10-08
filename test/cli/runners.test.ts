@@ -14,6 +14,9 @@ import {
 // REAL so the asserted stdout/stderr text is the genuine output.
 vi.mock("../../src/auth/configure.ts", () => ({
   configureAuthProvider: vi.fn(),
+  connectAuthProviderSource: vi.fn(() =>
+    Promise.resolve({ sourceInstanceIds: ["google-1"], status: "created" }),
+  ),
   listAuthProviderTools: vi.fn(),
   shouldDiscoverToolsAfterAuth: vi.fn(() => false),
 }));
@@ -32,7 +35,10 @@ vi.mock("../../src/ingestion/code-mode.ts", () => ({
   ensureCodeModeRepoSetup: vi.fn(),
   runCodeModeConnectors: vi.fn(),
 }));
-vi.mock("../../src/ingestion/ingestion.ts", () => ({
+vi.mock("../../src/ingestion/ingestion.ts", async (importActual) => ({
+  ingestionFailed: (
+    await importActual<typeof import("../../src/ingestion/ingestion.ts")>()
+  ).ingestionFailed,
   runOpenWikiIngestion: vi.fn(),
 }));
 vi.mock("../../src/scheduling/schedules.ts", () => ({
@@ -41,6 +47,7 @@ vi.mock("../../src/scheduling/schedules.ts", () => ({
   listConnectorSchedules: vi.fn(() => []),
   pauseConnectorSchedules: vi.fn(),
   resumeConnectorSchedules: vi.fn(),
+  setConnectorSchedulePullOnly: vi.fn(),
 }));
 vi.mock("../../src/setup/onboarding.ts", () => ({
   readOpenWikiOnboardingConfig: vi.fn(() => ({})),
@@ -62,6 +69,7 @@ vi.mock("../../src/visualize/server.ts", () => ({
 
 import {
   configureAuthProvider,
+  connectAuthProviderSource,
   listAuthProviderTools,
   shouldDiscoverToolsAfterAuth,
 } from "../../src/auth/configure.ts";
@@ -78,6 +86,7 @@ import {
   listConnectorSchedules,
   pauseConnectorSchedules,
   resumeConnectorSchedules,
+  setConnectorSchedulePullOnly,
 } from "../../src/scheduling/schedules.ts";
 import { saveOpenWikiOnboardingConfig } from "../../src/setup/onboarding.ts";
 import { runVisualizeServer } from "../../src/visualize/server.ts";
@@ -344,6 +353,122 @@ describe("runIngestCommand", () => {
     expect(stderr.join("")).toContain("boom");
     expect(process.exitCode).toBe(1);
   });
+
+  test("reports a lock conflict of the wiki update and exits 1, keeping the pulls", async () => {
+    vi.mocked(runOpenWikiIngestion).mockResolvedValue({
+      results: [{ displayName: "Gmail", status: "pulled", rawFiles: ["a"] }],
+      synthesis: {
+        status: "conflict",
+        message:
+          "The personal wiki is being updated by host-claude:mbp:4711 (last active 2 min ago).",
+      },
+    } as never);
+
+    await runIngestCommand(
+      makeCommand("ingest", {
+        modelId: null,
+        print: false,
+        pullOnly: false,
+        scheduledOnly: false,
+        target: "all",
+      }),
+    );
+
+    const output = stdout.join("");
+    expect(output).toContain("Gmail: pulled; 1 raw file(s)");
+    expect(output).toContain(
+      "Personal wiki: conflict; The personal wiki is being updated by host-claude:mbp:4711",
+    );
+    expect(process.exitCode).toBe(1);
+  });
+
+  test("passes --pull-only through and never offers scheduled ingestion a takeover (PLC-013)", async () => {
+    vi.mocked(runOpenWikiIngestion).mockResolvedValue({ results: [] });
+
+    await runIngestCommand(
+      makeCommand("ingest", {
+        modelId: null,
+        print: true,
+        pullOnly: true,
+        scheduledOnly: true,
+        target: "all",
+      }),
+    );
+
+    const options = vi.mocked(runOpenWikiIngestion).mock.calls[0]?.[1];
+    expect(options).toMatchObject({ pullOnly: true, scheduledOnly: true });
+    expect(options).not.toHaveProperty("confirmTakeover");
+    expect(process.exitCode).toBe(0);
+  });
+});
+
+describe("runCronCommand pull-only", () => {
+  test("refuses a pull-only schedule without the lifecycle-core opt-in", async () => {
+    delete process.env.OPENWIKI_PERSONAL_CORE;
+
+    await runCronCommand(
+      makeCommand("cron", {
+        action: "pull-only",
+        pullOnly: true,
+        target: "all",
+      }),
+    );
+
+    expect(stderr.join("")).toContain(
+      "A pull-only schedule requires OPENWIKI_PERSONAL_CORE=1",
+    );
+    expect(setConnectorSchedulePullOnly).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  test("saves the pull-only setting with the opt-in", async () => {
+    process.env.OPENWIKI_PERSONAL_CORE = "1";
+    const config = { sourceInstances: [], sources: {}, version: 1 };
+    vi.mocked(setConnectorSchedulePullOnly).mockResolvedValue({
+      config,
+      connectorIds: ["all"],
+      skippedConnectorIds: [],
+      warnings: [],
+    } as never);
+
+    await runCronCommand(
+      makeCommand("cron", {
+        action: "pull-only",
+        pullOnly: true,
+        target: "all",
+      }),
+    );
+
+    expect(setConnectorSchedulePullOnly).toHaveBeenCalledWith(
+      expect.objectContaining({ pullOnly: true, target: "all" }),
+    );
+    expect(saveOpenWikiOnboardingConfig).toHaveBeenCalledWith(config);
+    expect(stdout.join("")).toContain("Updated");
+    expect(process.exitCode).toBe(0);
+  });
+
+  test("turning pull-only off needs no opt-in", async () => {
+    delete process.env.OPENWIKI_PERSONAL_CORE;
+    vi.mocked(setConnectorSchedulePullOnly).mockResolvedValue({
+      config: { sourceInstances: [], sources: {}, version: 1 },
+      connectorIds: ["all"],
+      skippedConnectorIds: [],
+      warnings: [],
+    } as never);
+
+    await runCronCommand(
+      makeCommand("cron", {
+        action: "pull-only",
+        pullOnly: false,
+        target: "all",
+      }),
+    );
+
+    expect(setConnectorSchedulePullOnly).toHaveBeenCalledWith(
+      expect.objectContaining({ pullOnly: false }),
+    );
+    expect(process.exitCode).toBe(0);
+  });
 });
 
 describe("runAuthCommand", () => {
@@ -414,6 +539,8 @@ describe("runAuthCommand", () => {
     // The env-key NAME is surfaced so the user knows what was written...
     expect(output).toContain("Saved anthropic auth values: ANTHROPIC_API_KEY");
     expect(output).toContain("Config already exists");
+    expect(connectAuthProviderSource).toHaveBeenCalledWith("anthropic");
+    expect(output).toContain("Source created: google-1");
     // ...but no secret value is ever printed.
     expect(output).not.toContain(FAKE_SECRET);
     expect(process.exitCode).toBe(0);

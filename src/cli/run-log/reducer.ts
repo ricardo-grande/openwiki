@@ -24,6 +24,7 @@ export function appendRunLogEvent(
       id: existing?.id ?? nextLogId.current++,
       type: "repository_progress",
       stage: event.stage,
+      ...(event.wiki === undefined ? {} : { wiki: event.wiki }),
       ...(event.resumed === undefined ? {} : { resumed: event.resumed }),
       ...(event.page === undefined ? {} : { page: event.page }),
       ...(event.pageIndex === undefined ? {} : { pageIndex: event.pageIndex }),

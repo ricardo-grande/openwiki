@@ -70,3 +70,69 @@ test("reports current claim state, forgetting, and the auditable score", () => {
   expect(report).not.toContain("Forgetting score");
   expect(report).not.toContain("Coverage");
 });
+
+test("labels personal runs and reports structural checks", () => {
+  const checkpoint = (
+    checkpointId: string,
+    passed: boolean,
+  ): LedgerRunResult["checkpoints"][number] => ({
+    checkpointId,
+    claims: {
+      supported: 1,
+      stale: 0,
+      invented: 0,
+      unverified: 0,
+      total: 1,
+      supportedRate: 1,
+      stalenessRate: 0,
+      hallucinationRate: 0,
+      unverifiedRate: 0,
+    },
+    evaluationCompleteness: { judged: 1, indeterminate: 0, total: 1, rate: 1 },
+    efficiency: { durationMs: 1, churnedLines: 0, skipped: false },
+    structuralChecks: [
+      {
+        id: "quickstart",
+        label: "Quickstart exists",
+        passed: true,
+        details: [],
+      },
+      {
+        id: "canaries",
+        label: "No canary reaches the wiki",
+        passed,
+        details: passed ? [] : ['/commitments.md contains "CANARY"'],
+      },
+    ],
+  });
+  const result: LedgerRunResult = {
+    metadata: {
+      benchmarkName: "inbox-week",
+      difficulty: "medium",
+      benchmarkKind: "personal",
+      startedAt: "2026-01-01T00:00:00.000Z",
+      system: { provider: "anthropic", modelId: "system" },
+      evaluatorModelId: "judge",
+    },
+    checkpoints: [checkpoint("T0", true), checkpoint("T1", false)],
+    score: { value: 1, claimHealth: 1 },
+    diagnostics: {
+      staleKnowledge: {
+        records: [],
+        meanResolvedLifetime: undefined,
+        unresolvedCount: 0,
+      },
+    },
+  };
+
+  const report = formatReport(result);
+
+  expect(report).toContain("Fact forgetting");
+  expect(report).not.toContain("API forgetting");
+  expect(report).toContain("Obsolete trap facts still unresolved: 0");
+  expect(report).toContain("## Structural checks");
+  expect(report).toContain("| Checkpoint | quickstart | canaries |");
+  expect(report).toContain("| T0 | pass | pass |");
+  expect(report).toContain("| T1 | pass | FAIL |");
+  expect(report).toContain('  - /commitments.md contains "CANARY"');
+});

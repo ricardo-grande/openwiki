@@ -16,6 +16,7 @@ vi.mock("../../src/integrations/install/installer.ts", () => ({
 }));
 vi.mock("../../src/integrations/mcp/stdio.ts", () => ({
   runOpenWikiMcp: vi.fn(),
+  runOpenWikiPersonalMcp: vi.fn(),
 }));
 
 import {
@@ -23,7 +24,10 @@ import {
   installHostIntegration,
   uninstallHostIntegration,
 } from "../../src/integrations/install/installer.ts";
-import { runOpenWikiMcp } from "../../src/integrations/mcp/stdio.ts";
+import {
+  runOpenWikiMcp,
+  runOpenWikiPersonalMcp,
+} from "../../src/integrations/mcp/stdio.ts";
 import {
   runIntegrationsCommand,
   runMcpCommand,
@@ -61,17 +65,13 @@ afterEach(() => {
 });
 
 describe("runIntegrationsCommand", () => {
-  test("lists every registry host with a stable tabular status", async () => {
+  test("lists every registry host and component with a stable tabular status", async () => {
+    vi.mocked(getHostIntegrationStatus).mockResolvedValue("not-installed");
     vi.mocked(getHostIntegrationStatus)
       .mockResolvedValueOnce("installed")
+      .mockResolvedValueOnce("not-installed")
       .mockResolvedValueOnce("modified")
-      .mockResolvedValueOnce("not-installed")
-      .mockResolvedValueOnce("not-installed")
-      .mockResolvedValueOnce("not-installed")
-      .mockResolvedValueOnce("not-installed")
-      .mockResolvedValueOnce("not-installed")
-      .mockResolvedValueOnce("not-installed")
-      .mockResolvedValueOnce("not-installed");
+      .mockResolvedValueOnce("installed");
 
     await runIntegrationsCommand({
       kind: "integrations",
@@ -81,23 +81,37 @@ describe("runIntegrationsCommand", () => {
       scope: "user",
       projectRoot: null,
       force: false,
+      component: "code",
     });
 
     expect(stdout.join("")).toBe(
-      "bob\tinstalled\tIBM Bob\n" +
-        "codex\tmodified\tCodex\n" +
-        "claude\tnot-installed\tClaude Code\n" +
-        "opencode\tnot-installed\tOpenCode\n" +
-        "cursor\tnot-installed\tCursor\n" +
-        "kiro\tnot-installed\tKiro\n" +
-        "omp\tnot-installed\tOh My Pi\n" +
-        "antigravity\tnot-installed\tAntigravity CLI\n" +
-        "copilot\tnot-installed\tGitHub Copilot CLI\n",
+      "bob\tcode\tinstalled\tIBM Bob\n" +
+        "bob\tpersonal\tnot-installed\tIBM Bob\n" +
+        "codex\tcode\tmodified\tCodex\n" +
+        "codex\tpersonal\tinstalled\tCodex\n" +
+        "claude\tcode\tnot-installed\tClaude Code\n" +
+        "claude\tpersonal\tnot-installed\tClaude Code\n" +
+        "opencode\tcode\tnot-installed\tOpenCode\n" +
+        "opencode\tpersonal\tnot-installed\tOpenCode\n" +
+        "cursor\tcode\tnot-installed\tCursor\n" +
+        "cursor\tpersonal\tnot-installed\tCursor\n" +
+        "kiro\tcode\tnot-installed\tKiro\n" +
+        "kiro\tpersonal\tnot-installed\tKiro\n" +
+        "omp\tcode\tnot-installed\tOh My Pi\n" +
+        "omp\tpersonal\tnot-installed\tOh My Pi\n" +
+        "antigravity\tcode\tnot-installed\tAntigravity CLI\n" +
+        "antigravity\tpersonal\tnot-installed\tAntigravity CLI\n" +
+        "copilot\tcode\tnot-installed\tGitHub Copilot CLI\n" +
+        "copilot\tpersonal\tnot-installed\tGitHub Copilot CLI\n",
     );
-    expect(getHostIntegrationStatus).toHaveBeenCalledTimes(9);
+    expect(getHostIntegrationStatus).toHaveBeenCalledTimes(18);
     expect(getHostIntegrationStatus).toHaveBeenCalledWith(
       expect.objectContaining({ id: "codex" }),
-      { scope: "user", root: os.homedir() },
+      { scope: "user", root: os.homedir(), component: "code" },
+    );
+    expect(getHostIntegrationStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "codex" }),
+      { scope: "user", root: os.homedir(), component: "personal" },
     );
     expect(process.exitCode).toBe(0);
     expect(stderr.join("")).toBe("");
@@ -110,6 +124,7 @@ describe("runIntegrationsCommand", () => {
       skillDirectory: "/repo/.agents/skills/openwiki",
       mcpConfig: "/repo/.codex/config.toml",
       changed: true,
+      component: "code",
     });
 
     await runIntegrationsCommand({
@@ -120,11 +135,12 @@ describe("runIntegrationsCommand", () => {
       scope: "project",
       projectRoot: "/repo",
       force: true,
+      component: "code",
     });
 
     expect(installHostIntegration).toHaveBeenCalledWith(
       expect.objectContaining({ id: "codex", displayName: "Codex" }),
-      { scope: "project", root: "/repo", force: true },
+      { scope: "project", root: "/repo", force: true, component: "code" },
     );
     expect(stdout.join("")).toBe(
       "install Codex\n" +
@@ -147,6 +163,7 @@ describe("runIntegrationsCommand", () => {
       skillDirectory: "/repo/.claude/skills/openwiki",
       mcpConfig: "/repo/.mcp.json",
       changed: false,
+      component: "code",
       backupPath: "/repo/.claude/skills/openwiki.backup",
     });
 
@@ -158,11 +175,12 @@ describe("runIntegrationsCommand", () => {
       scope: "user",
       projectRoot: null,
       force: false,
+      component: "code",
     });
 
     expect(installHostIntegration).toHaveBeenCalledWith(
       expect.objectContaining({ id: "claude" }),
-      { scope: "user", root: os.homedir(), force: false },
+      { scope: "user", root: os.homedir(), force: false, component: "code" },
     );
     expect(stdout.join("")).toContain("unchanged Claude Code\n");
     expect(stdout.join("")).toContain(
@@ -180,6 +198,7 @@ describe("runIntegrationsCommand", () => {
       skillDirectory: "/repo/.claude/skills/openwiki",
       mcpConfig: "/repo/.mcp.json",
       changed: true,
+      component: "code",
     });
 
     await runIntegrationsCommand({
@@ -190,13 +209,55 @@ describe("runIntegrationsCommand", () => {
       scope: "project",
       projectRoot: "/repo",
       force: false,
+      component: "code",
     });
 
     expect(stdout.join("")).toContain("uninstall Claude Code\n");
     expect(stdout.join("")).not.toContain("Next:");
     expect(uninstallHostIntegration).toHaveBeenCalledWith(
       expect.objectContaining({ id: "claude" }),
-      { scope: "project", root: "/repo" },
+      { scope: "project", root: "/repo", component: "code" },
+    );
+  });
+
+  test("installs the personal component with its own next steps", async () => {
+    vi.mocked(installHostIntegration).mockResolvedValue({
+      target: "claude",
+      scope: "user",
+      component: "personal",
+      skillDirectory: "/home/.claude/skills/openwiki-personal",
+      mcpConfig: "/home/.claude.json",
+      changed: true,
+    });
+
+    await runIntegrationsCommand({
+      kind: "integrations",
+      action: "install",
+      exitCode: 0,
+      target: "claude",
+      scope: "user",
+      projectRoot: null,
+      force: false,
+      component: "personal",
+    });
+
+    expect(installHostIntegration).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "claude" }),
+      {
+        scope: "user",
+        root: os.homedir(),
+        force: false,
+        component: "personal",
+      },
+    );
+    expect(stdout.join("")).toBe(
+      "install Claude Code\n" +
+        "skill: /home/.claude/skills/openwiki-personal\n" +
+        "mcp: /home/.claude.json\n" +
+        "\nOpenWiki personal is ready for Claude Code.\n\n" +
+        "Next:\n" +
+        "  1. Restart Claude Code.\n" +
+        "  2. Confirm the openwiki-personal MCP server is available.\n",
     );
   });
 
@@ -213,6 +274,7 @@ describe("runIntegrationsCommand", () => {
       scope: "project",
       projectRoot: "/repo",
       force: false,
+      component: "code",
     });
 
     expect(stdout.join("")).toBe("");
@@ -236,12 +298,31 @@ describe("runMcpCommand", () => {
         kind: "mcp",
         exitCode: 0,
         host,
+        server: "code",
       });
 
       expect(runOpenWikiMcp).toHaveBeenCalledWith({
         host,
         producerActor: actor,
       });
+      expect(runOpenWikiPersonalMcp).not.toHaveBeenCalled();
     },
   );
+
+  test("starts the personal server for mcp personal", async () => {
+    vi.mocked(runOpenWikiPersonalMcp).mockResolvedValue(undefined);
+
+    await runMcpCommand({
+      kind: "mcp",
+      exitCode: 0,
+      host: "claude",
+      server: "personal",
+    });
+
+    expect(runOpenWikiPersonalMcp).toHaveBeenCalledWith({
+      host: "claude",
+      producerActor: "claude-code",
+    });
+    expect(runOpenWikiMcp).not.toHaveBeenCalled();
+  });
 });
