@@ -24,6 +24,7 @@ import {
 } from "../../retrieval/wiki.js";
 import { HostIntegrationError } from "../core/errors.js";
 import type { ProtocolTool } from "../core/protocol.js";
+import { mapRepositoryRunError } from "../core/session-manager.js";
 import { readPersonalStatus } from "./status.js";
 
 /**
@@ -192,11 +193,15 @@ export function createPersonalRetrievalTools(): ProtocolTool[] {
     {
       name: "openwiki_personal_status",
       description:
-        "Report the personal wiki directory, its last update, the wiki goal, configured source instances, and connector readiness. Reports whether credentials are set, never their values.",
+        "Report the personal wiki directory, its last update, the wiki goal, configured source instances, connector readiness, the synthesis cursor, raw runs pending synthesis, and the active run with its lock. Reports whether credentials are set, never their values.",
       schema: PersonalStatusInput,
       handle: async (input) => {
         PersonalStatusInput.parse(input);
-        return readPersonalStatus();
+        try {
+          return await readPersonalStatus();
+        } catch (error) {
+          throw mapRepositoryRunError(error);
+        }
       },
     },
     {

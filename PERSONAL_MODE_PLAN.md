@@ -86,13 +86,15 @@ independent and can ship at any time.
         store root (page prefix `/`)
   - [x] H2.3 The six tools on `openwiki-personal`, in §3.2 order; `status`
         reports env presence only, never loads the connector environment, and
-        returns the core fields as `null`
+        returns the core fields as `null` until H2.6
   - [x] H2.4 Raw reads in the untrusted envelope, with the 500 KB cap and
         symlink refusal
   - [x] H2.5 Retrieval guidance and the four required statements in
         `SKILL.md` and the personal INSTRUCTIONS
   - The read-only tools are not under the single-operation guard, as in code
     mode. The guard serializes the H3 lifecycle tools.
+  - [x] H2.6 Follow-up after C2: `status` reads the core state formats and
+        fills `synthesisCursor`, `pending`, and `activeRun`
 - [ ] **H3.** Lifecycle tools and full skill
 
 ## Order
@@ -589,6 +591,20 @@ This milestone needs C1 for the layout parameterization.
 
 **Checks:** PHM-007, PHM-008, PHM-009 (for the tools shipped), PHM-012 (raw
 half), and PHM-005 in its staged form.
+
+**Follow-up after C2.** H2 can land before C2, so `status` first ships with
+`synthesisCursor`, `pending`, and `activeRun` set to `null` (S0.1). Once C2
+lands, `status` reads the core state formats (host §3.4) without calling a
+core operation or taking the lock:
+
+- `synthesisCursor` is the cursor's per-connector entries;
+- `pending` counts, per connected connector, the raw runs the next run would
+  consume, using the core's frontier rule (only the newest run when the
+  connector has no cursor);
+- `activeRun` is `.run.json`'s run ID, mode, phase, and start time, with the
+  lock's holder, age, and expiry, or `null` for the lock when no process holds
+  the run;
+- a corrupt state file fails `status` with `invalid_state`.
 
 ### H3. Lifecycle tools and full skill (host §3.2, §3.4–§3.6)
 

@@ -7,6 +7,20 @@ import {
 } from "../../config/openwiki-home.js";
 import { createConnectorRegistry } from "../../connectors/registry.js";
 import type { ConnectorId } from "../../connectors/types.js";
+import { computePersonalFrontier } from "../../generation/personal-run.js";
+import {
+  getPersonalRunLockAgeMs,
+  isPersonalRunLockExpired,
+  readPersonalRunLock,
+} from "../../generation/personal-run-lock.js";
+import {
+  CONNECTOR_ID_PATTERN,
+  readPersonalRunState,
+  readSynthesisCursor,
+  type PersonalRunMode,
+  type PersonalRunPhase,
+  type SynthesisCursorEntry,
+} from "../../generation/personal-run-state.js";
 import { isFileNotFoundError } from "../../platform/fs-errors.js";
 import { readOpenWikiOnboardingConfig } from "../../setup/onboarding.js";
 
@@ -98,6 +112,63 @@ export interface PersonalConnectorReadiness {
 }
 
 /**
+ * The lock on the active run.
+ */
+export interface PersonalRunLockStatus {
+  /**
+   * `<driver>:<hostname>:<pid>` of the process holding the run.
+   */
+  holder: string;
+
+  /**
+   * ISO time of the holder's latest activity.
+   */
+  renewedAt: string;
+
+  /**
+   * Milliseconds since `renewedAt`.
+   */
+  ageMs: number;
+
+  /**
+   * Whether the lock may be taken over: unrenewed for 30 minutes, or held by
+   * a dead process on this machine.
+   */
+  expired: boolean;
+}
+
+/**
+ * The active personal run, from `.run.json` and `.run.lock`.
+ */
+export interface PersonalActiveRunStatus {
+  /**
+   * Run ID.
+   */
+  runId: string;
+
+  /**
+   * `init` or `update`.
+   */
+  mode: PersonalRunMode;
+
+  /**
+   * Current lifecycle phase.
+   */
+  phase: PersonalRunPhase;
+
+  /**
+   * ISO time the run began.
+   */
+  startedAt: string;
+
+  /**
+   * The lock, or `null` when no process holds the run and any driver may
+   * resume it.
+   */
+  lock: PersonalRunLockStatus | null;
+}
+
+/**
  * The `openwiki_personal_status` result (host §3.4).
  */
 export interface PersonalStatus {
@@ -127,28 +198,31 @@ export interface PersonalStatus {
   connectors: PersonalConnectorReadiness[];
 
   /**
-   * The synthesis cursor. `null` until the lifecycle core's state formats
-   * ship (host §3.2, "Delivery staging").
+   * The synthesis cursor: per connector, the raw run it is synthesized
+   * through. A connector no run has consumed is absent.
    */
-  synthesisCursor: null;
+  synthesisCursor: Record<string, SynthesisCursorEntry>;
 
   /**
-   * Raw runs newer than the cursor, per connector. `null` until the core's
-   * state formats ship.
+   * Per connected connector, the raw runs the next run would consume: those
+   * newer than its cursor, or only the newest when it has no cursor (core
+   * §3.2).
    */
-  pending: null;
+  pending: Record<string, number>;
 
   /**
-   * The active run. `null` until the core's state formats ship.
+   * The active run, or `null` when no run is active.
    */
-  activeRun: null;
+  activeRun: PersonalActiveRunStatus | null;
 }
 
 /**
- * Reports the personal wiki, its sources, and connector readiness without
- * loading the connector environment (host §3.1, §3.4).
+ * Reports the personal wiki, its sources, connector readiness, and the
+ * lifecycle core's state without loading the connector environment (host
+ * §3.1, §3.4).
  *
  * @returns The personal status.
+ * @throws RepositoryRunError (`invalid_state`) when a state file is corrupt.
  */
 export async function readPersonalStatus(): Promise<PersonalStatus> {
   const onboarding = await readOpenWikiOnboardingConfig();
@@ -171,6 +245,24 @@ export async function readPersonalStatus(): Promise<PersonalStatus> {
     });
   }
 
+  const cursor = await readSynthesisCursor(openWikiLocalWikiDir);
+  const connected = [
+    ...new Set(
+      onboarding.sourceInstances
+        .filter(
+          ({ connectedAt, connectorId }) =>
+            Boolean(connectedAt) && CONNECTOR_ID_PATTERN.test(connectorId),
+        )
+        .map(({ connectorId }) => connectorId),
+    ),
+  ];
+  const pending: Record<string, number> = Object.fromEntries(
+    connected.sort().map((connectorId) => [connectorId, 0]),
+  );
+  for (const entry of await computePersonalFrontier(connected, cursor)) {
+    pending[entry.connectorId] = entry.rawRunIds.length;
+  }
+
   return {
     wikiDir: openWikiLocalWikiDir,
     lastUpdate: await readLastUpdate(),
@@ -183,9 +275,32 @@ export async function readPersonalStatus(): Promise<PersonalStatus> {
       ingestionGoal: instance.ingestionGoal ?? null,
     })),
     connectors,
-    synthesisCursor: null,
-    pending: null,
-    activeRun: null,
+    synthesisCursor: cursor.connectors,
+    pending,
+    activeRun: await readActiveRun(),
+  };
+}
+
+/**
+ * Reads the active run and its lock.
+ *
+ * @returns The active run, or `null` when `.run.json` is absent.
+ */
+async function readActiveRun(): Promise<PersonalActiveRunStatus | null> {
+  const state = await readPersonalRunState(openWikiLocalWikiDir);
+  if (!state) return null;
+  const lock = await readPersonalRunLock(openWikiLocalWikiDir);
+  return {
+    runId: state.runId,
+    mode: state.mode,
+    phase: state.phase,
+    startedAt: state.startedAt,
+    lock: lock && {
+      holder: lock.holder,
+      renewedAt: lock.renewedAt,
+      ageMs: getPersonalRunLockAgeMs(lock),
+      expired: isPersonalRunLockExpired(lock),
+    },
   };
 }
 

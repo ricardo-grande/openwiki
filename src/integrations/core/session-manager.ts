@@ -296,7 +296,7 @@ export class HostSessionManager {
  * @param error - Unknown error leaving the repository lifecycle core.
  * @returns The mapped integration error or the original unknown error.
  */
-function mapRepositoryRunError(error: unknown): unknown {
+export function mapRepositoryRunError(error: unknown): unknown {
   if (!(error instanceof RepositoryRunError)) return error;
 
   switch (error.code) {

@@ -1,5 +1,12 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -365,8 +372,8 @@ describe("personal retrieval tools", () => {
           ingestionGoal: "Track commitments",
         },
       ],
-      synthesisCursor: null,
-      pending: null,
+      synthesisCursor: {},
+      pending: { google: 1 },
       activeRun: null,
     });
     const google = connectors.find((connector) => connector.id === "google");
@@ -468,5 +475,126 @@ describe("personal retrieval tools", () => {
     for (const value of Object.values(SECRETS)) {
       expect(serialized).not.toContain(value);
     }
+  });
+});
+
+describe("personal status core state", () => {
+  /**
+   * Reads the core fields of `openwiki_personal_status`.
+   *
+   * @returns The synthesis cursor, pending counts, and active run.
+   */
+  async function coreStatus(): Promise<{
+    synthesisCursor: Record<string, { synthesizedThrough: string }>;
+    pending: Record<string, number>;
+    activeRun: {
+      runId: string;
+      mode: string;
+      phase: string;
+      lock: { holder: string; expired: boolean; ageMs: number } | null;
+    } | null;
+  }> {
+    const { synthesisCursor, pending, activeRun } = (await call(
+      "openwiki_personal_status",
+    )) as Awaited<ReturnType<typeof coreStatus>>;
+    return { synthesisCursor, pending, activeRun };
+  }
+
+  /**
+   * Begins a personal update run through the lifecycle core.
+   *
+   * @param holder - Lock holder.
+   * @returns The run ID.
+   */
+  async function beginRun(holder: string): Promise<string> {
+    const { beginPersonalRun } =
+      await import("../../src/generation/personal-run.ts");
+    const result = await beginPersonalRun({
+      mode: "update",
+      actor: { producerActor: "claude", metadataModel: "host-agent/claude" },
+      holder,
+    });
+    if (!("run" in result)) throw new Error("expected an active run");
+    return result.run.state.runId;
+  }
+
+  test("counts raw runs past the cursor", async () => {
+    const { writeSynthesisCursor } =
+      await import("../../src/generation/personal-run-state.ts");
+    const entry = {
+      synthesizedThrough: OLDER_RAW_RUN,
+      at: "2026-10-06T07:00:00.000Z",
+      runId: "00000000-0000-4000-8000-000000000001",
+    };
+    await writeSynthesisCursor(wiki, {
+      schemaVersion: 1,
+      connectors: { google: entry },
+    });
+
+    await expect(coreStatus()).resolves.toEqual({
+      synthesisCursor: { google: entry },
+      pending: { google: 1 },
+      activeRun: null,
+    });
+
+    await writeSynthesisCursor(wiki, {
+      schemaVersion: 1,
+      connectors: { google: { ...entry, synthesizedThrough: RAW_RUN } },
+    });
+    await expect(coreStatus()).resolves.toMatchObject({
+      pending: { google: 0 },
+    });
+  });
+
+  test("reports a corrupt cursor as invalid_state", async () => {
+    await writeFile(path.join(wiki, ".synthesis-cursor.json"), "{", "utf8");
+
+    await expect(call("openwiki_personal_status")).rejects.toMatchObject({
+      code: "invalid_state",
+    });
+  });
+
+  test("reports the active run and its lock", async () => {
+    const holder = `native:${os.hostname()}:${process.pid}`;
+    const runId = await beginRun(holder);
+
+    const { activeRun } = await coreStatus();
+    expect(activeRun).toMatchObject({
+      runId,
+      mode: "update",
+      phase: "planning",
+      lock: { holder, expired: false },
+    });
+    expect(activeRun?.lock?.ageMs).toBeGreaterThanOrEqual(0);
+  });
+
+  test("reports an expired lock, and a released run with no lock", async () => {
+    const runId = await beginRun(`native:${os.hostname()}:${process.pid}`);
+    const lockFile = path.join(wiki, ".run.lock");
+    const lock = JSON.parse(await readFile(lockFile, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    await writeFile(
+      lockFile,
+      JSON.stringify({
+        ...lock,
+        holder: "native:other-host:4711",
+        renewedAt: "2026-01-01T00:00:00.000Z",
+      }),
+      "utf8",
+    );
+
+    await expect(coreStatus()).resolves.toMatchObject({
+      activeRun: {
+        runId,
+        lock: { holder: "native:other-host:4711", expired: true },
+      },
+    });
+
+    await rm(lockFile);
+    await expect(coreStatus()).resolves.toMatchObject({
+      activeRun: { runId, lock: null },
+    });
   });
 });
