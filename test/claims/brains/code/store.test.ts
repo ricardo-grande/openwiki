@@ -376,6 +376,24 @@ describe("ClaimsStore", () => {
     ]);
   });
 
+  test("refuses a symlinked wiki rooted at its directory", async () => {
+    await writeFixture("commitments.md", "# Commitments\n");
+    const linkParent = await mkdtemp(
+      path.join(tmpdir(), "openwiki-claims-link-"),
+    );
+    cleanupDirectories.push(linkParent);
+    const linkedWiki = path.join(linkParent, "wiki");
+    await symlink(rootDir, linkedWiki);
+    const store = new ClaimsStore(linkedWiki, "/");
+
+    await expect(store.readMarkdown("/commitments.md")).rejects.toThrow(
+      ClaimsPersistenceSecurityError,
+    );
+    await expect(store.discoverPages()).rejects.toThrow(
+      ClaimsPersistenceSecurityError,
+    );
+  });
+
   test("requires an absolute repository root", () => {
     expect(() => new ClaimsStore("relative/repository")).toThrow(
       ClaimsPersistenceError,

@@ -412,7 +412,7 @@ describe("OpenWiki MCP lifecycle smoke test", () => {
 });
 
 describe("OpenWiki personal MCP server", () => {
-  test("announces openwiki-personal with personal guidance and no stage-H1 tools", async () => {
+  test("announces openwiki-personal with personal guidance and the stage-H2 tools (PHM-001)", async () => {
     const fixture = await connect(
       PersonalSessionManager.create({ host: "claude" }),
       createOpenWikiPersonalMcpServer,
@@ -420,7 +420,15 @@ describe("OpenWiki personal MCP server", () => {
 
     try {
       expect(fixture.client.getServerVersion()?.name).toBe("openwiki-personal");
-      expect(fixture.client.getServerCapabilities()?.tools).toBeUndefined();
+      const { tools } = await fixture.client.listTools();
+      expect(tools.map((tool) => tool.name)).toEqual([
+        "openwiki_personal_search",
+        "openwiki_personal_read",
+        "openwiki_personal_list_pages",
+        "openwiki_personal_status",
+        "openwiki_personal_list_raw_items",
+        "openwiki_personal_read_raw_item",
+      ]);
       const instructions = fixture.client.getInstructions() ?? "";
       expect(instructions).toContain("user's own personal wiki");
       expect(instructions).toContain("Never use it at task start.");

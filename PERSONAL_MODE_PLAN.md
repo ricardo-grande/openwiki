@@ -77,7 +77,22 @@ independent and can ship at any time.
   - [x] H1.4 Scoped connector environment, loaded on the first fetching
         call, with model-provider keys excluded from every `.env` load
   - [x] H1.5 `openwiki auth <provider>` connects a `sourceInstance`
-- [ ] **H2.** Retrieval and read-only evidence
+- [x] **H2.** Retrieval and read-only evidence
+  - [x] H2.1 Fixed retrieval targets in `src/retrieval/wiki.ts`: search,
+        section and whole-page reads (with `version`), and `list_pages`,
+        without workspace resolution; every front-matter `resource` is
+        searchable
+  - [x] H2.2 `ClaimsStore` refuses a symlinked wiki directory when it is the
+        store root (page prefix `/`)
+  - [x] H2.3 The six tools on `openwiki-personal`, in §3.2 order; `status`
+        reports env presence only, never loads the connector environment, and
+        returns the core fields as `null`
+  - [x] H2.4 Raw reads in the untrusted envelope, with the 500 KB cap and
+        symlink refusal
+  - [x] H2.5 Retrieval guidance and the four required statements in
+        `SKILL.md` and the personal INSTRUCTIONS
+  - The read-only tools are not under the single-operation guard, as in code
+    mode. The guard serializes the H3 lifecycle tools.
 - [ ] **H3.** Lifecycle tools and full skill
 
 ## Order

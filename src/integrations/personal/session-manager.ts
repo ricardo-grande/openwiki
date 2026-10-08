@@ -6,6 +6,7 @@ import {
   validateHostIdentity,
 } from "../core/session-manager.js";
 import { loadScopedConnectorEnv } from "./connector-env.js";
+import { createPersonalRetrievalTools } from "./retrieval-tools.js";
 
 /**
  * Host identity for the personal MCP adapter.
@@ -48,8 +49,8 @@ export interface PersonalRunActor {
  * The personal server's session: at most one active personal run (host §3.2),
  * serialized operations, and the connector environment loaded on first use.
  *
- * This stage registers no tools. The retrieval tools arrive in H2 and the
- * lifecycle tools in H3.
+ * This stage registers the retrieval and read-only evidence tools. The
+ * lifecycle tools, which the single-operation guard serializes, arrive in H3.
  */
 export class PersonalSessionManager {
   /**
@@ -123,7 +124,7 @@ export class PersonalSessionManager {
    * @returns Ordered transport-neutral tool definitions.
    */
   tools(): readonly ProtocolTool[] {
-    return [];
+    return createPersonalRetrievalTools();
   }
 
   /**

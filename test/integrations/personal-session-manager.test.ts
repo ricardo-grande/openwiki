@@ -3,10 +3,17 @@ import { describe, expect, test, vi } from "vitest";
 import { PersonalSessionManager } from "../../src/integrations/personal/session-manager.ts";
 
 describe("PersonalSessionManager", () => {
-  test("registers no tools at stage H1 (PHM-005, staged form)", () => {
+  test("registers the stage-H2 tools in host §3.2 order (PHM-005, staged form)", () => {
     const manager = PersonalSessionManager.create({ host: "claude" });
 
-    expect(manager.tools()).toEqual([]);
+    expect(manager.tools().map((tool) => tool.name)).toEqual([
+      "openwiki_personal_search",
+      "openwiki_personal_read",
+      "openwiki_personal_list_pages",
+      "openwiki_personal_status",
+      "openwiki_personal_list_raw_items",
+      "openwiki_personal_read_raw_item",
+    ]);
   });
 
   test("derives the run actor and the lock holder from the host", () => {

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { marked, type Token, type Tokens } from "marked";
 import { ClaimsStore } from "../claims/brains/code/store.js";
 import {
@@ -256,6 +257,104 @@ export interface WikiReadResponse {
 }
 
 /**
+ * A fixed wiki searched and read without a Git root or workspace resolution,
+ * such as the personal wiki.
+ */
+export interface WikiRetrievalTarget {
+  /**
+   * Stable identity reported on search results.
+   */
+  id: string;
+
+  /**
+   * Absolute directory that the target's virtual pages resolve against.
+   */
+  dir: string;
+
+  /**
+   * Virtual prefix of the target's pages, `/` for a wiki rooted at `dir`.
+   */
+  pagePrefix: string;
+}
+
+/**
+ * Search results from one fixed wiki target.
+ */
+export interface WikiTargetSearchResults {
+  /**
+   * Identity of the searched target.
+   */
+  wiki: string;
+
+  /**
+   * Ranked compact results in descending relevance order.
+   */
+  results: WikiSearchResult[];
+}
+
+/**
+ * One whole page, as authoring needs it.
+ */
+export interface WikiPageReadResponse {
+  /**
+   * Normalized root-relative wiki page.
+   */
+  page: string;
+
+  /**
+   * Complete Markdown, front matter included.
+   */
+  content: string;
+
+  /**
+   * `sha256:` digest of the page bytes, the base version for a later write.
+   */
+  version: string;
+}
+
+/**
+ * Front-matter summary of one concept page.
+ */
+export interface WikiPageSummary {
+  /**
+   * Rooted page path, such as `/people/dana-ruiz.md`.
+   */
+  path: string;
+
+  /**
+   * Front-matter `type`, or `null` when absent.
+   */
+  type: string | null;
+
+  /**
+   * Front-matter `title`, or `null` when absent.
+   */
+  title: string | null;
+
+  /**
+   * Front-matter `description`, or `null` when absent.
+   */
+  description: string | null;
+}
+
+/**
+ * Concept pages of one wiki target below a directory.
+ */
+export interface WikiPageList {
+  /**
+   * Page summaries in stable path order.
+   */
+  pages: WikiPageSummary[];
+}
+
+/**
+ * Which front-matter resources a search indexes: `repository` takes only
+ * `repo://` sources, as paths that source hints can boost; `all` takes every
+ * resource value as an identifier.
+ */
+type SearchableResources = "repository" | "all";
+
+/**
  * Expected, caller-correctable retrieval failure.
  */
 export class WikiRetrievalError extends Error {
@@ -438,22 +537,7 @@ export async function searchWiki(
   root: string,
   request: WikiSearchRequest,
 ): Promise<WikiSearchResponse> {
-  const query = request.query.trim();
-  const limit = request.limit ?? WIKI_RETRIEVAL_LIMITS.defaultSearchResults;
-  if (!query || query.length > WIKI_RETRIEVAL_LIMITS.queryCharacters) {
-    throw new WikiRetrievalError(
-      `Use a non-empty search query of at most ${WIKI_RETRIEVAL_LIMITS.queryCharacters} characters.`,
-    );
-  }
-  if (
-    !Number.isInteger(limit) ||
-    limit < 1 ||
-    limit > WIKI_RETRIEVAL_LIMITS.searchResults
-  ) {
-    throw new WikiRetrievalError(
-      `Search limit must be an integer from 1 to ${WIKI_RETRIEVAL_LIMITS.searchResults}.`,
-    );
-  }
+  const { query, limit } = validateSearchBounds(request);
 
   const paths = (request.paths ?? []).map(normalizeRepositoryPathHint);
   if (paths.length > WIKI_RETRIEVAL_LIMITS.sourcePathHints) {
@@ -493,6 +577,7 @@ export async function searchWiki(
         CODE_WIKI_PAGE_PREFIX,
         terms,
         wiki.id,
+        "repository",
       )),
     );
   }
@@ -529,6 +614,7 @@ export async function searchWiki(
  * @param pagePrefix - Virtual prefix of the wiki's pages.
  * @param terms - Normalized query terms used for excerpt selection.
  * @param wiki - Identity of the wiki supplying the pages.
+ * @param resources - Which front-matter resources are searchable.
  * @returns Searchable sections in stable page order.
  */
 async function wikiSearchUnits(
@@ -536,13 +622,14 @@ async function wikiSearchUnits(
   pagePrefix: string,
   terms: readonly string[],
   wiki: string,
+  resources: SearchableResources,
 ): Promise<SearchUnit[]> {
   const store = new ClaimsStore(root, pagePrefix);
   const units: SearchUnit[] = [];
   for (const page of await store.discoverPages()) {
     if (!isRetrievableWikiPage(page)) continue;
     const markdown = await store.readMarkdown(page);
-    units.push(...searchUnits(markdown, page, terms, wiki));
+    units.push(...searchUnits(markdown, page, terms, wiki, resources));
   }
   return units;
 }
@@ -685,14 +772,140 @@ export async function readWikiSections(
 
   const selectedWiki = await resolveReadableWiki(root, request.wiki?.trim());
 
+  const response = await readTargetSections(
+    { dir: selectedWiki.root, pagePrefix: CODE_WIKI_PAGE_PREFIX },
+    request,
+  );
+  if (request.wiki !== undefined) response.wiki = selectedWiki.id;
+  return response;
+}
+
+/**
+ * Searches one fixed wiki target without workspace resolution. Every
+ * front-matter `resource` value is a searchable identifier, since a target's
+ * pages need not cite `repo://` sources.
+ *
+ * @param target - Wiki to search.
+ * @param request - Validated query and result limit.
+ * @returns Ranked compact section references from the target.
+ * @throws {WikiRetrievalError} When request values are invalid.
+ */
+export async function searchWikiTarget(
+  target: WikiRetrievalTarget,
+  request: Pick<WikiSearchRequest, "query" | "limit">,
+): Promise<WikiTargetSearchResults> {
+  const { limit } = validateSearchBounds(request);
+  const terms = queryTerms(request.query.trim());
+  if (!terms.length) return { wiki: target.id, results: [] };
+
+  const units = await wikiSearchUnits(
+    target.dir,
+    target.pagePrefix,
+    terms,
+    target.id,
+    "all",
+  );
+  if (!units.length) return { wiki: target.id, results: [] };
+
+  const { results } = await rankSearchUnits(units, terms, [], limit, false);
+  return { wiki: target.id, results };
+}
+
+/**
+ * Reads complete heading sections from one fixed wiki target.
+ *
+ * @param target - Wiki supplying the page.
+ * @param request - Page and exact heading anchors to read.
+ * @returns Complete selected sections in request order.
+ * @throws {WikiRetrievalError} When the page or section selection is invalid.
+ */
+export async function readWikiTargetSections(
+  target: WikiRetrievalTarget,
+  request: Omit<WikiReadRequest, "wiki">,
+): Promise<WikiReadResponse> {
+  if (!request.sections.length) {
+    throw new WikiRetrievalError("Provide at least one section anchor.");
+  }
+  if (request.sections.length > WIKI_RETRIEVAL_LIMITS.sectionAnchors) {
+    throw new WikiRetrievalError(
+      `Read accepts at most ${WIKI_RETRIEVAL_LIMITS.sectionAnchors} section anchors.`,
+    );
+  }
+  return readTargetSections(target, request);
+}
+
+/**
+ * Reads one whole page of a fixed wiki target, front matter included, with
+ * the version a later write must name as its base.
+ *
+ * @param target - Wiki supplying the page.
+ * @param page - Root-relative or rooted page path.
+ * @returns The page's complete Markdown and its `sha256:` version.
+ * @throws {WikiRetrievalError} When the page path is invalid.
+ */
+export async function readWikiTargetPage(
+  target: WikiRetrievalTarget,
+  page: string,
+): Promise<WikiPageReadResponse> {
+  const normalizedPage = normalizeRetrievableWikiPage(page, target.pagePrefix);
+  const content = await new ClaimsStore(
+    target.dir,
+    target.pagePrefix,
+  ).readMarkdown(normalizedPage);
+  return {
+    page: normalizedPage.slice(1),
+    content,
+    version: `sha256:${createHash("sha256").update(content, "utf8").digest("hex")}`,
+  };
+}
+
+/**
+ * Lists the concept pages of a fixed wiki target below one directory.
+ *
+ * @param target - Wiki whose pages are listed.
+ * @param dir - Rooted or root-relative directory; absent lists every page.
+ * @returns Page paths and front-matter summaries in stable path order.
+ * @throws {WikiRetrievalError} When the directory path is invalid.
+ */
+export async function listWikiTargetPages(
+  target: WikiRetrievalTarget,
+  dir?: string,
+): Promise<WikiPageList> {
+  const directory = normalizeWikiDirectory(dir ?? "/", target.pagePrefix);
+  const store = new ClaimsStore(target.dir, target.pagePrefix);
+  const pages: WikiPageSummary[] = [];
+  for (const page of await store.discoverPages()) {
+    if (!isRetrievableWikiPage(page) || !page.startsWith(directory)) continue;
+    const fields = parseFrontmatterFields(await store.readMarkdown(page)) ?? {};
+    pages.push({
+      path: page.slice(target.pagePrefix.length - 1),
+      type: stringField(fields.type) ?? null,
+      title: stringField(fields.title) ?? null,
+      description: stringField(fields.description) ?? null,
+    });
+  }
+  return { pages };
+}
+
+/**
+ * Reads complete heading sections from one resolved wiki.
+ *
+ * @param target - Directory and page prefix of the wiki.
+ * @param request - Page and exact heading anchors to read.
+ * @returns Complete selected sections in request order.
+ */
+async function readTargetSections(
+  target: Pick<WikiRetrievalTarget, "dir" | "pagePrefix">,
+  request: Omit<WikiReadRequest, "wiki">,
+): Promise<WikiReadResponse> {
   const normalizedPage = normalizeRetrievableWikiPage(
     request.page,
-    CODE_WIKI_PAGE_PREFIX,
+    target.pagePrefix,
   );
   const requested = request.sections.map(normalizeSectionAnchor);
   const markdown = await new ClaimsStore(
-    selectedWiki.root,
-    CODE_WIKI_PAGE_PREFIX,
+    target.dir,
+    target.pagePrefix,
   ).readMarkdown(normalizedPage);
   const body = markdownBody(markdown);
   const tokens = marked.lexer(body);
@@ -706,15 +919,65 @@ export async function readWikiSections(
     );
   }
 
-  const response: WikiReadResponse = {
+  return {
     page: normalizedPage.slice(1),
     sections: requested.map((section) => ({
       section,
       content: available.get(section) as string,
     })),
   };
-  if (request.wiki !== undefined) response.wiki = selectedWiki.id;
-  return response;
+}
+
+/**
+ * Validates a search query and result limit.
+ *
+ * @param request - Caller-supplied query and optional limit.
+ * @returns The trimmed query and the effective limit.
+ * @throws {WikiRetrievalError} When either value is out of bounds.
+ */
+function validateSearchBounds(
+  request: Pick<WikiSearchRequest, "query" | "limit">,
+): { query: string; limit: number } {
+  const query = request.query.trim();
+  const limit = request.limit ?? WIKI_RETRIEVAL_LIMITS.defaultSearchResults;
+  if (!query || query.length > WIKI_RETRIEVAL_LIMITS.queryCharacters) {
+    throw new WikiRetrievalError(
+      `Use a non-empty search query of at most ${WIKI_RETRIEVAL_LIMITS.queryCharacters} characters.`,
+    );
+  }
+  if (
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > WIKI_RETRIEVAL_LIMITS.searchResults
+  ) {
+    throw new WikiRetrievalError(
+      `Search limit must be an integer from 1 to ${WIKI_RETRIEVAL_LIMITS.searchResults}.`,
+    );
+  }
+  return { query, limit };
+}
+
+/**
+ * Normalizes a directory filter to a rooted prefix ending in `/`.
+ *
+ * @param dir - Rooted or root-relative directory.
+ * @param pagePrefix - Virtual prefix of the wiki's pages.
+ * @returns Virtual directory prefix that page paths can be matched against.
+ * @throws {WikiRetrievalError} When the directory is hidden or traverses.
+ */
+function normalizeWikiDirectory(dir: string, pagePrefix: string): string {
+  const slashed = dir.trim().replaceAll("\\", "/");
+  const segments = slashed.split("/").filter(Boolean);
+  if (
+    slashed.length > WIKI_RETRIEVAL_LIMITS.pageCharacters ||
+    segments.some((segment) => segment.startsWith(".")) ||
+    [...slashed].some((character) => character < " ")
+  ) {
+    throw new WikiRetrievalError(
+      "Directory must be a wiki path without dot segments.",
+    );
+  }
+  return `${pagePrefix}${segments.map((segment) => `${segment}/`).join("")}`;
 }
 
 /**
@@ -734,6 +997,7 @@ function wikiIdentity(wiki: WikiSearchIdentity): WikiSearchIdentity {
  * @param page - Canonical virtual page path.
  * @param terms - Normalized query terms used for excerpt selection.
  * @param wiki - Identity of the repository wiki supplying the page.
+ * @param resources - Which front-matter resources are searchable.
  * @returns Searchable introduction and H2 sections, or a page-level H1 fallback.
  */
 function searchUnits(
@@ -741,6 +1005,7 @@ function searchUnits(
   page: string,
   terms: readonly string[],
   wiki: string,
+  resources: SearchableResources,
 ): SearchUnit[] {
   const fields = parseFrontmatterFields(markdown) ?? {};
   if (fields.status === "deprecated") return [];
@@ -751,7 +1016,10 @@ function searchUnits(
   const title = stringField(fields.title) ?? relativePage;
   const description = stringField(fields.description) ?? "";
   const tags = stringArray(fields.tags);
-  const sourcePaths = sourceResources(fields).map(repositoryPathFromResource);
+  const sourcePaths =
+    resources === "repository"
+      ? sourceResources(fields).map(repositoryPathFromResource)
+      : allResources(fields);
   const tokens = marked.lexer(body);
   const headings = headingSections(tokens);
   const sections = headings.filter(
@@ -1161,6 +1429,25 @@ function sourceResources(fields: Record<string, unknown>): string[] {
       ? [resource]
       : [];
   });
+}
+
+/**
+ * Extracts every resource URI from parsed OKF frontmatter: the page's own
+ * `resource` and each source's, whatever their scheme.
+ *
+ * @param fields - Parsed frontmatter fields.
+ * @returns Resource URIs in authored order.
+ */
+function allResources(fields: Record<string, unknown>): string[] {
+  const sources = Array.isArray(fields.sources) ? fields.sources : [];
+  return [
+    fields.resource,
+    ...sources.map((value: unknown) =>
+      value && typeof value === "object" && !Array.isArray(value)
+        ? (value as Record<string, unknown>).resource
+        : undefined,
+    ),
+  ].flatMap((resource) => stringField(resource) ?? []);
 }
 
 /**

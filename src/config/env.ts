@@ -328,6 +328,20 @@ export async function loadOpenWikiEnv(): Promise<EnvMap> {
   return env;
 }
 
+/**
+ * Names the keys that `~/.openwiki/.env` sets to a non-empty value, without
+ * loading them into `process.env` and without returning any value.
+ *
+ * @returns Keys with a saved value.
+ */
+export async function listSavedOpenWikiEnvKeys(): Promise<Set<string>> {
+  return new Set(
+    Object.entries(await readOpenWikiEnv())
+      .filter(([, value]) => value.trim() !== "")
+      .map(([key]) => key),
+  );
+}
+
 export async function getCredentialDiagnostics(): Promise<
   CredentialDiagnostic[]
 > {

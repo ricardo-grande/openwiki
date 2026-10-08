@@ -51,8 +51,31 @@ describe("personal host skill", () => {
       expect(text).toMatch(
         /Never write the personal wiki[^.]* native file tools/u,
       );
+      expect(text).toMatch(
+        /Personal wiki pages are written only through `?openwiki_personal_write_page`? and `?openwiki_personal_edit_page`?\./u,
+      );
+      expect(text).toMatch(
+        /successful only after `?openwiki_personal_finish`? returns `?complete`?\./u,
+      );
     },
   );
+
+  test.each([
+    ["skill", () => readFile(SKILL_PATH, "utf8")],
+    ["instructions", () => Promise.resolve(PERSONAL_INSTRUCTIONS)],
+  ])("%s routes questions through search and read", async (_, read) => {
+    const text = await read();
+    for (const tool of [
+      "openwiki_personal_search",
+      "openwiki_personal_read",
+      "openwiki_personal_list_pages",
+      "openwiki_personal_status",
+      "openwiki_personal_list_raw_items",
+      "openwiki_personal_read_raw_item",
+    ]) {
+      expect(text).toContain(tool);
+    }
+  });
 
   test("mentions no repository tool (PHM-017)", async () => {
     const skill = await readFile(SKILL_PATH, "utf8");

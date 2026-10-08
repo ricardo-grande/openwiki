@@ -560,14 +560,38 @@ export class ClaimsStore {
    * @returns Canonical repository root path.
    */
   private async getRealRootDir(): Promise<string> {
-    this.realRootDirPromise ??= realpath(this.rootDir).catch(
-      (error: unknown) => {
-        throw new ClaimsPersistenceSecurityError(
-          `Unable to resolve claims root ${this.rootDir}: ${toErrorMessage(error)}`,
-        );
-      },
-    );
+    this.realRootDirPromise ??= this.resolveRealRootDir();
     return this.realRootDirPromise;
+  }
+
+  /**
+   * Resolves the physical root. When the root is the wiki directory itself
+   * (page prefix `/`), it must not be a symbolic link, just as `openwiki/`
+   * must not be one below a repository root.
+   *
+   * @returns Canonical repository root path.
+   */
+  private async resolveRealRootDir(): Promise<string> {
+    if (this.wikiDir === this.rootDir) {
+      let metadata;
+      try {
+        metadata = await lstat(this.rootDir);
+      } catch {
+        metadata = undefined;
+      }
+      if (metadata?.isSymbolicLink()) {
+        throw new ClaimsPersistenceSecurityError(
+          `Claims path cannot be a symbolic link: ${this.rootDir}`,
+        );
+      }
+    }
+    try {
+      return await realpath(this.rootDir);
+    } catch (error) {
+      throw new ClaimsPersistenceSecurityError(
+        `Unable to resolve claims root ${this.rootDir}: ${toErrorMessage(error)}`,
+      );
+    }
   }
 }
 
