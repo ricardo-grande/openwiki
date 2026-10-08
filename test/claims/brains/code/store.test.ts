@@ -358,6 +358,24 @@ describe("ClaimsStore", () => {
     );
   });
 
+  test("reads a wiki rooted at its directory with the root page prefix", async () => {
+    await writeFixture("commitments.md", "# Commitments\n");
+    await writeFixture("people/ana.md", "# Ana\n");
+    await writeFixture("index.md", "# Index\n");
+    await writeFixture("openwiki/stray.md", "# Stray\n");
+    const store = new ClaimsStore(rootDir, "/");
+
+    await expect(store.discoverPages()).resolves.toEqual([
+      "/commitments.md",
+      "/openwiki/stray.md",
+      "/people/ana.md",
+    ]);
+    await expect(store.readMarkdown("people/ana.md")).resolves.toBe("# Ana\n");
+    await expect(new ClaimsStore(rootDir).discoverPages()).resolves.toEqual([
+      "/openwiki/stray.md",
+    ]);
+  });
+
   test("requires an absolute repository root", () => {
     expect(() => new ClaimsStore("relative/repository")).toThrow(
       ClaimsPersistenceError,

@@ -18,6 +18,7 @@ import {
 } from "../../core/errors.js";
 import {
   CLAIMS_DIRECTORY,
+  CODE_WIKI_PAGE_PREFIX,
   isGroundedWikiPage,
   normalizeWikiPagePath,
   toClaimsSidecarRelativePath,
@@ -104,7 +105,17 @@ export class ClaimsStore {
    */
   private readonly claimsDir: string;
 
-  constructor(rootDir: string) {
+  /**
+   * Virtual prefix of the wiki's pages.
+   */
+  private readonly pagePrefix: string;
+
+  /**
+   * @param rootDir - Absolute directory that virtual page paths resolve against.
+   * @param pagePrefix - Virtual prefix of the wiki's pages: `/openwiki/` for a
+   *   repository root, or `/` when `rootDir` is the wiki directory itself.
+   */
+  constructor(rootDir: string, pagePrefix: string = CODE_WIKI_PAGE_PREFIX) {
     if (!path.isAbsolute(rootDir)) {
       throw new ClaimsPersistenceError(
         "Claims store root must be an absolute path.",
@@ -112,7 +123,8 @@ export class ClaimsStore {
     }
 
     this.rootDir = path.resolve(rootDir);
-    this.wikiDir = path.join(this.rootDir, "openwiki");
+    this.pagePrefix = pagePrefix;
+    this.wikiDir = path.join(this.rootDir, pagePrefix.slice(1, -1));
     this.claimsDir = path.join(this.wikiDir, CLAIMS_DIRECTORY);
   }
 
@@ -128,8 +140,8 @@ export class ClaimsStore {
     }
     const files = await collectRegularFiles(wikiDir, false);
     return files
-      .map((file) => `/openwiki/${file.replace(/\\/gu, "/")}`)
-      .filter(isGroundedWikiPage)
+      .map((file) => `${this.pagePrefix}${file.replace(/\\/gu, "/")}`)
+      .filter((page) => isGroundedWikiPage(page, this.pagePrefix))
       .sort((left, right) => left.localeCompare(right));
   }
 
@@ -148,9 +160,9 @@ export class ClaimsStore {
       .filter((file) => file.endsWith(".json"))
       .map(
         (file) =>
-          `/openwiki/${file.replace(/\\/gu, "/").replace(/\.json$/u, ".md")}`,
+          `${this.pagePrefix}${file.replace(/\\/gu, "/").replace(/\.json$/u, ".md")}`,
       )
-      .filter(isGroundedWikiPage)
+      .filter((page) => isGroundedWikiPage(page, this.pagePrefix))
       .sort((left, right) => left.localeCompare(right));
   }
 
@@ -204,7 +216,7 @@ export class ClaimsStore {
     for (const page of pages) {
       const persisted = await this.loadPage(page);
       if (persisted) {
-        result.set(normalizeWikiPagePath(page), persisted);
+        result.set(normalizeWikiPagePath(page, this.pagePrefix), persisted);
       }
     }
     return result;
@@ -217,11 +229,14 @@ export class ClaimsStore {
    * @returns Algorithm-prefixed page version.
    */
   async hashPage(page: string): Promise<string> {
-    const pagePath = path.join(this.rootDir, toRepositoryPagePath(page));
+    const pagePath = path.join(
+      this.rootDir,
+      toRepositoryPagePath(page, this.pagePrefix),
+    );
     const physicalPage = await this.resolveExistingRegularFile(pagePath);
     if (!physicalPage) {
       throw new ClaimsPageMissingError(
-        `Unable to hash ${normalizeWikiPagePath(page)}: file does not exist`,
+        `Unable to hash ${normalizeWikiPagePath(page, this.pagePrefix)}: file does not exist`,
       );
     }
     try {
@@ -229,7 +244,7 @@ export class ClaimsStore {
       return `sha256:${createHash("sha256").update(content).digest("hex")}`;
     } catch (error) {
       throw new ClaimsPersistenceError(
-        `Unable to hash ${normalizeWikiPagePath(page)}: ${toErrorMessage(error)}`,
+        `Unable to hash ${normalizeWikiPagePath(page, this.pagePrefix)}: ${toErrorMessage(error)}`,
       );
     }
   }
@@ -241,8 +256,11 @@ export class ClaimsStore {
    * @returns Exact UTF-8 Markdown bytes as text.
    */
   async readMarkdown(page: string): Promise<string> {
-    const normalizedPage = normalizeWikiPagePath(page);
-    const pagePath = path.join(this.rootDir, toRepositoryPagePath(page));
+    const normalizedPage = normalizeWikiPagePath(page, this.pagePrefix);
+    const pagePath = path.join(
+      this.rootDir,
+      toRepositoryPagePath(page, this.pagePrefix),
+    );
     const physicalPage = await this.resolveExistingRegularFile(pagePath);
     if (!physicalPage) {
       throw new ClaimsPageMissingError(
@@ -268,8 +286,11 @@ export class ClaimsStore {
    * @param content - Complete replacement Markdown.
    */
   async writeMarkdown(page: string, content: string): Promise<void> {
-    const normalizedPage = normalizeWikiPagePath(page);
-    const pagePath = path.join(this.rootDir, toRepositoryPagePath(page));
+    const normalizedPage = normalizeWikiPagePath(page, this.pagePrefix);
+    const pagePath = path.join(
+      this.rootDir,
+      toRepositoryPagePath(page, this.pagePrefix),
+    );
     const physicalPage = await this.resolveExistingRegularFile(pagePath);
     if (!physicalPage) {
       throw new ClaimsPageMissingError(
@@ -292,7 +313,7 @@ export class ClaimsStore {
    * @param pageClaims - Complete synchronized page state.
    */
   async writePage(page: string, pageClaims: PageClaims): Promise<void> {
-    const normalizedPage = normalizeWikiPagePath(page);
+    const normalizedPage = normalizeWikiPagePath(page, this.pagePrefix);
     const validated = validatePageClaims(
       pageClaims,
       `claims for ${normalizedPage}`,
@@ -342,7 +363,7 @@ export class ClaimsStore {
       await rm(path.join(directory, path.basename(sidecar)), { force: true });
     } catch (error) {
       throw new ClaimsPersistenceError(
-        `Unable to remove claims for ${normalizeWikiPagePath(page)}: ${toErrorMessage(error)}`,
+        `Unable to remove claims for ${normalizeWikiPagePath(page, this.pagePrefix)}: ${toErrorMessage(error)}`,
       );
     }
   }
@@ -354,7 +375,10 @@ export class ClaimsStore {
    * @returns Absolute contained sidecar path.
    */
   private sidecarPath(page: string): string {
-    return path.join(this.claimsDir, toClaimsSidecarRelativePath(page));
+    return path.join(
+      this.claimsDir,
+      toClaimsSidecarRelativePath(page, this.pagePrefix),
+    );
   }
 
   /**
@@ -516,8 +540,11 @@ export class ClaimsStore {
       realRootDir,
       path.relative(this.rootDir, absolutePath),
     );
+    // The root itself is contained: a wiki rooted at its directory (page
+    // prefix `/`) discovers its pages from the store root.
     if (
-      !isPathInside(realRootDir, physicalPath) ||
+      (physicalPath !== realRootDir &&
+        !isPathInside(realRootDir, physicalPath)) ||
       physicalPath !== expectedPath
     ) {
       throw new ClaimsPersistenceSecurityError(

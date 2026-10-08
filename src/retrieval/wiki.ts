@@ -1,6 +1,9 @@
 import { marked, type Token, type Tokens } from "marked";
 import { ClaimsStore } from "../claims/brains/code/store.js";
-import { normalizeWikiPagePath } from "../claims/brains/code/paths.js";
+import {
+  CODE_WIKI_PAGE_PREFIX,
+  normalizeWikiPagePath,
+} from "../claims/brains/code/paths.js";
 import { parseFrontmatterFields } from "../okf/frontmatter.js";
 import {
   resolveReadableWiki,
@@ -88,9 +91,15 @@ const STOP_WORDS = new Set(
 
 /**
  * Stable correction guidance for pages outside the public retrieval surface.
+ *
+ * @param pagePrefix - Virtual prefix of the wiki's pages.
+ * @returns Correction message naming the wiki's root.
  */
-const INVALID_WIKI_PAGE_MESSAGE =
-  "Page must be a non-structural Markdown path below openwiki/.";
+function invalidWikiPageMessage(pagePrefix: string): string {
+  return pagePrefix === "/"
+    ? "Page must be a non-structural Markdown path in the wiki."
+    : `Page must be a non-structural Markdown path below ${pagePrefix.slice(1)}.`;
+}
 
 /**
  * Search controls shared by direct callers and the MCP adapter.
@@ -478,12 +487,14 @@ export async function searchWiki(
 
   const units: SearchUnit[] = [];
   for (const wiki of scope.wikis) {
-    const store = new ClaimsStore(wiki.root);
-    for (const page of await store.discoverPages()) {
-      if (!isRetrievableWikiPage(page)) continue;
-      const markdown = await store.readMarkdown(page);
-      units.push(...searchUnits(markdown, page, terms, wiki.id));
-    }
+    units.push(
+      ...(await wikiSearchUnits(
+        wiki.root,
+        CODE_WIKI_PAGE_PREFIX,
+        terms,
+        wiki.id,
+      )),
+    );
   }
   if (!units.length) {
     return scope.workspace
@@ -509,6 +520,31 @@ export async function searchWiki(
         wikis: scope.wikis.map(wikiIdentity),
       }
     : response;
+}
+
+/**
+ * Converts every retrievable page of one wiki into searchable sections.
+ *
+ * @param root - Absolute directory the wiki's virtual pages resolve against.
+ * @param pagePrefix - Virtual prefix of the wiki's pages.
+ * @param terms - Normalized query terms used for excerpt selection.
+ * @param wiki - Identity of the wiki supplying the pages.
+ * @returns Searchable sections in stable page order.
+ */
+async function wikiSearchUnits(
+  root: string,
+  pagePrefix: string,
+  terms: readonly string[],
+  wiki: string,
+): Promise<SearchUnit[]> {
+  const store = new ClaimsStore(root, pagePrefix);
+  const units: SearchUnit[] = [];
+  for (const page of await store.discoverPages()) {
+    if (!isRetrievableWikiPage(page)) continue;
+    const markdown = await store.readMarkdown(page);
+    units.push(...searchUnits(markdown, page, terms, wiki));
+  }
+  return units;
 }
 
 /**
@@ -649,11 +685,15 @@ export async function readWikiSections(
 
   const selectedWiki = await resolveReadableWiki(root, request.wiki?.trim());
 
-  const normalizedPage = normalizeRetrievableWikiPage(request.page);
-  const requested = request.sections.map(normalizeSectionAnchor);
-  const markdown = await new ClaimsStore(selectedWiki.root).readMarkdown(
-    normalizedPage,
+  const normalizedPage = normalizeRetrievableWikiPage(
+    request.page,
+    CODE_WIKI_PAGE_PREFIX,
   );
+  const requested = request.sections.map(normalizeSectionAnchor);
+  const markdown = await new ClaimsStore(
+    selectedWiki.root,
+    CODE_WIKI_PAGE_PREFIX,
+  ).readMarkdown(normalizedPage);
   const body = markdownBody(markdown);
   const tokens = marked.lexer(body);
   const available = new Map(
@@ -983,22 +1023,26 @@ function repositoryPathFromResource(value: string): string {
 /**
  * Normalizes a caller-supplied page to the public retrieval subset.
  *
- * @param page - Repository-relative wiki page selected from search.
- * @returns Canonical virtual page path beginning with `/openwiki/`.
+ * @param page - Root-relative wiki page selected from search.
+ * @param pagePrefix - Virtual prefix of the wiki's pages.
+ * @returns Canonical virtual page path beginning with `pagePrefix`.
  * @throws {WikiRetrievalError} When the path is structural, hidden, or unsafe.
  */
-function normalizeRetrievableWikiPage(page: string): string {
+function normalizeRetrievableWikiPage(
+  page: string,
+  pagePrefix: string,
+): string {
   let normalized: string;
   try {
-    normalized = normalizeWikiPagePath(page);
+    normalized = normalizeWikiPagePath(page, pagePrefix);
   } catch {
-    throw new WikiRetrievalError(INVALID_WIKI_PAGE_MESSAGE);
+    throw new WikiRetrievalError(invalidWikiPageMessage(pagePrefix));
   }
   if (
     page.trim().length > WIKI_RETRIEVAL_LIMITS.pageCharacters ||
     !isRetrievableWikiPage(normalized)
   ) {
-    throw new WikiRetrievalError(INVALID_WIKI_PAGE_MESSAGE);
+    throw new WikiRetrievalError(invalidWikiPageMessage(pagePrefix));
   }
   return normalized;
 }
