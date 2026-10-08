@@ -544,8 +544,8 @@ vi.mock("../../src/generation/repository-run.js", () => ({
   },
 }));
 
+import { isRateLimitError } from "../../src/agent/page-workers.ts";
 import {
-  isRateLimitError,
   parseWorkerToolEvent,
   PLANNER_AGENT_NAME,
   runNativeRepositoryGeneration,

@@ -71,6 +71,13 @@ import {
   type RepositoryRunMode,
   type RepositoryRunState,
 } from "./run-state.js";
+import { requirePendingJob } from "./shared/pending-job.js";
+import {
+  isNotFoundBackendError,
+  readPageMarkdownSnapshot,
+  restorePageMarkdown,
+} from "./shared/page-snapshot.js";
+import { withRunMutation } from "./shared/run-mutation.js";
 
 /**
  * Inputs required to start or resume one repository-generation run.
@@ -294,72 +301,6 @@ export interface NoopBeginView {
  */
 export type BeginRepositoryRunResult =
   { view: ActiveBeginView; run: ActiveRepositoryRun } | { view: NoopBeginView };
-
-/**
- * Process-local serialization of durable run mutations, keyed by run identity.
- *
- * Page workers may run concurrently, but every read-modify-write of the run
- * checkpoint, the page manifest, and the shared Claims session must observe
- * the previous mutation's result. Keying by object identity keeps the durable
- * state shape unchanged and lets the drivers stay unaware of the lock.
- */
-const runMutations = new WeakMap<ActiveRepositoryRun, Promise<void>>();
-
-/**
- * Runs one durable mutation after every earlier mutation on the same run.
- *
- * The model-owned work of a page worker happens outside this lock; only the
- * bookkeeping that advances shared state is serialized, so concurrent workers
- * cost nothing here while still never losing a completion.
- *
- * @param run - Active run whose shared state the operation mutates.
- * @param operation - Mutation that reads `run.state` only once it holds the lock.
- * @returns The operation's result.
- */
-async function withRunMutation<T>(
-  run: ActiveRepositoryRun,
-  operation: () => Promise<T>,
-): Promise<T> {
-  const previous = runMutations.get(run) ?? Promise.resolve();
-  let release: () => void = () => undefined;
-  const current = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  runMutations.set(run, current);
-  await previous;
-  try {
-    return await operation();
-  } finally {
-    release();
-  }
-}
-
-/**
- * Finds one page job that a worker may still act on.
- *
- * Any pending job qualifies, not only the first one in queue order, so several
- * workers can own distinct jobs at the same time. Ownership is process-local;
- * the durable checkpoint only records `pending`, `skipped`, and `complete`.
- *
- * @param run - Active run with a durably installed plan.
- * @param jobId - Page job identifier supplied by the worker.
- * @param action - Past-tense verb named in the rejection message.
- * @returns The pending page job.
- */
-function requirePendingJob(
-  run: ActiveRepositoryRun,
-  jobId: string,
-  action: string,
-): PageJob {
-  const job = run.state.plan?.pages.find(({ id }) => id === jobId);
-  if (!job || job.status !== "pending") {
-    throw new RepositoryRunError(
-      "invalid_state",
-      `Only a pending OpenWiki page job may be ${action}.`,
-    );
-  }
-  return job;
-}
 
 /**
  * Projects the active run's immutable source identity into page coverage.
@@ -610,17 +551,6 @@ export async function beginRepositoryRun(
     // clean up.
     throw error;
   }
-}
-
-/**
- * True when a backend result error indicates a file does not exist.
- *
- * Matches both the standard `"file_not_found"` error code used by some backends
- * and the human-readable `"Error: File '...' not found"` string returned by
- * DeepAgents' filesystem backends (see #765).
- */
-function isNotFoundBackendError(error: string): boolean {
-  return error === "file_not_found" || error.includes("not found");
 }
 
 /**
@@ -1113,7 +1043,7 @@ export function inspectRepositoryPageClaims(
   run: ActiveRepositoryRun,
   jobId: string,
 ): { page: string; claims: InspectedClaim[] } {
-  const current = requirePendingJob(run, jobId, "inspected");
+  const current = requirePendingJob(run.state.plan?.pages, jobId, "inspected");
   return {
     page: current.path,
     claims: run.claimsRuntime.session.inspectClaims(current.path),
@@ -1127,28 +1057,12 @@ export async function captureRepositoryPageSnapshot(
   run: ActiveRepositoryRun,
   jobId: string,
 ): Promise<RepositoryPageSnapshot> {
-  const current = requirePendingJob(run, jobId, "snapshotted");
-
-  let markdown: string | null = null;
-  try {
-    const read = await run.backend.readRaw(current.path);
-    if (read.error && !isNotFoundBackendError(read.error)) {
-      throw new RepositoryRunError(
-        "invalid_state",
-        `Could not snapshot ${current.path}: ${read.error}`,
-      );
-    }
-    const content = read.data?.content;
-    if (content !== undefined && typeof content !== "string") {
-      throw new RepositoryRunError(
-        "invalid_state",
-        `Could not snapshot non-text Markdown page ${current.path}.`,
-      );
-    }
-    markdown = content ?? null;
-  } catch (error) {
-    if (!isFileNotFoundError(error)) throw error;
-  }
+  const current = requirePendingJob(
+    run.state.plan?.pages,
+    jobId,
+    "snapshotted",
+  );
+  const markdown = await readPageMarkdownSnapshot(run.backend, current.path);
 
   return {
     jobId: current.id,
@@ -1168,7 +1082,7 @@ export async function restoreRepositoryPage(
   run: ActiveRepositoryRun,
   snapshot: RepositoryPageSnapshot,
 ): Promise<void> {
-  await restoreRepositoryPageMarkdown(run, snapshot);
+  await restorePageMarkdown(run.backend, snapshot);
 
   const store = new ClaimsStore(run.root);
   if (snapshot.claims) {
@@ -1248,25 +1162,6 @@ export async function skipRepositoryPage(
   });
 }
 
-async function restoreRepositoryPageMarkdown(
-  run: ActiveRepositoryRun,
-  snapshot: RepositoryPageSnapshot,
-): Promise<void> {
-  const result =
-    snapshot.markdown === null
-      ? await run.backend.delete(snapshot.path)
-      : await run.backend.write(snapshot.path, snapshot.markdown);
-  if (
-    result.error &&
-    !(snapshot.markdown === null && isNotFoundBackendError(result.error))
-  ) {
-    throw new RepositoryRunError(
-      "invalid_state",
-      `Could not restore ${snapshot.path}: ${result.error}`,
-    );
-  }
-}
-
 /**
  * Persists and proves one page's Claims before completing its job.
  *
@@ -1305,7 +1200,11 @@ export async function submitRepositoryPage(
     };
   }
 
-  const current = requirePendingJob(run, requested.id, "submitted");
+  const current = requirePendingJob(
+    run.state.plan?.pages,
+    requested.id,
+    "submitted",
+  );
 
   let pageReadable = false;
   try {
@@ -1693,7 +1592,7 @@ export async function finishRepositoryRun(
   });
 
   for (const snapshot of snapshots) {
-    await restoreRepositoryPageMarkdown(run, snapshot);
+    await restorePageMarkdown(run.backend, snapshot);
   }
 
   await run.claimsRuntime.finalize(run.state.startedAt, skippedPages);
