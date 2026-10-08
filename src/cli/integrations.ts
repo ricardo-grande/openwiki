@@ -6,14 +6,20 @@ import {
 } from "../integrations/install/installer.js";
 import {
   getHostTarget,
+  HOST_INTEGRATION_COMPONENTS,
+  listHostIntegrationComponents,
   listHostTargets,
 } from "../integrations/install/registry.js";
-import { runOpenWikiMcp } from "../integrations/mcp/stdio.js";
+import {
+  runOpenWikiMcp,
+  runOpenWikiPersonalMcp,
+} from "../integrations/mcp/stdio.js";
 import { getErrorMessage } from "../platform/diagnostics.js";
 import type { CliCommand } from "./commands.js";
 
 /**
  * Executes a registry-driven integration list, install, or uninstall command.
+ * List reports one row per host and component.
  *
  * @param command - Parsed integration command.
  */
@@ -24,15 +30,18 @@ export async function runIntegrationsCommand(
     const root =
       command.scope === "user" ? os.homedir() : (command.projectRoot ?? ".");
     if (command.action === "list") {
-      const targets = listHostTargets();
+      const components = listHostIntegrationComponents();
       const rows = await Promise.all(
-        targets.map(async (target) => {
-          const status = await getHostIntegrationStatus(target, {
-            scope: command.scope,
-            root,
-          });
-          return `${target.id}\t${status}\t${target.displayName}`;
-        }),
+        listHostTargets().flatMap((target) =>
+          components.map(async (component) => {
+            const status = await getHostIntegrationStatus(target, {
+              scope: command.scope,
+              root,
+              component: component.id,
+            });
+            return `${target.id}\t${component.id}\t${status}\t${target.displayName}`;
+          }),
+        ),
       );
       process.stdout.write(`${rows.join("\n")}\n`);
       process.exitCode = 0;
@@ -41,16 +50,19 @@ export async function runIntegrationsCommand(
 
     const target = command.target ? getHostTarget(command.target) : undefined;
     if (!target) throw new Error("Integration target is required.");
+    const component = command.component;
     const result =
       command.action === "install"
         ? await installHostIntegration(target, {
             scope: command.scope,
             root,
             force: command.force,
+            component,
           })
         : await uninstallHostIntegration(target, {
             scope: command.scope,
             root,
+            component,
           });
 
     process.stdout.write(
@@ -60,7 +72,14 @@ export async function runIntegrationsCommand(
         (result.backupPath ? `backup: ${result.backupPath}\n` : ""),
     );
 
-    if (command.action === "install") {
+    if (command.action === "install" && component === "personal") {
+      process.stdout.write(
+        `\nOpenWiki personal is ready for ${target.displayName}.\n\n` +
+          "Next:\n" +
+          `  1. Restart ${target.displayName}.\n` +
+          `  2. Confirm the ${HOST_INTEGRATION_COMPONENTS.personal.serverName} MCP server is available.\n`,
+      );
+    } else if (command.action === "install") {
       const restartGuidance =
         command.scope === "user"
           ? `Restart ${target.displayName}, then open any Git repository.`
@@ -81,7 +100,8 @@ export async function runIntegrationsCommand(
 }
 
 /**
- * Starts the local stdio MCP server for a parsed CLI command.
+ * Starts the local stdio MCP server for a parsed CLI command: the repository
+ * server, or the personal server for `openwiki mcp personal`.
  *
  * @param command - Parsed MCP server command.
  */
@@ -89,8 +109,13 @@ export async function runMcpCommand(
   command: Extract<CliCommand, { kind: "mcp" }>,
 ): Promise<void> {
   const target = getHostTarget(command.host);
-  await runOpenWikiMcp({
+  const options = {
     host: command.host,
     producerActor: target?.producerActor ?? command.host,
-  });
+  };
+  if (command.server === "personal") {
+    await runOpenWikiPersonalMcp(options);
+  } else {
+    await runOpenWikiMcp(options);
+  }
 }

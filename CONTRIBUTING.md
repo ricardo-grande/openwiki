@@ -46,7 +46,8 @@ agent after installation. IBM Bob, Codex, Claude Code, OpenCode, Cursor, Kiro,
 Oh My Pi, Antigravity CLI, and GitHub Copilot CLI install at user scope. Later source changes only
 require `pnpm build`
 unless the bundled skill itself changes. Rerun `integrations:dev` to refresh
-the skill or after switching Node installations.
+the skill or after switching Node installations. Add `--personal` to install
+the separate `openwiki-personal` skill and MCP server instead (user scope only).
 
 User-scope destinations match each host's own conventions: IBM Bob writes under
 `~/.agents` and `~/.bob`, Codex writes under `~/.agents` and `~/.codex`, Claude

@@ -14,6 +14,9 @@ import {
 // REAL so the asserted stdout/stderr text is the genuine output.
 vi.mock("../../src/auth/configure.ts", () => ({
   configureAuthProvider: vi.fn(),
+  connectAuthProviderSource: vi.fn(() =>
+    Promise.resolve({ sourceInstanceIds: ["google-1"], status: "created" }),
+  ),
   listAuthProviderTools: vi.fn(),
   shouldDiscoverToolsAfterAuth: vi.fn(() => false),
 }));
@@ -62,6 +65,7 @@ vi.mock("../../src/visualize/server.ts", () => ({
 
 import {
   configureAuthProvider,
+  connectAuthProviderSource,
   listAuthProviderTools,
   shouldDiscoverToolsAfterAuth,
 } from "../../src/auth/configure.ts";
@@ -414,6 +418,8 @@ describe("runAuthCommand", () => {
     // The env-key NAME is surfaced so the user knows what was written...
     expect(output).toContain("Saved anthropic auth values: ANTHROPIC_API_KEY");
     expect(output).toContain("Config already exists");
+    expect(connectAuthProviderSource).toHaveBeenCalledWith("anthropic");
+    expect(output).toContain("Source created: google-1");
     // ...but no secret value is ever printed.
     expect(output).not.toContain(FAKE_SECRET);
     expect(process.exitCode).toBe(0);

@@ -8,6 +8,10 @@ import { describe, expect, test } from "vitest";
 const execFileAsync = promisify(execFile);
 const PACKAGE_ROOT = process.cwd();
 const SKILL_ROOT = path.join(PACKAGE_ROOT, "integrations/openwiki");
+const PERSONAL_SKILL_ROOT = path.join(
+  PACKAGE_ROOT,
+  "integrations/openwiki-personal",
+);
 const PI_EXTENSION_PATH = "dist/integrations/pi/openwiki.js";
 
 /**
@@ -52,6 +56,13 @@ describe("published host integration bundle", () => {
       const canonicalFiles = await listFiles(SKILL_ROOT);
       for (const relative of canonicalFiles) {
         expect(packedPaths).toContain(`integrations/openwiki/${relative}`);
+      }
+      const personalFiles = await listFiles(PERSONAL_SKILL_ROOT);
+      expect(personalFiles).toContain("SKILL.md");
+      for (const relative of personalFiles) {
+        expect(packedPaths).toContain(
+          `integrations/openwiki-personal/${relative}`,
+        );
       }
 
       expect(packedPaths).toContain("package.json");

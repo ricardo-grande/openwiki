@@ -20,7 +20,10 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
   },
 }));
 
-import { runOpenWikiMcp } from "../../src/integrations/mcp/stdio.ts";
+import {
+  runOpenWikiMcp,
+  runOpenWikiPersonalMcp,
+} from "../../src/integrations/mcp/stdio.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -34,6 +37,17 @@ describe("OpenWiki MCP stdio entry point", () => {
       .mockImplementation(() => true);
 
     await runOpenWikiMcp({ host: "codex" });
+
+    expect(transport.starts).toHaveBeenCalledOnce();
+    expect(stdout).not.toHaveBeenCalled();
+  });
+
+  test("starts the personal transport without printing a banner", async () => {
+    const stdout = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation(() => true);
+
+    await runOpenWikiPersonalMcp({ host: "claude" });
 
     expect(transport.starts).toHaveBeenCalledOnce();
     expect(stdout).not.toHaveBeenCalled();

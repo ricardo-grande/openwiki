@@ -38,8 +38,13 @@ import {
   writeReceipt,
   type SkillReceipt,
 } from "./skill-bundle.js";
-import { defaultMcpServerCommand } from "./registry.js";
+import {
+  defaultMcpServerCommand,
+  HOST_INTEGRATION_COMPONENTS,
+} from "./registry.js";
 import type {
+  HostIntegrationComponent,
+  HostIntegrationComponentDefinition,
   HostIntegrationStatus,
   HostMcpServerCommand,
   HostTarget,
@@ -128,9 +133,9 @@ export class HostIntegrationInstaller {
   private readonly createId: () => string;
 
   /**
-   * Canonical package-owned skill bundle.
+   * Source or built module URL anchoring the package-owned skill bundles.
    */
-  private readonly bundleDirectory: string;
+  private readonly moduleUrl: string;
 
   /**
    * Creates an installer service.
@@ -141,9 +146,7 @@ export class HostIntegrationInstaller {
     this.operations = options.operations ?? DEFAULT_OPERATIONS;
     this.now = options.now ?? (() => new Date());
     this.createId = options.createId ?? randomUUID;
-    this.bundleDirectory = resolveSkillBundle(
-      options.moduleUrl ?? import.meta.url,
-    );
+    this.moduleUrl = options.moduleUrl ?? import.meta.url;
   }
 
   /**
@@ -157,15 +160,22 @@ export class HostIntegrationInstaller {
     target: HostTarget,
     options: InstallOptions,
   ): Promise<InstallResult> {
+    const component = componentFor(options.component);
     const context = await resolveInstallContext(
       target,
+      component,
       options.scope,
       options.root,
     );
     const mcpServerCommand =
-      options.mcpServerCommand ?? defaultMcpServerCommand(target.id);
+      options.mcpServerCommand ??
+      defaultMcpServerCommand(target.id, component.id);
     assertMcpServerCommand(mcpServerCommand);
-    const canonical = await inventorySkill(this.bundleDirectory, false);
+    const bundleDirectory = resolveSkillBundle(
+      this.moduleUrl,
+      component.skillName,
+    );
+    const canonical = await inventorySkill(bundleDirectory, false);
     const inspection = await inspectInstallation(
       context.skillDirectory,
       target.id,
@@ -179,6 +189,7 @@ export class HostIntegrationInstaller {
 
     const installedCommand = installedMcpServerCommand(
       target,
+      component,
       inspection.receipt,
     );
     const replaceMcpServerCommand =
@@ -190,8 +201,7 @@ export class HostIntegrationInstaller {
       sameFiles(inspection.receipt.files, canonical.files);
     if (current) {
       const configChanged = await installManagedConfig(
-        context.mcpConfigKind,
-        context.mcpConfig,
+        context,
         mcpServerCommand,
         replaceMcpServerCommand,
       );
@@ -205,7 +215,7 @@ export class HostIntegrationInstaller {
       "staging",
       this.createId(),
     );
-    await cp(this.bundleDirectory, staging, {
+    await cp(bundleDirectory, staging, {
       recursive: true,
       errorOnExist: true,
       force: false,
@@ -247,8 +257,10 @@ export class HostIntegrationInstaller {
     target: HostTarget,
     options: UninstallOptions,
   ): Promise<InstallResult> {
+    const component = componentFor(options.component);
     const context = await resolveInstallContext(
       target,
+      component,
       options.scope,
       options.root,
     );
@@ -264,11 +276,11 @@ export class HostIntegrationInstaller {
     }
     const mcpServerCommand = installedMcpServerCommand(
       target,
+      component,
       inspection.receipt,
     );
     const configStatus = await getManagedConfigStatus(
-      context.mcpConfigKind,
-      context.mcpConfig,
+      context,
       mcpServerCommand,
     );
     if (configStatus === "modified") {
@@ -296,11 +308,7 @@ export class HostIntegrationInstaller {
 
     try {
       if (hasConfig) {
-        configChanged = await uninstallManagedConfig(
-          context.mcpConfigKind,
-          context.mcpConfig,
-          mcpServerCommand,
-        );
+        configChanged = await uninstallManagedConfig(context, mcpServerCommand);
       }
       if (hasSkill) {
         await this.operations.move(context.skillDirectory, cleanupBackup);
@@ -348,17 +356,20 @@ export class HostIntegrationInstaller {
     target: HostTarget,
     options: UninstallOptions,
   ): Promise<HostIntegrationStatus> {
-    if (!target[options.scope]) return "unsupported";
+    const component = componentFor(options.component);
+    if (!target[options.scope] || !component.scopes.includes(options.scope)) {
+      return "unsupported";
+    }
     const context = await resolveInstallContext(
       target,
+      component,
       options.scope,
       options.root,
     );
     const skill = await inspectInstallation(context.skillDirectory, target.id);
     const config = await getManagedConfigStatus(
-      context.mcpConfigKind,
-      context.mcpConfig,
-      installedMcpServerCommand(target, skill.receipt),
+      context,
+      installedMcpServerCommand(target, component, skill.receipt),
     );
     if (skill.status === "not-installed" && config === "not-installed") {
       return "not-installed";
@@ -397,8 +408,7 @@ export class HostIntegrationInstaller {
 
     try {
       configChanged = await installManagedConfig(
-        context.mcpConfigKind,
-        context.mcpConfig,
+        context,
         mcpServerCommand,
         replaceMcpServerCommand,
       );
@@ -548,85 +558,114 @@ export async function getHostIntegrationStatus(
 }
 
 /**
- * Resolves the canonical host skill from a source or built installer module.
+ * Resolves a canonical host skill from a source or built installer module.
  *
  * @param moduleUrl - Source or built installer module URL.
+ * @param component - Component whose skill bundle is resolved.
  * @returns Absolute canonical skill bundle path.
  */
 export function resolveCanonicalSkillBundle(
   moduleUrl = import.meta.url,
+  component: HostIntegrationComponent = "code",
 ): string {
-  return resolveSkillBundle(moduleUrl);
+  return resolveSkillBundle(
+    moduleUrl,
+    HOST_INTEGRATION_COMPONENTS[component].skillName,
+  );
+}
+
+/**
+ * Resolves a component definition, defaulting to the code component.
+ *
+ * @param component - Requested component.
+ * @returns The component's registry definition.
+ */
+function componentFor(
+  component: HostIntegrationComponent = "code",
+): HostIntegrationComponentDefinition {
+  return HOST_INTEGRATION_COMPONENTS[component];
 }
 
 /**
  * Installs the registry-selected MCP config representation.
  *
- * @param kind - Registry-selected config adapter.
- * @param filePath - Absolute host config path.
+ * @param context - Transaction paths, config adapter, and component.
  * @param entry - Exact executable invocation to install.
  * @param replaceableEntry - Exact prior invocation that may be replaced.
  * @returns Whether config changed.
  */
 async function installManagedConfig(
-  kind: InstallContext["mcpConfigKind"],
-  filePath: string,
+  context: InstallContext,
   entry: HostMcpServerCommand,
   replaceableEntry?: HostMcpServerCommand,
 ): Promise<boolean> {
-  switch (kind) {
+  const { mcpConfig: filePath, component } = context;
+  switch (context.mcpConfigKind) {
     case "json":
-      return installJsonMcpEntry(filePath, entry, replaceableEntry);
+      return installJsonMcpEntry(
+        filePath,
+        entry,
+        replaceableEntry,
+        component.serverName,
+      );
     case "codex-toml":
-      return installCodexMcpBlock(filePath, entry, replaceableEntry);
+      return installCodexMcpBlock(
+        filePath,
+        entry,
+        replaceableEntry,
+        component.serverName,
+      );
     case "opencode-json":
-      return installOpencodeMcpEntry(filePath, entry, replaceableEntry);
+      return installOpencodeMcpEntry(
+        filePath,
+        entry,
+        replaceableEntry,
+        component.serverName,
+      );
   }
 }
 
 /**
  * Removes the registry-selected exact MCP config representation.
  *
- * @param kind - Registry-selected config adapter.
- * @param filePath - Absolute host config path.
+ * @param context - Transaction paths, config adapter, and component.
  * @param entry - Exact executable invocation owned by the installed skill.
  * @returns Whether config changed.
  */
 async function uninstallManagedConfig(
-  kind: InstallContext["mcpConfigKind"],
-  filePath: string,
+  context: InstallContext,
   entry: HostMcpServerCommand,
 ): Promise<boolean> {
-  switch (kind) {
+  const { mcpConfig: filePath, component } = context;
+  switch (context.mcpConfigKind) {
     case "json":
-      return uninstallJsonMcpEntry(filePath, entry);
+      return uninstallJsonMcpEntry(filePath, entry, component.serverName);
     case "codex-toml":
-      return uninstallCodexMcpBlock(filePath, entry);
+      return uninstallCodexMcpBlock(filePath, entry, component.serverName);
     case "opencode-json":
-      return uninstallOpencodeMcpEntry(filePath, entry);
+      return uninstallOpencodeMcpEntry(filePath, entry, component.serverName);
   }
 }
 
 /**
  * Reports the registry-selected MCP config representation state.
  *
- * @param kind - Registry-selected config adapter.
- * @param filePath - Absolute host config path.
+ * @param context - Transaction paths, config adapter, and component.
  * @param entry - Exact executable invocation expected by the installed skill.
  * @returns Absent, intact, or modified managed config state.
  */
 async function getManagedConfigStatus(
-  kind: InstallContext["mcpConfigKind"],
-  filePath: string,
+  context: InstallContext,
   entry: HostMcpServerCommand,
 ): Promise<HostIntegrationStatus> {
-  switch (kind) {
+  const { mcpConfig: filePath, component } = context;
+  switch (context.mcpConfigKind) {
     case "json":
-      return getJsonMcpEntryStatus(filePath, entry);
+      return getJsonMcpEntryStatus(filePath, entry, component.serverName);
     case "codex-toml":
-      return getCodexMcpBlockStatus(filePath, entry);
+      return getCodexMcpBlockStatus(filePath, entry, component.serverName);
     case "opencode-json":
-      return getOpencodeMcpEntryStatus(filePath, entry);
+      return getOpencodeMcpEntryStatus(filePath, entry, component.serverName);
   }
 }
 
@@ -634,14 +673,19 @@ async function getManagedConfigStatus(
  * Resolves the command recorded by an installed skill receipt.
  *
  * @param target - Registry host owning the installation.
+ * @param component - Component owning the installation.
  * @param receipt - Intact receipt, when a managed skill is installed.
- * @returns Recorded command, or the legacy default command.
+ * @returns Recorded command, or the component's default command.
  */
 function installedMcpServerCommand(
   target: HostTarget,
+  component: HostIntegrationComponentDefinition,
   receipt: SkillReceipt | undefined,
 ): HostMcpServerCommand {
-  return receipt?.mcpServerCommand ?? defaultMcpServerCommand(target.id);
+  return (
+    receipt?.mcpServerCommand ??
+    defaultMcpServerCommand(target.id, component.id)
+  );
 }
 
 /**

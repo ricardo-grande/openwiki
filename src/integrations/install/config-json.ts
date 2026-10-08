@@ -9,31 +9,33 @@ import type { HostIntegrationStatus, HostMcpServerCommand } from "./types.js";
  * @param filePath - Absolute JSON config path.
  * @param entry - Exact registry-derived entry to own.
  * @param replaceableEntry - Exact prior entry that may be replaced.
+ * @param serverName - `mcpServers` key that owns the entry.
  * @returns Whether the config changed.
  */
 export async function installJsonMcpEntry(
   filePath: string,
   entry: HostMcpServerCommand,
   replaceableEntry?: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<boolean> {
   const root = (await readJsonObject(filePath)) ?? {};
   const servers = asObject(root.mcpServers, "mcpServers", filePath);
-  const existing = servers.openwiki;
+  const existing = servers[serverName];
   if (existing !== undefined) {
     if (matchesEntry(existing, entry)) return false;
     if (replaceableEntry && matchesEntry(existing, replaceableEntry)) {
-      servers.openwiki = entry;
+      servers[serverName] = entry;
       root.mcpServers = servers;
       await writeTextAtomic(filePath, `${JSON.stringify(root, null, 2)}\n`);
       return true;
     }
     throw new HostIntegrationError(
       "conflict",
-      `An openwiki MCP server already exists in ${filePath}.`,
+      `An ${serverName} MCP server already exists in ${filePath}.`,
     );
   }
 
-  servers.openwiki = entry;
+  servers[serverName] = entry;
   root.mcpServers = servers;
   await writeTextAtomic(filePath, `${JSON.stringify(root, null, 2)}\n`);
   return true;
@@ -44,26 +46,28 @@ export async function installJsonMcpEntry(
  *
  * @param filePath - Absolute JSON config path.
  * @param expected - Exact entry previously installed by OpenWiki.
+ * @param serverName - `mcpServers` key that owns the entry.
  * @returns Whether the config changed.
  */
 export async function uninstallJsonMcpEntry(
   filePath: string,
   expected: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<boolean> {
   const root = await readJsonObject(filePath, true);
   if (root === null) return false;
 
   const servers = asObject(root.mcpServers, "mcpServers", filePath);
-  const existing = servers.openwiki;
+  const existing = servers[serverName];
   if (existing === undefined) return false;
   if (!matchesEntry(existing, expected)) {
     throw new HostIntegrationError(
       "conflict",
-      `Refusing to remove a modified openwiki MCP entry from ${filePath}.`,
+      `Refusing to remove a modified ${serverName} MCP entry from ${filePath}.`,
     );
   }
 
-  delete servers.openwiki;
+  delete servers[serverName];
   root.mcpServers = servers;
   await writeTextAtomic(filePath, `${JSON.stringify(root, null, 2)}\n`);
   return true;
@@ -74,18 +78,22 @@ export async function uninstallJsonMcpEntry(
  *
  * @param filePath - Absolute JSON config path.
  * @param expected - Exact registry-derived entry OpenWiki owns.
+ * @param serverName - `mcpServers` key that owns the entry.
  * @returns Current managed-entry state.
  */
 export async function getJsonMcpEntryStatus(
   filePath: string,
   expected: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<HostIntegrationStatus> {
   try {
     const root = await readJsonObject(filePath, true);
     if (root === null) return "not-installed";
     const servers = asObject(root.mcpServers, "mcpServers", filePath);
-    if (servers.openwiki === undefined) return "not-installed";
-    return matchesEntry(servers.openwiki, expected) ? "installed" : "modified";
+    if (servers[serverName] === undefined) return "not-installed";
+    return matchesEntry(servers[serverName], expected)
+      ? "installed"
+      : "modified";
   } catch {
     return "modified";
   }
@@ -149,7 +157,7 @@ function asObject(
 /**
  * Compares an unknown JSON value with the exact managed entry shape.
  *
- * @param value - Existing `mcpServers.openwiki` value.
+ * @param value - Existing managed `mcpServers` value.
  * @param expected - Registry-derived managed entry.
  * @returns Whether the value is structurally identical to the managed entry.
  */

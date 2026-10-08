@@ -66,7 +66,17 @@ independent and can ship at any time.
 - [ ] **C5.** Entry-point rewiring
 - [ ] **C6.** Default flip
 - [ ] **C7.** Remove the legacy path
-- [ ] **H1.** Personal server and installer components
+- [x] **H1.** Personal server and installer components
+  - [x] H1.1 `createMcpServer` takes a name, instructions, and tool
+        provider; `openwiki mcp personal --host <id>` serves
+        `openwiki-personal` from a tool-less `PersonalSessionManager`
+  - [x] H1.2 Installer components: `--personal` (user scope only),
+        per-component skill, server key, and receipt; `integrations list`
+        reports one row per host and component
+  - [x] H1.3 Skill skeleton `integrations/openwiki-personal/`
+  - [x] H1.4 Scoped connector environment, loaded on the first fetching
+        call, with model-provider keys excluded from every `.env` load
+  - [x] H1.5 `openwiki auth <provider>` connects a `sourceInstance`
 - [ ] **H2.** Retrieval and read-only evidence
 - [ ] **H3.** Lifecycle tools and full skill
 
@@ -169,7 +179,7 @@ What is Git-specific today:
 ### What is built
 
 1. **A benchmark kind.** `benchmark.json` gains `kind: "repository" |
-   "personal"`, with `"repository"` as the default so `calc` and `taskflow`
+"personal"`, with `"repository"` as the default so `calc` and `taskflow`
    don't change.
    - A personal checkpoint lists the raw runs it adds:
      `{ id, label, pulls: [{ connectorId, rawRunId }] }`.
@@ -336,6 +346,7 @@ A refactor-only change. The spec requires that it lands on its own.
 
   Parameterize them by the core's `next`, `snapshot`, `restore`, `skip`, and
   `submit` functions.
+
 - Take the wiki root and page prefix as parameters instead of hardcoding
   `/openwiki`. Code mode passes `/openwiki`. This applies to:
   - `src/claims/brains/code/paths.ts`;
@@ -448,6 +459,7 @@ and the core half of PLC-017.
   Extract this content from `src/agent/prompts/personal.ts` and from the
   synthesis policy in `src/ingestion/ingestion.ts`. Remove the rules the core
   now enforces: ordering, required pages, `.last-update.json`, and indexes.
+
 - Create `src/agent/personal-runner.ts` with three workers:
   - **Gather worker:** the MCP list and call tools plus `close_gathering`, with
     a read-only wiki;
@@ -458,6 +470,7 @@ and the core half of PLC-017.
   None of the workers gets a shell, ingest tools, or delegation. They reuse
   `src/agent/page-workers.ts`, honor `OPENWIKI_PAGE_CONCURRENCY` (default 1),
   and renew the lock on a timer.
+
 - Gate the driver behind the opt-in from S0.4. Without the opt-in,
   `openwiki personal --init/--update` keeps the legacy path.
 

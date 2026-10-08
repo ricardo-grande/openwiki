@@ -11,6 +11,7 @@ import { HostIntegrationError } from "../core/errors.js";
 import { resolveRepositoryRoot } from "../core/repository-root.js";
 import { writeTextAtomic } from "./atomic-file.js";
 import type {
+  HostIntegrationComponentDefinition,
   HostMcpConfig,
   HostIntegrationScope,
   HostTarget,
@@ -44,6 +45,11 @@ export interface InstallContext {
   scope: HostIntegrationScope;
 
   /**
+   * Component this transaction installs, removes, or inspects.
+   */
+  component: HostIntegrationComponentDefinition;
+
+  /**
    * Canonical home or project root anchoring the transaction.
    */
   root: string;
@@ -68,15 +74,23 @@ export interface InstallContext {
  * Resolves canonical transaction paths and rejects symlinked components.
  *
  * @param target - Registry entry supplying scope-relative destinations.
+ * @param component - Component whose skill and server entry are addressed.
  * @param scope - User or project ownership scope.
  * @param candidateRoot - Home or project root anchoring the scope.
  * @returns Canonical scope, skill, and config paths.
  */
 export async function resolveInstallContext(
   target: HostTarget,
+  component: HostIntegrationComponentDefinition,
   scope: HostIntegrationScope,
   candidateRoot: string,
 ): Promise<InstallContext> {
+  if (!component.scopes.includes(scope)) {
+    throw new HostIntegrationError(
+      "invalid_input",
+      "The personal integration is user-scoped and cannot be combined with --project.",
+    );
+  }
   const destinations = target[scope];
   if (!destinations) {
     throw new HostIntegrationError(
@@ -90,7 +104,7 @@ export async function resolveInstallContext(
       : await resolveInstallRoot(candidateRoot);
   const skillDirectory = resolveInside(
     root,
-    destinations.skillDirectory,
+    `${destinations.skillsRoot}/${component.skillName}`,
     "skill directory",
   );
   const mcpConfig = resolveInside(
@@ -102,6 +116,7 @@ export async function resolveInstallContext(
   await assertNoSymlinkComponents(root, mcpConfig);
   return {
     scope,
+    component,
     root,
     skillDirectory,
     mcpConfig,
@@ -261,6 +276,7 @@ export function resultFor(
   return {
     target: target.id,
     scope: context.scope,
+    component: context.component.id,
     skillDirectory: context.skillDirectory,
     mcpConfig: context.mcpConfig,
     changed,

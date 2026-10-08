@@ -10,6 +10,13 @@ import {
   isMcpConnectorId,
 } from "../connectors/mcp-runtime.js";
 import type { ConnectorId } from "../connectors/types.js";
+import {
+  connectSourceInstance,
+  readOpenWikiOnboardingConfig,
+  saveOpenWikiOnboardingConfig,
+  type ConnectSourceInstanceResult,
+} from "../setup/onboarding.js";
+import { getAuthProvider } from "./providers.js";
 import type { AuthProviderId } from "./types.js";
 
 export type AuthConfigureResult = {
@@ -59,6 +66,34 @@ export async function configureAuthProvider(
     nextSteps: getNextSteps(provider, true),
     provider,
     status: existing === null ? "created" : "updated",
+  };
+}
+
+/**
+ * Records the provider's connector as a connected source instance after a
+ * successful auth, so `ingest` includes it (host §3.1).
+ *
+ * @param provider - Authenticated provider.
+ * @param now - Clock for the connection timestamp.
+ * @returns The connector's instance IDs and what changed.
+ */
+export async function connectAuthProviderSource(
+  provider: AuthProviderId,
+  now: () => Date = () => new Date(),
+): Promise<Omit<ConnectSourceInstanceResult, "config">> {
+  const config = await readOpenWikiOnboardingConfig();
+  const result = connectSourceInstance(
+    config,
+    getConnectorIdForProvider(provider),
+    getAuthProvider(provider).displayName,
+    now().toISOString(),
+  );
+  if (result.status !== "unchanged") {
+    await saveOpenWikiOnboardingConfig(result.config);
+  }
+  return {
+    sourceInstanceIds: result.sourceInstanceIds,
+    status: result.status,
   };
 }
 

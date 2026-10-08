@@ -1,6 +1,7 @@
 import path from "node:path";
 import {
   configureAuthProvider,
+  connectAuthProviderSource,
   listAuthProviderTools,
   shouldDiscoverToolsAfterAuth,
 } from "../auth/configure.js";
@@ -225,6 +226,10 @@ export async function runAuthCommand(
         for (const nextStep of configureResult.nextSteps) {
           process.stdout.write(`- ${nextStep}\n`);
         }
+        const sourceResult = await connectAuthProviderSource(command.provider);
+        process.stdout.write(
+          `${sourceResult.status === "unchanged" ? "Source already connected" : `Source ${sourceResult.status}`}: ${sourceResult.sourceInstanceIds.join(", ")}\n`,
+        );
 
         if (shouldDiscoverToolsAfterAuth(command.provider)) {
           try {

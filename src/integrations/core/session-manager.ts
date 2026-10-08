@@ -9,6 +9,7 @@ import {
   type ActiveRepositoryRun,
 } from "../../generation/repository-run.js";
 import { HostIntegrationError } from "./errors.js";
+import { OperationGuard } from "./operation-guard.js";
 import {
   BeginInput,
   InspectPageClaimsInput,
@@ -58,9 +59,9 @@ export class HostSessionManager {
   private active: ActiveRepositoryRun | null = null;
 
   /**
-   * Whether one lifecycle operation currently owns this adapter.
+   * Single-operation guard shared by every lifecycle operation.
    */
-  private operationInProgress = false;
+  private readonly guard = new OperationGuard();
 
   /**
    * Validated host identity recorded in run metadata.
@@ -97,21 +98,10 @@ export class HostSessionManager {
    * @returns A validated rootless session manager.
    */
   static create(options: HostSessionManagerOptions): HostSessionManager {
-    if (!isValidHostId(options.host)) {
-      throw new HostIntegrationError(
-        "invalid_input",
-        "The host ID must contain lowercase letters, digits, or hyphens.",
-      );
-    }
-
-    const producerActor = options.producerActor ?? options.host;
-    if (!isValidHostId(producerActor)) {
-      throw new HostIntegrationError(
-        "invalid_input",
-        "The producer actor must contain lowercase letters, digits, or hyphens.",
-      );
-    }
-
+    const producerActor = validateHostIdentity(
+      options.host,
+      options.producerActor,
+    );
     return new HostSessionManager(
       options.host,
       producerActor,
@@ -292,27 +282,11 @@ export class HostSessionManager {
    * @returns The operation result.
    */
   private async runOperation<T>(task: () => Promise<T>): Promise<T> {
-    this.startOperation();
     try {
-      return await task();
+      return await this.guard.run(task);
     } catch (error) {
       throw mapRepositoryRunError(error);
-    } finally {
-      this.operationInProgress = false;
     }
-  }
-
-  /**
-   * Acquires the adapter's single-operation guard or rejects concurrent work.
-   */
-  private startOperation(): void {
-    if (this.operationInProgress) {
-      throw new HostIntegrationError(
-        "invalid_state",
-        "Another OpenWiki lifecycle operation is already in progress.",
-      );
-    }
-    this.operationInProgress = true;
   }
 }
 
@@ -337,11 +311,37 @@ function mapRepositoryRunError(error: unknown): unknown {
 }
 
 /**
+ * Validates a host identity and its producer actor.
+ *
+ * @param host - Candidate host identity.
+ * @param producerActor - Candidate producer actor, defaulting to the host.
+ * @returns The validated producer actor.
+ */
+export function validateHostIdentity(
+  host: string,
+  producerActor: string = host,
+): string {
+  if (!isValidHostId(host)) {
+    throw new HostIntegrationError(
+      "invalid_input",
+      "The host ID must contain lowercase letters, digits, or hyphens.",
+    );
+  }
+  if (!isValidHostId(producerActor)) {
+    throw new HostIntegrationError(
+      "invalid_input",
+      "The producer actor must contain lowercase letters, digits, or hyphens.",
+    );
+  }
+  return producerActor;
+}
+
+/**
  * Derives the metadata model identity for one validated host.
  *
  * @param host - Validated host identity.
  * @returns Stable metadata model identity.
  */
-function getHostAgentIdentity(host: string): string {
+export function getHostAgentIdentity(host: string): string {
   return `host-agent/${host}`;
 }

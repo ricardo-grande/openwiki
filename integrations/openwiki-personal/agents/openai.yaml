@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenWiki Personal"
+  short_description: "Answer from and maintain your OpenWiki personal wiki"
+  default_prompt: "Use $openwiki-personal to answer from my personal wiki."

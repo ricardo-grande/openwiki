@@ -883,3 +883,149 @@ describe("OpenCode JSONC MCP entry ownership", () => {
     expect(await readFile(filePath, "utf8")).toBe(commented);
   });
 });
+
+describe("personal server entries", () => {
+  const PERSONAL_CODEX_ENTRY: HostMcpServerCommand = {
+    command: "openwiki",
+    args: ["mcp", "personal", "--host", "codex"],
+  };
+
+  test("JSON keeps openwiki and openwiki-personal independent", async () => {
+    const root = await createRoot();
+    const filePath = path.join(root, ".claude.json");
+    const personal: HostMcpServerCommand = {
+      command: "openwiki",
+      args: ["mcp", "personal", "--host", "claude"],
+    };
+
+    await installJsonMcpEntry(filePath, ENTRY);
+    await expect(
+      installJsonMcpEntry(filePath, personal, undefined, "openwiki-personal"),
+    ).resolves.toBe(true);
+    expect(JSON.parse(await readFile(filePath, "utf8"))).toEqual({
+      mcpServers: { openwiki: ENTRY, "openwiki-personal": personal },
+    });
+    await expect(getJsonMcpEntryStatus(filePath, ENTRY)).resolves.toBe(
+      "installed",
+    );
+    await expect(
+      getJsonMcpEntryStatus(filePath, personal, "openwiki-personal"),
+    ).resolves.toBe("installed");
+
+    await expect(uninstallJsonMcpEntry(filePath, ENTRY)).resolves.toBe(true);
+    expect(JSON.parse(await readFile(filePath, "utf8"))).toEqual({
+      mcpServers: { "openwiki-personal": personal },
+    });
+  });
+
+  test("Codex TOML uses separate markers and tables per server", async () => {
+    const root = await createRoot();
+    const filePath = path.join(root, "config.toml");
+    const prefix = 'model = "gpt-5"\n\n';
+    await writeFile(filePath, prefix, "utf8");
+
+    await installCodexMcpBlock(filePath, CODEX_ENTRY);
+    const codeOnly = await readFile(filePath, "utf8");
+    await expect(
+      installCodexMcpBlock(
+        filePath,
+        PERSONAL_CODEX_ENTRY,
+        undefined,
+        "openwiki-personal",
+      ),
+    ).resolves.toBe(true);
+    const both = await readFile(filePath, "utf8");
+    expect(both.startsWith(codeOnly)).toBe(true);
+    expect(both.slice(codeOnly.length)).toBe(
+      [
+        "",
+        "# OPENWIKI-PERSONAL:MCP:START",
+        "[mcp_servers.openwiki-personal]",
+        'command = "openwiki"',
+        'args = ["mcp", "personal", "--host", "codex"]',
+        "# OPENWIKI-PERSONAL:MCP:END",
+        "",
+      ].join("\n"),
+    );
+    await expect(getCodexMcpBlockStatus(filePath, CODEX_ENTRY)).resolves.toBe(
+      "installed",
+    );
+    await expect(
+      getCodexMcpBlockStatus(
+        filePath,
+        PERSONAL_CODEX_ENTRY,
+        "openwiki-personal",
+      ),
+    ).resolves.toBe("installed");
+
+    await expect(
+      uninstallCodexMcpBlock(
+        filePath,
+        PERSONAL_CODEX_ENTRY,
+        "openwiki-personal",
+      ),
+    ).resolves.toBe(true);
+    expect(await readFile(filePath, "utf8")).toBe(`${codeOnly}\n`);
+    await expect(uninstallCodexMcpBlock(filePath, CODEX_ENTRY)).resolves.toBe(
+      true,
+    );
+  });
+
+  test("Codex TOML rejects an unmanaged openwiki-personal table", async () => {
+    const root = await createRoot();
+    const filePath = path.join(root, "config.toml");
+    const unmanaged = '[mcp_servers.openwiki-personal]\ncommand = "custom"\n';
+    await writeFile(filePath, unmanaged, "utf8");
+
+    await expect(
+      installCodexMcpBlock(
+        filePath,
+        PERSONAL_CODEX_ENTRY,
+        undefined,
+        "openwiki-personal",
+      ),
+    ).rejects.toMatchObject({ code: "conflict" });
+    await expect(installCodexMcpBlock(filePath, CODEX_ENTRY)).resolves.toBe(
+      true,
+    );
+  });
+
+  test("OpenCode keeps openwiki and openwiki-personal independent", async () => {
+    const root = await createRoot();
+    const filePath = path.join(root, "opencode.jsonc");
+    const personal: HostMcpServerCommand = {
+      command: "openwiki",
+      args: ["mcp", "personal", "--host", "opencode"],
+    };
+
+    await installOpencodeMcpEntry(filePath, OPENCODE_ENTRY);
+    await expect(
+      installOpencodeMcpEntry(
+        filePath,
+        personal,
+        undefined,
+        "openwiki-personal",
+      ),
+    ).resolves.toBe(true);
+    expect(JSON.parse(await readFile(filePath, "utf8"))).toEqual({
+      mcp: {
+        openwiki: OPENCODE_SHAPE,
+        "openwiki-personal": {
+          type: "local",
+          command: ["openwiki", "mcp", "personal", "--host", "opencode"],
+          enabled: true,
+        },
+      },
+    });
+    await expect(
+      getOpencodeMcpEntryStatus(filePath, personal, "openwiki-personal"),
+    ).resolves.toBe("installed");
+
+    await expect(
+      uninstallOpencodeMcpEntry(filePath, personal, "openwiki-personal"),
+    ).resolves.toBe(true);
+    expect(JSON.parse(await readFile(filePath, "utf8"))).toEqual({
+      mcp: { openwiki: OPENCODE_SHAPE },
+    });
+  });
+});

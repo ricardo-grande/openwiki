@@ -123,6 +123,73 @@ export async function saveOpenWikiOnboardingConfig(
   }
 }
 
+/**
+ * The outcome of {@link connectSourceInstance}.
+ */
+export type ConnectSourceInstanceResult = {
+  config: OpenWikiOnboardingConfig;
+  sourceInstanceIds: string[];
+  status: "created" | "unchanged" | "updated";
+};
+
+/**
+ * Marks a connector as a connected source, as TUI onboarding does: creates a
+ * connected instance when the connector has none, and otherwise sets
+ * `connectedAt` on its instances that lack it. Ingestion reads only connected
+ * instances.
+ *
+ * @param config - Current onboarding config.
+ * @param connectorId - Connector to connect.
+ * @param displayName - Name prefix for a created instance.
+ * @param connectedAt - Connection timestamp.
+ * @returns The next config, the connector's instance IDs, and what changed.
+ */
+export function connectSourceInstance(
+  config: OpenWikiOnboardingConfig,
+  connectorId: ConnectorId,
+  displayName: string,
+  connectedAt: string,
+): ConnectSourceInstanceResult {
+  const existing = config.sourceInstances.filter(
+    (sourceInstance) => sourceInstance.connectorId === connectorId,
+  );
+  if (existing.length === 0) {
+    const sourceInstance: OnboardingSourceInstanceConfig = {
+      connectedAt,
+      connectorId,
+      id: `${connectorId}-1`,
+      name: `${displayName} 1`,
+    };
+    return {
+      config: {
+        ...config,
+        sourceInstances: [...config.sourceInstances, sourceInstance],
+      },
+      sourceInstanceIds: [sourceInstance.id],
+      status: "created",
+    };
+  }
+
+  const sourceInstanceIds = existing.map((sourceInstance) => sourceInstance.id);
+  if (existing.every((sourceInstance) => sourceInstance.connectedAt)) {
+    return { config, sourceInstanceIds, status: "unchanged" };
+  }
+
+  return {
+    config: {
+      ...config,
+      sourceInstances: config.sourceInstances.map((sourceInstance) =>
+        sourceInstance.connectorId === connectorId &&
+        !sourceInstance.connectedAt
+          ? { ...sourceInstance, connectedAt }
+          : sourceInstance,
+      ),
+    },
+    sourceInstanceIds,
+    status: "updated",
+  };
+}
+
 export function getRepositoryWikiInstructionsPath(repoRoot: string): string {
   return path.join(repoRoot, OPEN_WIKI_DIR, REPOSITORY_INSTRUCTIONS_FILE);
 }

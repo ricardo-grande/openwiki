@@ -3,8 +3,32 @@ import { HostIntegrationError } from "../core/errors.js";
 import { writeTextAtomic } from "./atomic-file.js";
 import type { HostIntegrationStatus, HostMcpServerCommand } from "./types.js";
 
-const START = "# OPENWIKI:MCP:START";
-const END = "# OPENWIKI:MCP:END";
+/**
+ * Marker pair that delimits one server's managed block.
+ */
+interface BlockMarkers {
+  /**
+   * Line that opens the managed block.
+   */
+  start: string;
+
+  /**
+   * Line that closes the managed block.
+   */
+  end: string;
+}
+
+/**
+ * Derives the marker pair for one server, for example `# OPENWIKI:MCP:START`
+ * for `openwiki` and `# OPENWIKI-PERSONAL:MCP:START` for `openwiki-personal`.
+ *
+ * @param serverName - `mcp_servers` table key that owns the block.
+ * @returns The server's marker pair.
+ */
+function markersFor(serverName: string): BlockMarkers {
+  const prefix = `# ${serverName.toUpperCase()}:MCP`;
+  return { start: `${prefix}:START`, end: `${prefix}:END` };
+}
 
 /**
  * Byte range occupied by one complete managed TOML block.
@@ -27,26 +51,31 @@ interface MarkerRange {
  * @param filePath - Absolute Codex TOML config path.
  * @param entry - Exact executable invocation to install.
  * @param replaceableEntry - Exact prior invocation that may be replaced.
+ * @param serverName - `mcp_servers` table key that owns the block.
  * @returns Whether the config changed.
  */
 export async function installCodexMcpBlock(
   filePath: string,
   entry: HostMcpServerCommand,
   replaceableEntry?: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<boolean> {
   const current = await readOptional(filePath);
-  const block = renderBlock(entry);
-  const range = markerRange(current);
+  const block = renderBlock(entry, serverName);
+  const range = markerRange(current, serverName);
   if (range) {
     const existing = current.slice(range.start, range.end);
-    if (hasUnmanagedOpenWikiTable(current, range)) {
+    if (hasUnmanagedOpenWikiTable(current, serverName, range)) {
       throw new HostIntegrationError(
         "conflict",
         `Refusing to replace a modified OpenWiki MCP block in ${filePath}.`,
       );
     }
     if (existing === block) return false;
-    if (!replaceableEntry || existing !== renderBlock(replaceableEntry)) {
+    if (
+      !replaceableEntry ||
+      existing !== renderBlock(replaceableEntry, serverName)
+    ) {
       throw new HostIntegrationError(
         "conflict",
         `Refusing to replace a modified OpenWiki MCP block in ${filePath}.`,
@@ -58,10 +87,10 @@ export async function installCodexMcpBlock(
     );
     return true;
   }
-  if (hasUnmanagedOpenWikiTable(current)) {
+  if (hasUnmanagedOpenWikiTable(current, serverName)) {
     throw new HostIntegrationError(
       "conflict",
-      `An unmanaged openwiki MCP table already exists in ${filePath}.`,
+      `An unmanaged ${serverName} MCP table already exists in ${filePath}.`,
     );
   }
 
@@ -76,18 +105,20 @@ export async function installCodexMcpBlock(
  *
  * @param filePath - Absolute Codex TOML config path.
  * @param entry - Exact executable invocation owned by OpenWiki.
+ * @param serverName - `mcp_servers` table key that owns the block.
  * @returns Whether the config changed.
  */
 export async function uninstallCodexMcpBlock(
   filePath: string,
   entry: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<boolean> {
   const current = await readOptional(filePath);
-  const range = markerRange(current);
+  const range = markerRange(current, serverName);
   if (!range) return false;
   if (
-    current.slice(range.start, range.end) !== renderBlock(entry) ||
-    hasUnmanagedOpenWikiTable(current, range)
+    current.slice(range.start, range.end) !== renderBlock(entry, serverName) ||
+    hasUnmanagedOpenWikiTable(current, serverName, range)
   ) {
     throw new HostIntegrationError(
       "conflict",
@@ -107,20 +138,25 @@ export async function uninstallCodexMcpBlock(
  *
  * @param filePath - Absolute Codex TOML config path.
  * @param entry - Exact executable invocation expected in the managed block.
+ * @param serverName - `mcp_servers` table key that owns the block.
  * @returns Current managed-block state.
  */
 export async function getCodexMcpBlockStatus(
   filePath: string,
   entry: HostMcpServerCommand,
+  serverName = "openwiki",
 ): Promise<HostIntegrationStatus> {
   try {
     const current = await readOptional(filePath);
-    const range = markerRange(current);
+    const range = markerRange(current, serverName);
     if (!range) {
-      return hasUnmanagedOpenWikiTable(current) ? "modified" : "not-installed";
+      return hasUnmanagedOpenWikiTable(current, serverName)
+        ? "modified"
+        : "not-installed";
     }
-    return current.slice(range.start, range.end) === renderBlock(entry) &&
-      !hasUnmanagedOpenWikiTable(current, range)
+    return current.slice(range.start, range.end) ===
+      renderBlock(entry, serverName) &&
+      !hasUnmanagedOpenWikiTable(current, serverName, range)
       ? "installed"
       : "modified";
   } catch {
@@ -132,16 +168,20 @@ export async function getCodexMcpBlockStatus(
  * Detects an OpenWiki MCP table outside the one managed marker range.
  *
  * @param content - Complete TOML config content.
+ * @param serverName - `mcp_servers` table key that owns the block.
  * @param managed - Expected managed block range, when present.
  * @returns Whether any matching table is outside the managed block.
  */
 function hasUnmanagedOpenWikiTable(
   content: string,
+  serverName: string,
   managed?: MarkerRange,
 ): boolean {
-  for (const match of content.matchAll(
-    /^\s*\[mcp_servers\.openwiki\]\s*$/gmu,
-  )) {
+  const table = new RegExp(
+    `^\\s*\\[mcp_servers\\.${escapeRegExp(serverName)}\\]\\s*$`,
+    "gmu",
+  );
+  for (const match of content.matchAll(table)) {
     const index = match.index;
     if (!managed || index < managed.start || index >= managed.end) return true;
   }
@@ -152,26 +192,40 @@ function hasUnmanagedOpenWikiTable(
  * Renders the canonical managed TOML block.
  *
  * @param entry - Exact executable invocation to render.
+ * @param serverName - `mcp_servers` table key that owns the block.
  * @returns Complete marker-delimited TOML block.
  */
-function renderBlock(entry: HostMcpServerCommand): string {
-  return `${START}
-[mcp_servers.openwiki]
+function renderBlock(entry: HostMcpServerCommand, serverName: string): string {
+  const markers = markersFor(serverName);
+  return `${markers.start}
+[mcp_servers.${serverName}]
 command = ${JSON.stringify(entry.command)}
 args = [${entry.args.map((argument) => JSON.stringify(argument)).join(", ")}]
-${END}
+${markers.end}
 `;
+}
+
+/**
+ * Escapes one literal for use inside a regular expression.
+ *
+ * @param value - Literal text.
+ * @returns Pattern that matches exactly the literal.
+ */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 /**
  * Locates and validates the managed TOML marker pair.
  *
  * @param content - Complete TOML config content.
+ * @param serverName - `mcp_servers` table key that owns the block.
  * @returns Managed byte range, or `null` when both markers are absent.
  */
-function markerRange(content: string): MarkerRange | null {
-  const start = content.indexOf(START);
-  const endMarker = content.indexOf(END);
+function markerRange(content: string, serverName: string): MarkerRange | null {
+  const markers = markersFor(serverName);
+  const start = content.indexOf(markers.start);
+  const endMarker = content.indexOf(markers.end);
   if (start === -1 && endMarker === -1) return null;
   if (start === -1 || endMarker === -1 || endMarker < start) {
     throw new HostIntegrationError(
@@ -180,8 +234,8 @@ function markerRange(content: string): MarkerRange | null {
     );
   }
   if (
-    content.indexOf(START, start + START.length) !== -1 ||
-    content.indexOf(END, endMarker + END.length) !== -1
+    content.indexOf(markers.start, start + markers.start.length) !== -1 ||
+    content.indexOf(markers.end, endMarker + markers.end.length) !== -1
   ) {
     throw new HostIntegrationError(
       "invalid_input",
@@ -189,7 +243,7 @@ function markerRange(content: string): MarkerRange | null {
     );
   }
 
-  let end = endMarker + END.length;
+  let end = endMarker + markers.end.length;
   if (content[end] === "\r") end += 1;
   if (content[end] === "\n") end += 1;
   return { start, end };

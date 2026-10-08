@@ -99,14 +99,11 @@ export type CredentialDiagnostic = {
 };
 
 /**
- * Every environment variable OpenWiki reads or persists, in the order they are
- * written to `~/.openwiki/.env`. This is the single source of truth: the
- * credential diagnostics list and the agent's debug-dump key list are both
- * derived from it (see {@link CREDENTIAL_DIAGNOSTIC_ENV_KEYS} and
- * {@link DEBUG_ENV_KEYS}), so they cannot silently drift out of sync when a new
- * managed key is added.
+ * The model-provider keys: provider selection, model ID, model run settings,
+ * and provider credentials. The personal MCP server never loads these, because
+ * it serves a host's model and is itself model-free.
  */
-export const MANAGED_ENV_KEYS = [
+export const MODEL_PROVIDER_ENV_KEYS = [
   BASETEN_API_KEY_ENV_KEY,
   BASETEN_BASE_URL_ENV_KEY,
   BOB_API_KEY_ENV_KEY,
@@ -154,6 +151,18 @@ export const MANAGED_ENV_KEYS = [
   OPENWIKI_PROVIDER_RETRY_ATTEMPTS_ENV_KEY,
   OPENWIKI_PAGE_CONCURRENCY_ENV_KEY,
   OPENWIKI_REASONING_EFFORT_ENV_KEY,
+] as const;
+
+/**
+ * Every environment variable OpenWiki reads or persists, in the order they are
+ * written to `~/.openwiki/.env`. This is the single source of truth: the
+ * credential diagnostics list and the agent's debug-dump key list are both
+ * derived from it (see {@link CREDENTIAL_DIAGNOSTIC_ENV_KEYS} and
+ * {@link DEBUG_ENV_KEYS}), so they cannot silently drift out of sync when a new
+ * managed key is added.
+ */
+export const MANAGED_ENV_KEYS = [
+  ...MODEL_PROVIDER_ENV_KEYS,
   OPENWIKI_NOTION_TOKEN_ENV_KEY,
   OPENWIKI_NOTION_MCP_CLIENT_ID_ENV_KEY,
   OPENWIKI_NOTION_MCP_ACCESS_TOKEN_ENV_KEY,
@@ -277,10 +286,30 @@ export function getSavedEnvValue(key: string): string | undefined {
   return savedEnvAtStartup?.[key];
 }
 
+/**
+ * The only keys {@link loadOpenWikiEnv} may load, or `undefined` for no limit.
+ * The personal MCP server sets it so that every load in that process, including
+ * the one inside an OAuth token refresh, is limited to connector credentials.
+ */
+let envLoadScope: ReadonlySet<string> | undefined;
+
+/**
+ * Limits every later {@link loadOpenWikiEnv} in this process to `keys`. Keys in
+ * {@link MODEL_PROVIDER_ENV_KEYS} are never loaded while a scope is set.
+ *
+ * @param keys - The keys later loads may copy into `process.env`.
+ */
+export function scopeOpenWikiEnvLoading(keys: Iterable<string>): void {
+  const modelProviderKeys = new Set<string>(MODEL_PROVIDER_ENV_KEYS);
+  envLoadScope = new Set(
+    [...keys].filter((key) => !modelProviderKeys.has(key)),
+  );
+}
+
 export async function loadOpenWikiEnv(): Promise<EnvMap> {
   captureShellEnv();
 
-  const env = await readOpenWikiEnv();
+  const env = filterEnvToLoadScope(await readOpenWikiEnv());
 
   if (savedEnvAtStartup === undefined) {
     savedEnvAtStartup = { ...env };
@@ -658,6 +687,17 @@ function getStreamIdleTimeoutWarnings(
 
 function getReasoningEffortWarnings(value: string): string[] {
   return isReasoningEffort(value.trim()) ? [] : ["invalid reasoning effort"];
+}
+
+function filterEnvToLoadScope(env: EnvMap): EnvMap {
+  const scope = envLoadScope;
+  if (scope === undefined) {
+    return env;
+  }
+
+  return Object.fromEntries(
+    Object.entries(env).filter(([key]) => scope.has(key)),
+  );
 }
 
 async function readOpenWikiEnv(): Promise<EnvMap> {
