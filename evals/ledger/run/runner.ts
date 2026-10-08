@@ -78,6 +78,14 @@ export interface RunnerInputs {
   onEvidence?: (evidence: EvidenceCorpus) => void | Promise<void>;
 
   /**
+   * Durable sink invoked after each checkpoint is scored, before the next
+   * checkpoint begins.
+   *
+   * @default undefined scored checkpoints are persisted only with the result
+   */
+  onCheckpoint?: (checkpoint: CheckpointResult) => void | Promise<void>;
+
+  /**
    * The resolved run config.
    */
   config: LedgerRunConfig;
@@ -280,6 +288,7 @@ export async function runBenchmark(
         reportProgress,
       });
 
+      await inputs.onCheckpoint?.(checkpointResult);
       checkpointResults.push(checkpointResult);
       history.push(historyEntry);
       carry = nextCarry;

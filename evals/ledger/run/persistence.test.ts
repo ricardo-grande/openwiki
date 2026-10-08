@@ -8,6 +8,7 @@ import {
   prepareRunDirectory,
   writeArtifactSnapshot,
   writeAssertionInventory,
+  writeCheckpointResult,
   writeEvidenceCorpus,
   writeRunFailure,
   writeRunResult,
@@ -383,6 +384,39 @@ describe("writeRunResult", () => {
       await readFile(path.join(runDir, "evidence", "T0.json"), "utf8"),
     ) as { records: Array<{ evidenceId: string }> };
     expect(written.records[0].evidenceId).toBe("src/calc.ts::0000");
+  });
+
+  test("persists each scored checkpoint with its verdict rationales", async () => {
+    const resultsDir = await scratchResultsDir();
+    const runDir = await prepareRunDirectory(
+      resultsDir,
+      "inbox-week",
+      "2026-01-01T00:00:00.000Z",
+    );
+
+    await writeCheckpointResult(
+      runDir,
+      checkpointWith("T1", [
+        {
+          assertion: "The dentist appointment is on March 10.",
+          sourceQuote: "Dentist: March 10",
+          location: "logistics.md",
+          verdict: "unverified",
+          tense: "current",
+          adjudicatedBy: "none",
+          evidenceIds: [],
+          rationale: "No item mentions a dentist.",
+        },
+      ]),
+    );
+
+    const written = JSON.parse(
+      await readFile(path.join(runDir, "checkpoints", "T1.json"), "utf8"),
+    ) as CheckpointResult;
+    expect(written.checkpointId).toBe("T1");
+    expect(written.evaluations?.precisionEvaluations[0].rationale).toBe(
+      "No item mentions a dentist.",
+    );
   });
 
   test("rejects artifact document paths outside the checkpoint directory", async () => {

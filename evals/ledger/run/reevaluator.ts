@@ -78,6 +78,14 @@ export interface SavedRunReevaluationInputs {
    * @default undefined loaded evidence is not re-persisted
    */
   onEvidence?: (evidence: EvidenceCorpus) => void | Promise<void>;
+
+  /**
+   * Durable sink invoked after each checkpoint is scored, before the next
+   * checkpoint begins.
+   *
+   * @default undefined scored checkpoints are persisted only with the result
+   */
+  onCheckpoint?: (checkpoint: CheckpointResult) => void | Promise<void>;
 }
 
 /**
@@ -203,6 +211,7 @@ export async function reevaluateSavedRun(
         reportProgress,
       });
 
+      await inputs.onCheckpoint?.(checkpointResult);
       checkpointResults.push(checkpointResult);
       history.push(historyEntry);
       carry = nextCarry;
