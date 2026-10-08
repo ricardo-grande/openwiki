@@ -437,6 +437,20 @@ Connector secrets are referenced by env var name and stored in `~/.openwiki/.env
 
 </details>
 
+<details>
+<summary><b>Experimental: resumable personal runs</b></summary>
+
+Set `OPENWIKI_PERSONAL_CORE=1` to run `openwiki personal --init` and `openwiki personal --update` on the same resumable page-job lifecycle as code mode:
+
+- Each run reads only the connector pulls the wiki has not absorbed yet. A connector's first run reads only its newest pull.
+- A planner routes that evidence to pages, then one fresh worker writes each page. `OPENWIKI_PAGE_CONCURRENCY` applies.
+- An interrupted run resumes when you run the same command again. A lock in `~/.openwiki/wiki/.run.lock` stops a second process from writing the wiki at the same time.
+- If you edit a page while a worker is writing it, the worker reads your edit again instead of overwriting it.
+
+`openwiki ingest` and `openwiki personal` chat do not use it yet.
+
+</details>
+
 ### LangSmith connector (code mode)
 
 The connectors above feed a `personal` wiki. The **LangSmith** connector instead enriches a `code` wiki: it pulls recent LangSmith traces (tool calls, outcomes, and latency) for the projects you choose through the official LangSmith SDK, so a repository's docs reflect how its code actually behaves at runtime, not just what the source says.

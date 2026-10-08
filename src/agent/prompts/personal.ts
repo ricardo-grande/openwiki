@@ -3,6 +3,47 @@ import {
   openWikiHomeDisplayPath,
   openWikiLocalWikiDisplayPath,
 } from "../../config/openwiki-home.js";
+import {
+  PERSONAL_CANONICAL_PAGES_GUIDANCE,
+  PERSONAL_CONFIDENCE_GUIDANCE,
+  PERSONAL_CONTESTED_GUIDANCE,
+  PERSONAL_DEDUPLICATION_GUIDANCE,
+  PERSONAL_EMAIL_TRIAGE_GUIDANCE,
+  PERSONAL_OPEN_QUESTION_RESTRAINT_GUIDANCE,
+  PERSONAL_OPEN_QUESTION_SCOPE_GUIDANCE,
+  PERSONAL_OPEN_QUESTIONS_FORMAT_GUIDANCE,
+  PERSONAL_ROUTING_GUIDANCE,
+  PERSONAL_SYNTHESIS_LAYER_GUIDANCE,
+  PERSONAL_THEMES_FORMAT_GUIDANCE,
+  PERSONAL_WORKSPACE_TRIAGE_GUIDANCE,
+} from "./personal-guidance.js";
+
+/**
+ * The synthesis rules of the legacy monolithic init and update prompts,
+ * assembled from the shared personal guidance. The three open-questions
+ * ordering rules are legacy-only: on the lifecycle core, the plan's
+ * maintenance job orders that work.
+ */
+const LEGACY_LOCAL_SYNTHESIS_DISCIPLINE = [
+  "Local knowledge synthesis discipline:",
+  PERSONAL_SYNTHESIS_LAYER_GUIDANCE,
+  PERSONAL_CANONICAL_PAGES_GUIDANCE,
+  PERSONAL_OPEN_QUESTION_SCOPE_GUIDANCE,
+  PERSONAL_THEMES_FORMAT_GUIDANCE,
+  PERSONAL_OPEN_QUESTIONS_FORMAT_GUIDANCE,
+  "",
+  "- At the start of every local-wiki run, read /open-questions.md if it exists so current unresolved questions shape evidence review.",
+  "- During the run, if new evidence answers a known open question, move it to Answered and link Evidence to the canonical answer or source evidence.",
+  "- At the end of the run, return to /open-questions.md to add real newly discovered unresolved questions and to resolve any questions answered during the run.",
+  PERSONAL_CONFIDENCE_GUIDANCE,
+  PERSONAL_CONTESTED_GUIDANCE,
+  PERSONAL_EMAIL_TRIAGE_GUIDANCE,
+  PERSONAL_ROUTING_GUIDANCE,
+  PERSONAL_WORKSPACE_TRIAGE_GUIDANCE,
+  PERSONAL_DEDUPLICATION_GUIDANCE,
+  PERSONAL_OPEN_QUESTION_RESTRAINT_GUIDANCE,
+].join("\n");
+
 export const PERSONAL_SYSTEM_PROMPTS = {
   chat: `You are OpenWiki, an expert technical writer, software architect, and product analyst.
 
@@ -171,69 +212,7 @@ Connector ingestion discipline:
 - For Notion MCP, do not ask the user to hand-edit readOnlyOperations for normal interactive ingestion. Discover tools with openwiki_list_mcp_tools, choose the exact search/query/retrieve/list tool exposed by the server, call it with openwiki_call_mcp_tool, then inspect the raw result with openwiki_list_raw_items/openwiki_read_raw_item.
 - If the user asks how to set up connector authentication, provider credentials, OAuth, local integrations, Slack/Gmail/X/Notion auth, connector config, or which token/scopes are needed, use the available OpenWiki operations documentation and README auth notes before answering. Do not ask the user to paste secret values into chat; explain env var names and trusted CLI commands such as openwiki auth <provider> instead.
 
-Local knowledge synthesis discipline:
-- Use the wiki as a synthesis layer, not a source dump. Connector-specific pages should preserve compact evidence notes; canonical cross-source pages should hold the user's durable knowledge.
-- Maintain these canonical files when relevant:
-  - /quickstart.md: navigation and current high-level status only. Emphasize confirmed and strong source-backed facts; link out for detail.
-  - /open-questions.md: concise questions about the user's wiki or core memory model. Use sections named Active, Answered, and Stale.
-  - /themes.md: compact recurring themes and trends index. Use stable topic keys and terse rows/entries; keep detailed explanation in source pages.
-  - /commitments.md: concrete work tasks, commitments, scheduled items, approvals, and follow-ups, especially from Gmail, Notion, Slack, and direct mentions. Include Owner: me, team, other:<name>, or unknown when inferable from evidence.
-  - /personal-logistics.md: personal errands, appointments, pickups, travel, household/life-admin deadlines, and other non-work logistics. Do not mix routine personal logistics into /commitments.md unless they are also work commitments.
-  - /sources/<connector>.md: concise source evidence and ingestion coverage only. Do not make source pages the primary synthesis layer.
-- Only add /open-questions.md entries for uncertainty about the user's memory graph or wiki quality, such as unclear recurring routines, unknown locations, uncertain preferences, ambiguous people/org relationships, contradictory evidence, or missing context needed for future assistance. Example: "Brace has a weekly workout class, but the gym location is unclear."
-- Do not write open questions merely because a source document contains unresolved product/design questions, comments, or TODOs. Keep those on source pages, /themes.md, or /commitments.md unless the question is explicitly owned by the user or creates a gap in the user's core memory.
-- Group related open questions under one topic key instead of creating many separate entries for the same source document or project.
-- Keep /themes.md concise:
-  - Treat it as an index of recurring signals, not a narrative page.
-  - Prefer a Markdown table with columns: Topic key, Theme/Signal, First seen, Last seen, Confidence, Sources, Evidence count, Status, Evidence.
-  - If a table is too cramped, use one short section per theme with the same fields, plus at most one Notes bullet.
-  - Cap each theme's prose at 1-2 short sentences. Put detail, examples, long context, and item lists in /sources/<connector>.md, /commitments.md, or /personal-logistics.md and link there.
-  - Update existing theme rows instead of appending explanatory paragraphs. Watchlist entries should be especially terse.
-- Structure /open-questions.md entries concisely:
-  <open_questions_structure>
-    # Open Questions
-
-    ## Active
-
-    ### <topic-key>: <question>
-    - Owner: <person/team/unknown>
-    - Seen: YYYY-MM-DD
-    - Evidence: <short source refs>
-    - Notes: <optional; only if needed>
-
-    ## Answered
-
-    ### <topic-key>: <original question>
-    - Evidence: <link/ref to canonical answer or source>
-    - Answered: YYYY-MM-DD
-
-    ## Stale
-
-    ### <topic-key>: <original question>
-    - Why: <short reason>
-    - Last seen: YYYY-MM-DD
-  </open_questions_structure>
-
-- At the start of every local-wiki run, read /open-questions.md if it exists so current unresolved questions shape evidence review.
-- During the run, if new evidence answers a known open question, move it to Answered and link Evidence to the canonical answer or source evidence.
-- At the end of the run, return to /open-questions.md to add real newly discovered unresolved questions and to resolve any questions answered during the run.
-- Apply confidence labels consistently:
-  - confirmed: directly supported by authoritative evidence or repeated high-quality evidence.
-  - source-backed: supported by one credible source but not yet independently confirmed.
-  - contested: incompatible claims from credible sources that current evidence does not settle.
-  - watchlist: weak, low-signal, early, or potentially transient evidence worth checking again.
-  - saved-context: useful context intentionally saved by the user or found in bookmarks, without implying it is true or important.
-- Contested knowledge discipline:
-  - When credible personal-mode sources disagree and no ground truth settles the conflict, preserve both claims in a ## Contested section on the canonical page. Include each claim's source and date when available.
-  - Label the disputed fact contested wherever it appears, including /themes.md Confidence cells. Never present either side as confirmed or source-backed while the conflict remains unsettled.
-  - Add an /open-questions.md entry only when the unresolved conflict would impair future assistance, and link that question to the canonical Contested entry instead of restating both claims.
-  - Never resolve a contested fact by recency alone. Resolve it only when new evidence settles the conflict or shows that a source is stale, then keep a short resolution note with the resolution date, deciding evidence, and superseded claim source.
-- Classify email-like evidence before writing it to the wiki. Use these labels: action_required, scheduled_commitment, decision_or_approval, direct_request, important_update, people_or_org_signal, project_context, security_or_account_notice, newsletter_or_digest, transaction_or_receipt, promotion_or_marketing, personal_logistics, noise.
-- For email-like evidence, also assign priority high, medium, low, or ignore, and durability ephemeral, durable, or recurring. Write only high/medium durable items, action items, scheduled commitments, approvals, personal logistics, and recurring patterns. Keep receipts, promotions, generic newsletters, routine security notices, and noise out of the wiki unless they are actionable, recurrent, or explicitly requested.
-- Route work commitments and follow-ups to /commitments.md with Owner when inferable; route personal logistics to /personal-logistics.md with date/time/location/status when available.
-- For Notion and similar workspaces, prefer pages edited in the ingestion window, pages where the user is mentioned/tagged/assigned, pages where the user appears in people properties, and pages with titles/body that indicate decisions, follow-ups, blockers, owners, customers, meetings, or plans. Use last_edited_time, last_edited_by, object IDs, page IDs, cursors, and hashes when available. Do not create one broad Notion digest page; route durable synthesis into /themes.md, /commitments.md, /personal-logistics.md, and keep /sources/notion.md as an evidence index. Route Notion questions to /open-questions.md only when they are about the user's wiki/core memory, not because the Notion page itself contains open product questions.
-- Deduplicate across sources using stable topic keys or slugs for recurring entities, projects, questions, and commitments. Update existing theme, open-question, and commitment entries instead of repeating the same detail on multiple source pages. Promote a watchlist item to a theme only when it recurs, has source diversity, or comes from a high-quality source. Mark stale themes or questions when they have not reappeared and no longer look active.
-- Add new open questions only when there is a real unresolved memory/wiki uncertainty that would impair future assistance; do not turn every weak signal or source-document question into a wiki open question.
+${LEGACY_LOCAL_SYNTHESIS_DISCIPLINE}
 
 
 
@@ -393,69 +372,7 @@ Connector ingestion discipline:
 - For Notion MCP, do not ask the user to hand-edit readOnlyOperations for normal interactive ingestion. Discover tools with openwiki_list_mcp_tools, choose the exact search/query/retrieve/list tool exposed by the server, call it with openwiki_call_mcp_tool, then inspect the raw result with openwiki_list_raw_items/openwiki_read_raw_item.
 - If the user asks how to set up connector authentication, provider credentials, OAuth, local integrations, Slack/Gmail/X/Notion auth, connector config, or which token/scopes are needed, use the available OpenWiki operations documentation and README auth notes before answering. Do not ask the user to paste secret values into chat; explain env var names and trusted CLI commands such as openwiki auth <provider> instead.
 
-Local knowledge synthesis discipline:
-- Use the wiki as a synthesis layer, not a source dump. Connector-specific pages should preserve compact evidence notes; canonical cross-source pages should hold the user's durable knowledge.
-- Maintain these canonical files when relevant:
-  - /quickstart.md: navigation and current high-level status only. Emphasize confirmed and strong source-backed facts; link out for detail.
-  - /open-questions.md: concise questions about the user's wiki or core memory model. Use sections named Active, Answered, and Stale.
-  - /themes.md: compact recurring themes and trends index. Use stable topic keys and terse rows/entries; keep detailed explanation in source pages.
-  - /commitments.md: concrete work tasks, commitments, scheduled items, approvals, and follow-ups, especially from Gmail, Notion, Slack, and direct mentions. Include Owner: me, team, other:<name>, or unknown when inferable from evidence.
-  - /personal-logistics.md: personal errands, appointments, pickups, travel, household/life-admin deadlines, and other non-work logistics. Do not mix routine personal logistics into /commitments.md unless they are also work commitments.
-  - /sources/<connector>.md: concise source evidence and ingestion coverage only. Do not make source pages the primary synthesis layer.
-- Only add /open-questions.md entries for uncertainty about the user's memory graph or wiki quality, such as unclear recurring routines, unknown locations, uncertain preferences, ambiguous people/org relationships, contradictory evidence, or missing context needed for future assistance. Example: "Brace has a weekly workout class, but the gym location is unclear."
-- Do not write open questions merely because a source document contains unresolved product/design questions, comments, or TODOs. Keep those on source pages, /themes.md, or /commitments.md unless the question is explicitly owned by the user or creates a gap in the user's core memory.
-- Group related open questions under one topic key instead of creating many separate entries for the same source document or project.
-- Keep /themes.md concise:
-  - Treat it as an index of recurring signals, not a narrative page.
-  - Prefer a Markdown table with columns: Topic key, Theme/Signal, First seen, Last seen, Confidence, Sources, Evidence count, Status, Evidence.
-  - If a table is too cramped, use one short section per theme with the same fields, plus at most one Notes bullet.
-  - Cap each theme's prose at 1-2 short sentences. Put detail, examples, long context, and item lists in /sources/<connector>.md, /commitments.md, or /personal-logistics.md and link there.
-  - Update existing theme rows instead of appending explanatory paragraphs. Watchlist entries should be especially terse.
-- Structure /open-questions.md entries concisely:
-  <open_questions_structure>
-    # Open Questions
-
-    ## Active
-
-    ### <topic-key>: <question>
-    - Owner: <person/team/unknown>
-    - Seen: YYYY-MM-DD
-    - Evidence: <short source refs>
-    - Notes: <optional; only if needed>
-
-    ## Answered
-
-    ### <topic-key>: <original question>
-    - Evidence: <link/ref to canonical answer or source>
-    - Answered: YYYY-MM-DD
-
-    ## Stale
-
-    ### <topic-key>: <original question>
-    - Why: <short reason>
-    - Last seen: YYYY-MM-DD
-  </open_questions_structure>
-
-- At the start of every local-wiki run, read /open-questions.md if it exists so current unresolved questions shape evidence review.
-- During the run, if new evidence answers a known open question, move it to Answered and link Evidence to the canonical answer or source evidence.
-- At the end of the run, return to /open-questions.md to add real newly discovered unresolved questions and to resolve any questions answered during the run.
-- Apply confidence labels consistently:
-  - confirmed: directly supported by authoritative evidence or repeated high-quality evidence.
-  - source-backed: supported by one credible source but not yet independently confirmed.
-  - contested: incompatible claims from credible sources that current evidence does not settle.
-  - watchlist: weak, low-signal, early, or potentially transient evidence worth checking again.
-  - saved-context: useful context intentionally saved by the user or found in bookmarks, without implying it is true or important.
-- Contested knowledge discipline:
-  - When credible personal-mode sources disagree and no ground truth settles the conflict, preserve both claims in a ## Contested section on the canonical page. Include each claim's source and date when available.
-  - Label the disputed fact contested wherever it appears, including /themes.md Confidence cells. Never present either side as confirmed or source-backed while the conflict remains unsettled.
-  - Add an /open-questions.md entry only when the unresolved conflict would impair future assistance, and link that question to the canonical Contested entry instead of restating both claims.
-  - Never resolve a contested fact by recency alone. Resolve it only when new evidence settles the conflict or shows that a source is stale, then keep a short resolution note with the resolution date, deciding evidence, and superseded claim source.
-- Classify email-like evidence before writing it to the wiki. Use these labels: action_required, scheduled_commitment, decision_or_approval, direct_request, important_update, people_or_org_signal, project_context, security_or_account_notice, newsletter_or_digest, transaction_or_receipt, promotion_or_marketing, personal_logistics, noise.
-- For email-like evidence, also assign priority high, medium, low, or ignore, and durability ephemeral, durable, or recurring. Write only high/medium durable items, action items, scheduled commitments, approvals, personal logistics, and recurring patterns. Keep receipts, promotions, generic newsletters, routine security notices, and noise out of the wiki unless they are actionable, recurrent, or explicitly requested.
-- Route work commitments and follow-ups to /commitments.md with Owner when inferable; route personal logistics to /personal-logistics.md with date/time/location/status when available.
-- For Notion and similar workspaces, prefer pages edited in the ingestion window, pages where the user is mentioned/tagged/assigned, pages where the user appears in people properties, and pages with titles/body that indicate decisions, follow-ups, blockers, owners, customers, meetings, or plans. Use last_edited_time, last_edited_by, object IDs, page IDs, cursors, and hashes when available. Do not create one broad Notion digest page; route durable synthesis into /themes.md, /commitments.md, /personal-logistics.md, and keep /sources/notion.md as an evidence index. Route Notion questions to /open-questions.md only when they are about the user's wiki/core memory, not because the Notion page itself contains open product questions.
-- Deduplicate across sources using stable topic keys or slugs for recurring entities, projects, questions, and commitments. Update existing theme, open-question, and commitment entries instead of repeating the same detail on multiple source pages. Promote a watchlist item to a theme only when it recurs, has source diversity, or comes from a high-quality source. Mark stale themes or questions when they have not reappeared and no longer look active.
-- Add new open questions only when there is a real unresolved memory/wiki uncertainty that would impair future assistance; do not turn every weak signal or source-document question into a wiki open question.
+${LEGACY_LOCAL_SYNTHESIS_DISCIPLINE}
 
 
 

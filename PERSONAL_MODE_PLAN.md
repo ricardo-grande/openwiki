@@ -75,7 +75,24 @@ independent and can ship at any time.
     evidence, deletions outside `scope.pages`, and hidden path segments.
   - `/open-questions.md` is a maintenance job only while it carries no
     seeds. A planner that seeds it makes it a regular job.
-- [ ] **C4.** Native driver, opt-in
+- [x] **C4.** Native driver, opt-in
+  - [x] C4.1 `agent/prompts/personal-guidance.ts`: canonical-page formats,
+        confidence and contested rules, email triage, and
+        `createConnectorSynthesisGuidance`. The legacy init and update
+        prompts are assembled from it, byte-identical to before.
+  - [x] C4.2 `agent/personal-runner.ts`: gather worker, planner, and one page
+        worker per job on the shared worker pool, with the lock renewed on a
+        timer and released on failure
+  - [x] C4.3 Frontier-bounded raw read tools (`raw://` refs with JSON
+        pointers), MCP gather tools scoped to the open connectors, and a page
+        backend that tracks `baseVersion` from job start, its own writes, and
+        its last stable read
+  - [x] C4.4 `OPENWIKI_PERSONAL_CORE=1` routes
+        `openwiki personal --init/--update` to the driver. Per-source
+        ingestion and chat stay on the legacy path until C5.
+  - A run with no evidence and no request submits an empty plan without a
+    planner, so init on a fresh home runs only the `/quickstart.md` job.
+  - CLI progress events carry `wiki: "personal"` and a `gathering` stage.
 - [ ] **C5.** Entry-point rewiring
 - [ ] **C6.** Default flip
 - [ ] **C7.** Remove the legacy path

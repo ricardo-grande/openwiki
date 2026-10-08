@@ -19,7 +19,21 @@ export interface RepositoryGenerationProgressEvent {
   /**
    * Current native repository-generation lifecycle stage.
    */
-  stage: "planning" | "generating" | "finalizing" | "replanning" | "noop";
+  stage:
+    | "gathering"
+    | "planning"
+    | "generating"
+    | "finalizing"
+    | "replanning"
+    | "noop";
+
+  /**
+   * Wiki the lifecycle maintains. Only the personal wiki has a gathering
+   * stage.
+   *
+   * @default "repository"
+   */
+  wiki?: "repository" | "personal";
 
   /**
    * Whether this stage is continuing a previously interrupted durable run.
@@ -114,6 +128,16 @@ export type OpenWikiRunOptions = {
   threadId?: string;
   userMessage?: string | null;
   telemetryFile?: string;
+
+  /**
+   * Keeps a personal init or update on the legacy monolithic path even when
+   * `OPENWIKI_PERSONAL_CORE=1` opts in to the lifecycle core. Per-source
+   * ingestion sets it: the core expects one run after all of an ingest's
+   * pulls, not one run per source.
+   *
+   * @default false
+   */
+  legacyPersonalPath?: boolean;
 };
 
 export type UpdateRunStatus = "complete" | "interrupted";

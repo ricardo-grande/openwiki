@@ -3,7 +3,7 @@ import {
   CONNECTOR_IDS,
   createConnectorRegistry,
 } from "../../src/connectors/registry.ts";
-import { createConnectorSynthesisGuidance } from "../../src/ingestion/ingestion.ts";
+import { createConnectorSynthesisGuidance } from "../../src/agent/prompts/personal-guidance.ts";
 
 const registry = createConnectorRegistry();
 

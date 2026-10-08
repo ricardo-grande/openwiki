@@ -751,7 +751,7 @@ export function isOpenWikiDocsPath(filePath: string): boolean {
  * @param filePath - Relative, absolute, or backslash-separated virtual path.
  * @returns Canonical absolute POSIX virtual path.
  */
-function normalizeVirtualPath(filePath: string): string {
+export function normalizeVirtualPath(filePath: string): string {
   const slashed = filePath.trim().replaceAll("\\", "/");
   return path.posix.normalize(`/${slashed.replace(/^\/+/, "")}`);
 }

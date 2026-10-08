@@ -69,4 +69,30 @@ describe("formatRepositoryProgress", () => {
       "Documenting 5 of 20 · 2 in flight: /openwiki/a.md, /openwiki/b.md\n",
     );
   });
+
+  test("labels personal wiki stages, including gathering", () => {
+    const label = (
+      stage: "gathering" | "planning" | "finalizing" | "noop",
+      resumed = false,
+    ) =>
+      formatRepositoryProgress(
+        { type: "repository_progress", wiki: "personal", stage, resumed },
+        "update",
+      );
+
+    expect(label("gathering")).toBe("Gathering evidence for the personal wiki");
+    expect(label("gathering", true)).toBe(
+      "Resuming evidence gathering for the personal wiki",
+    );
+    expect(label("planning")).toBe("Planning personal wiki");
+    expect(label("planning", true)).toBe("Resuming personal wiki planning");
+    expect(label("finalizing")).toBe("Finalizing personal wiki");
+    expect(label("noop")).toBe("Personal wiki is already current");
+    expect(
+      formatRepositoryProgress(
+        { type: "repository_progress", stage: "noop" },
+        "update",
+      ),
+    ).toBe("Repository wiki is already current");
+  });
 });

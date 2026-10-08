@@ -58,6 +58,10 @@ import {
   CONVERSATION_HISTORY_MOUNT,
   createAgentBackend,
 } from "./agent-backend.js";
+import {
+  isPersonalCoreEnabled,
+  runNativePersonalGeneration,
+} from "./personal-runner.js";
 import { runNativeRepositoryGeneration } from "./repository-runner.js";
 import {
   createVertexAuthFetch,
@@ -187,56 +191,47 @@ export async function runOpenWikiAgent(
     outputMode === "repository" && (command === "init" || command === "update");
 
   if (isRepositoryGeneration) {
-    const debugFetchCapture = installOpenRouterDebugFetch(options);
-    try {
-      const config = await resolveRunConfig(options, (resolved) => {
-        telemetryContext.provider = resolved;
-      });
-      debugFetchCapture.setRetryAttempts(config.providerRetryAttempts);
-      const model = inStageSync(
-        "build",
-        () =>
-          createModel(
-            config.provider,
-            config.modelId,
-            config.providerRetryAttempts,
-            config.maxOutputTokens,
-            config.streamIdleTimeout,
-          ),
-        { errorClass: "build_error", errorDetail: "model" },
-      );
-      const generation = await inStage(
-        "run",
-        () =>
-          runNativeRepositoryGeneration({
-            root: runtimeCwd,
-            mode: command,
-            language: options.language,
-            force: Boolean(options.userMessage?.trim()),
-            planningContext: options.userMessage,
-            modelId: config.modelId,
-            model,
-            pageConcurrency: config.pageConcurrency,
-            onEvent: options.onEvent,
-          }),
-        { errorClass: "agent_error" },
-      );
+    return runNativeGeneration(
+      command,
+      options,
+      telemetryContext,
+      (model, config) =>
+        runNativeRepositoryGeneration({
+          root: runtimeCwd,
+          mode: command,
+          language: options.language,
+          force: Boolean(options.userMessage?.trim()),
+          planningContext: options.userMessage,
+          modelId: config.modelId,
+          model,
+          pageConcurrency: config.pageConcurrency,
+          onEvent: options.onEvent,
+        }),
+    );
+  }
 
-      if (generation.skipped) {
-        telemetryContext.outcome = "noop";
-      }
+  const isPersonalCoreGeneration =
+    outputMode === "local-wiki" &&
+    (command === "init" || command === "update") &&
+    !options.legacyPersonalPath &&
+    isPersonalCoreEnabled();
 
-      return {
-        command,
-        model: config.modelId,
-        ...(generation.skipped ? { skipped: true } : {}),
-      };
-    } catch (error) {
-      attachOpenRouterDebugInfo(error, debugFetchCapture.getLastFailure());
-      throw error;
-    } finally {
-      debugFetchCapture.restore();
-    }
+  if (isPersonalCoreGeneration) {
+    return runNativeGeneration(
+      command,
+      options,
+      telemetryContext,
+      (model, config) =>
+        runNativePersonalGeneration({
+          mode: command,
+          language: options.language,
+          instruction: options.userMessage,
+          modelId: config.modelId,
+          model,
+          pageConcurrency: config.pageConcurrency,
+          onEvent: options.onEvent,
+        }),
+    );
   }
 
   const openWikiIgnore =
@@ -278,6 +273,65 @@ export async function runOpenWikiAgent(
     // error already carries.
     attachOpenRouterDebugInfo(error, debugFetchCapture.getLastFailure());
 
+    throw error;
+  } finally {
+    debugFetchCapture.restore();
+  }
+}
+
+/**
+ * Runs a native lifecycle driver: resolves the run configuration, builds the
+ * model, and records a no-op outcome.
+ *
+ * @param command - Init or update.
+ * @param options - Run options of the caller.
+ * @param telemetryContext - Shared telemetry context the provider and outcome
+ *   are recorded on.
+ * @param generate - Driver to run with the built model.
+ * @returns The run result, marked skipped for a no-op.
+ */
+async function runNativeGeneration(
+  command: OpenWikiCommand,
+  options: OpenWikiRunOptions,
+  telemetryContext: RunTelemetryContext,
+  generate: (
+    model: BaseChatModel,
+    config: Awaited<ReturnType<typeof resolveRunConfig>>,
+  ) => Promise<{ skipped: boolean }>,
+): Promise<OpenWikiRunResult> {
+  const debugFetchCapture = installOpenRouterDebugFetch(options);
+  try {
+    const config = await resolveRunConfig(options, (resolved) => {
+      telemetryContext.provider = resolved;
+    });
+    debugFetchCapture.setRetryAttempts(config.providerRetryAttempts);
+    const model = inStageSync(
+      "build",
+      () =>
+        createModel(
+          config.provider,
+          config.modelId,
+          config.providerRetryAttempts,
+          config.maxOutputTokens,
+          config.streamIdleTimeout,
+        ),
+      { errorClass: "build_error", errorDetail: "model" },
+    );
+    const generation = await inStage("run", () => generate(model, config), {
+      errorClass: "agent_error",
+    });
+
+    if (generation.skipped) {
+      telemetryContext.outcome = "noop";
+    }
+
+    return {
+      command,
+      model: config.modelId,
+      ...(generation.skipped ? { skipped: true } : {}),
+    };
+  } catch (error) {
+    attachOpenRouterDebugInfo(error, debugFetchCapture.getLastFailure());
     throw error;
   } finally {
     debugFetchCapture.restore();
