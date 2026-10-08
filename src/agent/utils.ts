@@ -38,6 +38,13 @@ import type {
 const execFileAsync = promisify(execFile);
 const LOCAL_WIKI_METADATA_PATH = ".last-update.json";
 const REPOSITORY_RUN_STATE_BASENAME = ".run.json";
+/**
+ * Personal lifecycle state at the wiki root: `.run.json`, `.run.lock`, and
+ * `.synthesis-cursor.json`, plus the temporary siblings their atomic writes
+ * and lock takeovers create.
+ */
+const PERSONAL_RUN_STATE_FILE_PATTERN =
+  /^\.(?:run\.json|run\.lock|synthesis-cursor\.json)(?:\..+\.(?:tmp|stale))?$/u;
 
 export type OpenWikiContentSnapshot = string;
 
@@ -817,7 +824,8 @@ function isIgnoredSnapshotPath(relativePath: string): boolean {
   return (
     relativePath === path.basename(UPDATE_METADATA_PATH) ||
     relativePath === LOCAL_WIKI_METADATA_PATH ||
-    relativePath === REPOSITORY_RUN_STATE_BASENAME
+    relativePath === REPOSITORY_RUN_STATE_BASENAME ||
+    PERSONAL_RUN_STATE_FILE_PATTERN.test(relativePath)
   );
 }
 

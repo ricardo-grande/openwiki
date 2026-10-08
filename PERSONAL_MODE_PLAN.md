@@ -48,7 +48,19 @@ independent and can ship at any time.
         retrieval
   - [x] C1.4 `writableWikiPages` enforced in `local-wiki` (PLC-003)
   - The S1 score check is skipped while S1.6 is deferred.
-- [ ] **C2.** Core state, lock, begin and finish
+- [x] **C2.** Core state, lock, begin and finish
+  - [x] C2.1 `personal-run-state.ts`: `.run.json` (`kind: "personal"`),
+        `.synthesis-cursor.json`, and the `raw://` ref parser
+  - [x] C2.2 `personal-run-lock.ts`: `.run.lock` with exclusive create,
+        renewal, expiry, takeover, and release
+  - [x] C2.3 `personal-run.ts`: frontier, `beginPersonalRun`,
+        `closePersonalGathering`, `finishPersonalRun`
+  - [x] C2.4 State files excluded from content snapshots
+  - An in-scope agentic connector always gets an unfrozen frontier entry,
+    so an update with one is never a no-op: gathering may still find
+    evidence.
+  - PLC-013's "scheduled ingestion never takes over" is an entry-point
+    property and is checked with C5.
 - [ ] **C3.** Plan and page operations
 - [ ] **C4.** Native driver, opt-in
 - [ ] **C5.** Entry-point rewiring

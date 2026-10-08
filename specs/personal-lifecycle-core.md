@@ -4,7 +4,7 @@ title: Personal Lifecycle Core and Drivers
 description: Defines the durable, model-free lifecycle core for OpenWiki personal mode and the contract that its native and host drivers follow.
 spec_id: personal-lifecycle-core
 kind: architecture
-version: "0.2"
+version: "0.3"
 status: draft
 depends_on: []
 generated: { by: claude/claude-opus-5-5, at: 2026-10-07T15:42:16Z }
@@ -19,7 +19,7 @@ sources:
 
 # Personal Lifecycle Core and Drivers
 
-**Version 0.2** · Status: draft · Kind: architecture
+**Version 0.3** · Status: draft · Kind: architecture
 
 This spec gives OpenWiki personal mode (the local brain under
 `~/.openwiki/wiki`) the same architecture code mode already has. A durable,
@@ -55,7 +55,7 @@ version are listed in §7.
 | 4   | Agent boundaries      | What drivers and their agents may do |
 | 5   | Conformance           | Checks PLC-001 to PLC-019 |
 | 6   | Considered & deferred | Claims brain, retention, per-instance cursors, ... |
-| 7   | Changelog             | 0.2 opt-in flag, release gate, onboarding entry point, translation removal timing |
+| 7   | Changelog             | 0.3 import boundary by module, lock create and takeover wording |
 
 ## Conventions
 
@@ -151,8 +151,12 @@ personal core reuses from code mode, and the two cross-mode changes it needs.
 Components:
 
 - `generation/personal-run.ts`: REQUIRED. The personal lifecycle core (§3.2–§3.4).
-  Its only dependencies are the building blocks below, the connector raw store,
-  and `onboarding.json`.
+  It MAY be split into sibling `generation/personal-run-*.ts` modules (for
+  example the state formats and the lock); the rules for the core apply to
+  each of them. Besides the building blocks below, the core depends only on
+  the connector raw store, `onboarding.json`, and model-free helpers: OpenWiki
+  home paths, language resolution, index labels, and `ClaimsStore` page
+  discovery.
 - Reused as they are today:
   - `finalizeWikiArtifacts` and `prepareWikiForAuthoring`, together with
     `serializePreparedWikiState` and `deserializePreparedWikiState`
@@ -201,9 +205,15 @@ await runPageWorkers(run, {
 
 **Rules**
 
-- `personal-run.ts` MUST NOT import model, agent, prompt, or
-  connector-ingestion code. Rationale: a model-free core is what lets a host
-  with its own model drive the lifecycle.
+- The core MUST NOT import model, agent-runtime, prompt, or
+  connector-ingestion code, and MUST NOT import the code-mode core
+  (`repository-run.ts`, `run-state.ts`, `page-jobs.ts`, `page-manifest.ts`).
+  From `agent/` it MAY import only the deterministic building blocks listed
+  above (`wiki-finalizer.ts`, `docs-only-backend.ts`, `utils.ts`) and the
+  type-only `types.ts`. Rationale: a model-free core is what lets a host
+  with its own model drive the lifecycle. Several of those building blocks
+  live under `agent/` for historical reasons, so the boundary is drawn by
+  module, not by directory.
 - Contributors MUST land the moves into `generation/shared/` and
   `agent/page-workers.ts` as a separate change. In that change the code-mode
   test suite MUST pass with no test edits other than import paths.
@@ -286,8 +296,9 @@ The frontier is a list of entries:
 - `frozen`: REQUIRED. Becomes true when gathering ends (§3.4).
 
 `<wikiDir>/.run.lock` is the single-writer lock (§3.4). It exists only while
-a process holds the run, and it is created with exclusive create (`wx`). Its
-fields:
+a process holds the run. It is created with an *exclusive create*: one that
+fails when the file already exists and never exposes a partially written
+lock, such as hard-linking a complete temporary file into place. Its fields:
 
 - `holder`: REQUIRED. `<driver>:<hostname>:<pid>`, for example
   `native:mbp:4711` or `host-claude:mbp:5120`.
@@ -539,7 +550,9 @@ the core at a time.
 
 - `begin` acquires `.run.lock` with exclusive create. If the lock exists and
   is *fresh*, `begin` fails with `conflict` and returns the holder and the
-  lock's age.
+  lock's age. A `begin` whose `holder` already holds the lock renews it
+  instead. A failed `begin` releases the lock only if that same call
+  acquired it.
 - Every core operation and every page read made by the holder's process renews
   `renewedAt`. The native driver also renews it on a timer while its workers
   run.
@@ -547,8 +560,10 @@ the core at a time.
   - `renewedAt` is older than 30 minutes;
   - the holder's hostname is this machine and its pid is no longer running.
 - An expired lock is taken over only by a `begin` with `takeover: true`. The
-  taker deletes the stale lock and re-acquires it with exclusive create, so of
-  two simultaneous takers exactly one wins.
+  taker moves the stale lock aside only while it is still the lock the taker
+  judged expired, then re-acquires it with exclusive create. Of two
+  simultaneous takers exactly one wins, and neither removes a lock the other
+  just acquired.
 - Scheduled ingestion never passes `takeover`. Interactive drivers (the CLI, a
   host) pass it only after the user confirms.
 - A driver that exits without finishing deletes `.run.lock` and leaves
@@ -763,7 +778,7 @@ The following MUST NOT be treated as non-conformance:
 
 | ID | Check | Severity | Checked by | Ref |
 |---|---|---|---|---|
-| PLC-001 | `personal-run.ts` has no imports from `agent/`, prompt, or ingestion modules | error | lint rule / test | §3.1 |
+| PLC-001 | The core modules import no model, agent-runtime, prompt, connector-ingestion, or code-mode core module, and from `agent/` only the §3.1 building blocks | error | lint rule / test | §3.1 |
 | PLC-002 | Code-mode suite passes unchanged after the shared-helper moves | error | CI | §3.1 |
 | PLC-003 | `writableWikiPages` enforced in local-wiki | error | test | §3.1 |
 | PLC-004 | Frontier excludes raw runs at or before the cursor; uses newest-only when no cursor exists | error | test | §3.2 |
@@ -816,6 +831,17 @@ The following MUST NOT be treated as non-conformance:
 ---
 
 ## 7. Changelog
+
+### 0.3 · 2026-10-08
+
+- **Import boundary** (§3.1, PLC-001). The boundary is drawn by module, not
+  by directory: the core may import the §3.1 building blocks under `agent/`
+  and nothing else there. The core may span sibling `personal-run-*.ts`
+  modules, and its model-free helper dependencies are named.
+- **Lock wording** (§3.2, §3.4). *Exclusive create* is defined by its
+  guarantees rather than by `wx`. A takeover moves the stale lock aside only
+  while it is still the lock judged expired. A `begin` by the current holder
+  renews its lock, and a failed `begin` releases only a lock it acquired.
 
 ### 0.2 · 2026-10-07
 
