@@ -39,7 +39,15 @@ independent and can ship at any time.
         `evals/ledger/README.md`. Deferred for cost: one partial
         `inbox-week` run (about 5% supported) is recorded instead.
 - [ ] **S2.** Onboarding runs init only
-- [ ] **C1.** Shared groundwork
+- [x] **C1.** Shared groundwork
+  - [x] C1.1 `generation/shared/`: `withRunMutation`, JSON state helpers,
+        pending-job lookup, Markdown page snapshot and restore
+  - [x] C1.2 `agent/page-workers.ts`: worker pool, `runPageAgent`,
+        `streamWorkerTools`, `NO_DELEGATION_MIDDLEWARE`
+  - [x] C1.3 Page prefix parameter for Claims paths, `ClaimsStore`, and
+        retrieval
+  - [x] C1.4 `writableWikiPages` enforced in `local-wiki` (PLC-003)
+  - The S1 score check is skipped while S1.6 is deferred.
 - [ ] **C2.** Core state, lock, begin and finish
 - [ ] **C3.** Plan and page operations
 - [ ] **C4.** Native driver, opt-in

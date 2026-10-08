@@ -97,6 +97,56 @@ describe("OpenWikiLocalShellBackend", () => {
     ).resolves.toBe("updated");
   });
 
+  test("enforces writableWikiPages in local-wiki mode", async () => {
+    const rootDir = await mkdtemp(path.join(os.tmpdir(), "openwiki-backend-"));
+    await writeFile(path.join(rootDir, "quickstart.md"), "before", "utf8");
+    const backend = new OpenWikiLocalShellBackend({
+      docsOnly: true,
+      outputMode: "local-wiki",
+      rootDir,
+      virtualMode: true,
+      writableWikiPages: ["/commitments.md"],
+    });
+
+    const write = await backend.write("/commitments.md", "assigned");
+    expect(write.error).toBeUndefined();
+    const edit = await backend.edit("/commitments.md", "assigned", "edited");
+    expect(edit.error).toBeUndefined();
+    await expect(
+      readFile(path.join(rootDir, "commitments.md"), "utf8"),
+    ).resolves.toBe("edited");
+
+    for (const deniedPath of [
+      "/quickstart.md",
+      "/people.md",
+      "/commitments.md/../quickstart.md",
+    ]) {
+      const denied = await backend.write(deniedPath, "bad");
+      expect(denied.error).toContain("may not modify");
+    }
+    const deniedEdit = await backend.edit("/quickstart.md", "before", "after");
+    expect(deniedEdit.error).toContain("may not modify");
+    const deniedDeletion = await backend.delete("/quickstart.md");
+    expect(deniedDeletion.error).toContain("may not modify");
+    await expect(
+      backend.uploadFiles([["/people.md", new TextEncoder().encode("bad")]]),
+    ).resolves.toEqual([
+      expect.objectContaining({ error: "permission_denied" }),
+    ]);
+    await expect(
+      readFile(path.join(rootDir, "quickstart.md"), "utf8"),
+    ).resolves.toBe("before");
+
+    const readOnly = new OpenWikiLocalShellBackend({
+      outputMode: "local-wiki",
+      rootDir,
+      virtualMode: true,
+      writableWikiPages: [],
+    });
+    const readOnlyWrite = await readOnly.write("/commitments.md", "bad");
+    expect(readOnlyWrite.error).toContain("may not modify");
+  });
+
   test("keeps chat-mode style backends unrestricted when docsOnly is false", async () => {
     const rootDir = await mkdtemp(path.join(os.tmpdir(), "openwiki-backend-"));
     const backend = new OpenWikiLocalShellBackend({

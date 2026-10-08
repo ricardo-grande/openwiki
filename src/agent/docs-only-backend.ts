@@ -50,10 +50,11 @@ type OpenWikiBackendOptions = LocalShellBackendOptions & {
   outputMode?: OpenWikiOutputMode;
 
   /**
-   * Exact generated pages this backend may mutate in repository docs-only mode.
+   * Exact generated pages this backend may mutate in repository docs-only mode
+   * and in `local-wiki` mode.
    *
-   * `undefined` preserves the existing repository writer behavior. An empty
-   * array creates a read-only generated-docs backend.
+   * `undefined` preserves the existing writer behavior. An empty array creates
+   * a read-only generated-docs backend.
    */
   writableWikiPages?: readonly string[];
 };
@@ -576,11 +577,16 @@ export class OpenWikiLocalShellBackend extends LocalShellBackend {
 
   /**
    * Return a refusal message when a write escapes the docs tree in docs-only
-   * mode, or `null` if the write is allowed. Always allows in `local-wiki` mode
-   * or when the path is under `openwiki/`.
+   * mode or targets a page outside `writableWikiPages`, or `null` if the write
+   * is allowed. `local-wiki` mode has no docs tree to escape, so only the
+   * writable-page scope applies there.
    */
   private getDocsOnlyWriteError(filePath: string): string | null {
-    if (!this.docsOnly || this.outputMode === "local-wiki") {
+    if (this.outputMode === "local-wiki") {
+      return this.getWritablePageError(filePath);
+    }
+
+    if (!this.docsOnly) {
       return null;
     }
 
@@ -588,6 +594,14 @@ export class OpenWikiLocalShellBackend extends LocalShellBackend {
       return `OpenWiki repository init/update runs may only write under /${OPEN_WIKI_DIR}/. Refused path: ${filePath}`;
     }
 
+    return this.getWritablePageError(filePath);
+  }
+
+  /**
+   * Return a refusal message when this worker is scoped to explicit pages and
+   * the path is not one of them, or `null` if the write is allowed.
+   */
+  private getWritablePageError(filePath: string): string | null {
     if (
       this.writableWikiPages !== undefined &&
       !this.writableWikiPages.has(normalizeVirtualPath(filePath))
