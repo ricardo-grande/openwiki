@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
@@ -12,11 +13,9 @@ const GENERATION_DIR = path.resolve(
   "../../src/generation",
 );
 
-const PERSONAL_CORE_MODULES = [
-  "personal-run.ts",
-  "personal-run-lock.ts",
-  "personal-run-state.ts",
-];
+const PERSONAL_CORE_MODULES = readdirSync(GENERATION_DIR)
+  .filter((name) => /^personal-run(?:-[a-z]+)?\.ts$/u.test(name))
+  .sort();
 
 /**
  * Deterministic building blocks the core reuses (core spec §3.1).
@@ -41,6 +40,15 @@ async function readImports(file: string): Promise<string[]> {
 }
 
 describe("personal lifecycle core import boundary (PLC-001)", () => {
+  test("covers every personal core module", () => {
+    expect(PERSONAL_CORE_MODULES).toEqual([
+      "personal-run-lock.ts",
+      "personal-run-plan.ts",
+      "personal-run-state.ts",
+      "personal-run.ts",
+    ]);
+  });
+
   test.each(PERSONAL_CORE_MODULES)(
     "%s imports no model, agent, prompt, or ingestion code",
     async (module) => {

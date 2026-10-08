@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { OpenWikiLocalShellBackend } from "../agent/docs-only-backend.js";
@@ -20,6 +20,10 @@ import {
   openWikiLocalWikiDir,
 } from "../config/openwiki-home.js";
 import {
+  repairPersistedFile,
+  type FrontmatterIssue,
+} from "../okf/frontmatter.js";
+import {
   resolveConceptTypeLabel,
   resolveIndexLabels,
 } from "../okf/index-labels.js";
@@ -38,6 +42,14 @@ import {
   renewPersonalRunLock,
 } from "./personal-run-lock.js";
 import {
+  PERSONAL_OPEN_QUESTIONS_PAGE,
+  createPersonalPlan,
+  extractActiveSection,
+  isCanonicalPersonalPagePath,
+  samePersonalPlan,
+  type ProposedPersonalPlan,
+} from "./personal-run-plan.js";
+import {
   AGENTIC_PERSONAL_CONNECTORS,
   CONNECTOR_ID_PATTERN,
   RAW_RUN_ID_PATTERN,
@@ -48,6 +60,7 @@ import {
   writePersonalRunState,
   writeSynthesisCursor,
   type PersonalFrontierEntry,
+  type PersonalPageJob,
   type PersonalRunActor,
   type PersonalRunMode,
   type PersonalRunPhase,
@@ -57,8 +70,10 @@ import {
 } from "./personal-run-state.js";
 import {
   isNotFoundBackendError,
+  readPageMarkdownSnapshot,
   restorePageMarkdown,
 } from "./shared/page-snapshot.js";
+import { requirePendingJob } from "./shared/pending-job.js";
 import { withRunMutation } from "./shared/run-mutation.js";
 
 /**
@@ -576,6 +591,398 @@ export async function closePersonalGathering(
 }
 
 /**
+ * Validates a plan, adds the required jobs, orders the queue, and moves the
+ * run to generating.
+ *
+ * Submitting the same plan again is accepted without change, so a driver may
+ * retry a call whose response it lost.
+ *
+ * @param run - Active run in the planning phase.
+ * @param input - Planner submission.
+ * @returns Accepted queue in order.
+ * @throws RepositoryRunError (`invalid_input`) for a plan that breaks a §3.3
+ *   rule; nothing is written and the driver resubmits.
+ */
+export async function submitPersonalPlan(
+  run: ActivePersonalRun,
+  input: ProposedPersonalPlan,
+): Promise<{ status: "accepted"; totalPages: number; pages: string[] }> {
+  return withRunMutation(run, async () => {
+    await renewHeldLock(run);
+    const accepted = (plan: NonNullable<PersonalRunState["plan"]>) => ({
+      status: "accepted" as const,
+      totalPages: plan.pages.length,
+      pages: plan.pages.map(({ path: page }) => page),
+    });
+
+    if (run.state.plan) {
+      // Never silently replace a persisted plan.
+      const proposed = createPersonalPlan(run.state, input);
+      if (!samePersonalPlan(run.state.plan, proposed)) {
+        throw new RepositoryRunError(
+          "invalid_state",
+          "This OpenWiki personal run already has a different plan.",
+        );
+      }
+      return accepted(run.state.plan);
+    }
+    if (run.state.phase !== "planning") {
+      throw new RepositoryRunError(
+        "invalid_state",
+        `OpenWiki accepts a plan only in the planning phase, not ${run.state.phase}.`,
+      );
+    }
+
+    const plan = createPersonalPlan(run.state, input);
+    const nextState: PersonalRunState = {
+      ...run.state,
+      phase: "generating",
+      plan,
+    };
+    await writePersonalRunState(run.wikiDir, nextState);
+    run.state = nextState;
+    return accepted(plan);
+  });
+}
+
+/**
+ * Page job handed to a worker, with the page's current version.
+ */
+export interface PersonalPageJobView extends PersonalPageJob {
+  /**
+   * Command being executed.
+   */
+  mode: PersonalRunMode;
+
+  /**
+   * Whether the page exists on disk.
+   */
+  existing: boolean;
+
+  /**
+   * `sha256:` digest of the page's current bytes, or `"absent"`. The
+   * `baseVersion` of the job's first write.
+   */
+  pageVersion: string;
+
+  /**
+   * Body of the page's Active section, for a maintenance job only.
+   *
+   * @default undefined - not a maintenance job.
+   */
+  activeEntries?: string | null;
+
+  /**
+   * Pages completed earlier in this run, for a maintenance job only.
+   *
+   * @default undefined - not a maintenance job.
+   */
+  changedPages?: string[];
+}
+
+/**
+ * Next pending job, or queue completion.
+ */
+export type NextPersonalPageResult =
+  { status: "pending"; job: PersonalPageJobView } | { status: "complete" };
+
+/**
+ * Returns the first pending job not excluded, without reserving it.
+ *
+ * @param run - Active run in the generating phase.
+ * @param options - Job IDs already owned by this driver's in-flight workers.
+ * @returns The job with its page version, or completion when none remains.
+ */
+export async function nextPersonalPage(
+  run: ActivePersonalRun,
+  options: { exclude?: ReadonlySet<string> } = {},
+): Promise<NextPersonalPageResult> {
+  await renewHeldLock(run);
+  const plan = requireGeneratingPlan(run);
+  const exclude = options.exclude ?? new Set<string>();
+  const job = plan.pages.find(
+    ({ id, status }) => status === "pending" && !exclude.has(id),
+  );
+  if (!job) return { status: "complete" };
+
+  const markdown = await readPageMarkdownSnapshot(run.backend, job.path);
+  const view: PersonalPageJobView = {
+    ...job,
+    mode: run.state.mode,
+    existing: markdown !== null,
+    pageVersion: toPageVersion(markdown),
+  };
+  if (job.maintenance) {
+    view.activeEntries =
+      markdown === null ? null : extractActiveSection(markdown);
+    view.changedPages = plan.pages
+      .filter(({ id, status }) => status === "complete" && id !== job.id)
+      .map(({ path: page }) => page);
+  }
+  return { status: "pending", job: view };
+}
+
+/**
+ * Reads the Active section of `/open-questions.md`.
+ *
+ * @param wikiDir - Personal wiki directory.
+ * @returns The section body, or `null` when the page or section is absent.
+ */
+export async function readPersonalOpenQuestions(
+  wikiDir: string = openWikiLocalWikiDir,
+): Promise<string | null> {
+  const markdown = await readPageMarkdownSnapshot(
+    createPersonalBackend(wikiDir),
+    PERSONAL_OPEN_QUESTIONS_PAGE,
+  );
+  return markdown === null ? null : extractActiveSection(markdown);
+}
+
+/**
+ * Captures one pending page before model-owned work.
+ */
+export async function capturePersonalPageSnapshot(
+  run: ActivePersonalRun,
+  jobId: string,
+): Promise<PersonalPageSnapshot> {
+  await renewHeldLock(run);
+  const job = requirePendingJob(run.state.plan?.pages, jobId, "snapshotted");
+  return {
+    jobId: job.id,
+    path: job.path,
+    markdown: await readPageMarkdownSnapshot(run.backend, job.path),
+  };
+}
+
+/**
+ * Rolls one pending page back to its snapshot between worker attempts,
+ * leaving the job pending.
+ */
+export async function restorePersonalPage(
+  run: ActivePersonalRun,
+  snapshot: PersonalPageSnapshot,
+): Promise<void> {
+  await renewHeldLock(run);
+  requireSnapshotJob(run, snapshot);
+  await restorePageMarkdown(run.backend, snapshot);
+}
+
+/**
+ * Gives up on a page job: restores its snapshot and marks it skipped.
+ *
+ * A skipped job returns to pending when the run is resumed, and `finish`
+ * holds the cursor of every connector whose evidence it was seeded with.
+ */
+export async function skipPersonalPage(
+  run: ActivePersonalRun,
+  snapshot: PersonalPageSnapshot,
+): Promise<void> {
+  await withRunMutation(run, async () => {
+    await renewHeldLock(run);
+    requireSnapshotJob(run, snapshot);
+    await restorePageMarkdown(run.backend, snapshot);
+
+    const plan = requireGeneratingPlan(run);
+    const nextState: PersonalRunState = {
+      ...run.state,
+      plan: {
+        ...plan,
+        pages: plan.pages.map((page) =>
+          page.id === snapshot.jobId
+            ? { ...page, status: "skipped" as const }
+            : page,
+        ),
+      },
+    };
+    await writePersonalRunState(run.wikiDir, nextState);
+    run.state = nextState;
+  });
+}
+
+/**
+ * Result of a page write.
+ */
+export interface PersonalPageWriteResult {
+  /**
+   * Page the job owns.
+   */
+  page: string;
+
+  /**
+   * UTF-8 size of the page after front-matter repair.
+   */
+  bytes: number;
+
+  /**
+   * Version after the write, the `baseVersion` of the job's next write.
+   */
+  version: string;
+
+  /**
+   * Front-matter state after repair. `submit` rejects an invalid page.
+   */
+  frontmatter: {
+    valid: boolean;
+    repaired: boolean;
+    issues: FrontmatterIssue[];
+  };
+}
+
+/**
+ * Replaces a pending job's page, if it is still at `baseVersion`, then repairs
+ * its front matter.
+ *
+ * @param run - Active run in the generating phase.
+ * @param input - Job, the version the content was based on, and the content.
+ * @returns The new version and front-matter state.
+ * @throws RepositoryRunError (`conflict`) when the page changed since
+ *   `baseVersion`; the page is left unchanged.
+ */
+export async function writePersonalPage(
+  run: ActivePersonalRun,
+  input: { jobId: string; baseVersion: string; content: string },
+): Promise<PersonalPageWriteResult> {
+  const { job, backend } = await preparePageWrite(run, input);
+  const result = await backend.write(job.path, input.content);
+  if (result.error) {
+    throw new RepositoryRunError(
+      "invalid_input",
+      `Could not write ${job.path}: ${result.error}`,
+    );
+  }
+  return completePageWrite(run, job, backend);
+}
+
+/**
+ * Replaces text in a pending job's page, if it is still at `baseVersion`,
+ * then repairs its front matter.
+ *
+ * @param run - Active run in the generating phase.
+ * @param input - Job, base version, and the replacement.
+ * @returns The new version and front-matter state.
+ * @throws RepositoryRunError (`conflict`) when the page changed since
+ *   `baseVersion`, or (`invalid_input`) when the edit does not apply.
+ */
+export async function editPersonalPage(
+  run: ActivePersonalRun,
+  input: {
+    jobId: string;
+    baseVersion: string;
+    oldString: string;
+    newString: string;
+    replaceAll?: boolean;
+  },
+): Promise<PersonalPageWriteResult> {
+  const { job, backend } = await preparePageWrite(run, input);
+  const result = await backend.edit(
+    job.path,
+    input.oldString,
+    input.newString,
+    input.replaceAll,
+  );
+  if (result.error) {
+    throw new RepositoryRunError(
+      "invalid_input",
+      `Could not edit ${job.path}: ${result.error}`,
+    );
+  }
+  return completePageWrite(run, job, backend);
+}
+
+/**
+ * Returns the current version of a pending job's page, for a driver that
+ * tracks the base version of its writes.
+ */
+export async function readPersonalPageVersion(
+  run: ActivePersonalRun,
+  jobId: string,
+): Promise<string> {
+  await renewHeldLock(run);
+  requireGeneratingPlan(run);
+  const job = requirePendingJob(run.state.plan?.pages, jobId, "written");
+  return toPageVersion(await readPageMarkdownSnapshot(run.backend, job.path));
+}
+
+/**
+ * Completes a pending job whose page exists with valid front matter.
+ *
+ * Completing an already complete job returns the same result again.
+ *
+ * @param run - Active run in the generating phase.
+ * @param input - Job to complete.
+ * @returns The page and the number of jobs still pending.
+ * @throws RepositoryRunError (`invalid_input`) when the page is missing or its
+ *   front matter cannot be repaired.
+ */
+export async function submitPersonalPage(
+  run: ActivePersonalRun,
+  input: { jobId: string },
+): Promise<{ status: "complete"; page: string; remaining: number }> {
+  await renewHeldLock(run);
+  const plan = requireGeneratingPlan(run);
+  const requested = plan.pages.find(({ id }) => id === input.jobId);
+  if (!requested) {
+    throw new RepositoryRunError(
+      "invalid_input",
+      `Unknown OpenWiki page job ${input.jobId}.`,
+    );
+  }
+  const completed = (pages: readonly PersonalPageJob[]) => ({
+    status: "complete" as const,
+    page: requested.path,
+    remaining: pages.filter(({ status }) => status === "pending").length,
+  });
+  if (requested.status === "complete") return completed(plan.pages);
+  const job = requirePendingJob(plan.pages, requested.id, "submitted");
+
+  // Page-local validation runs outside the mutation lock: it touches only
+  // this job's page.
+  const markdown = await readPageMarkdownSnapshot(run.backend, job.path);
+  if (markdown === null) {
+    throw new RepositoryRunError(
+      "invalid_input",
+      `Write ${job.path} before submitting its page job.`,
+    );
+  }
+  const repair = await repairPersistedFile(
+    createJobBackend(run, job),
+    job.path,
+    resolveConceptTypeLabel(run.state.language),
+  );
+  if (!repair.validation.valid) {
+    throw new RepositoryRunError(
+      "invalid_input",
+      `Could not repair front matter in ${job.path}: ${formatIssues(repair.validation.issues)}`,
+    );
+  }
+
+  return withRunMutation(run, async () => {
+    // Another worker may have advanced the plan while this one waited.
+    const latestPlan = requireGeneratingPlan(run);
+    const latest = latestPlan.pages.find(({ id }) => id === job.id);
+    if (latest?.status === "complete") return completed(latestPlan.pages);
+    requirePendingJob(latestPlan.pages, job.id, "submitted");
+
+    const pages = latestPlan.pages.map((page) =>
+      page.id === job.id
+        ? {
+            ...page,
+            status: "complete" as const,
+            completedBy: run.state.actor.producerActor,
+          }
+        : page,
+    );
+    const nextState: PersonalRunState = {
+      ...run.state,
+      plan: { ...latestPlan, pages },
+    };
+    await writePersonalRunState(run.wikiDir, nextState);
+    run.state = nextState;
+    return completed(pages);
+  });
+}
+
+/**
  * Finalizes a run whose queue has no pending job.
  *
  * Every step is idempotent and `.run.json` is removed last, so a crash at any
@@ -865,6 +1272,123 @@ async function renewHeldLock(run: ActivePersonalRun): Promise<void> {
 }
 
 /**
+ * Returns the accepted plan of a run in the generating phase.
+ */
+function requireGeneratingPlan(
+  run: ActivePersonalRun,
+): NonNullable<PersonalRunState["plan"]> {
+  const plan = run.state.plan;
+  if (!plan || run.state.phase !== "generating") {
+    throw new RepositoryRunError(
+      "invalid_state",
+      "Submit the OpenWiki personal plan before page work.",
+    );
+  }
+  return plan;
+}
+
+/**
+ * Requires a snapshot to belong to a pending job of this run.
+ */
+function requireSnapshotJob(
+  run: ActivePersonalRun,
+  snapshot: PersonalPageSnapshot,
+): void {
+  const job = run.state.plan?.pages.find(({ id }) => id === snapshot.jobId);
+  if (job?.status !== "pending" || job.path !== snapshot.path) {
+    throw new RepositoryRunError(
+      "invalid_state",
+      "The page worker no longer owns a pending job.",
+    );
+  }
+}
+
+/**
+ * Checks that a write targets a pending job whose page is still at
+ * `baseVersion`: the page change check.
+ */
+async function preparePageWrite(
+  run: ActivePersonalRun,
+  input: { jobId: string; baseVersion: string },
+): Promise<{ job: PersonalPageJob; backend: OpenWikiLocalShellBackend }> {
+  await renewHeldLock(run);
+  requireGeneratingPlan(run);
+  const job = requirePendingJob(run.state.plan?.pages, input.jobId, "written");
+  const current = toPageVersion(
+    await readPageMarkdownSnapshot(run.backend, job.path),
+  );
+  if (current !== input.baseVersion) {
+    throw new RepositoryRunError(
+      "conflict",
+      `${job.path} changed since version ${input.baseVersion}; it is now ${current}. Read the page again and re-apply the change.`,
+    );
+  }
+  return { job, backend: createJobBackend(run, job) };
+}
+
+/**
+ * Repairs a written page's front matter and reports its new version.
+ */
+async function completePageWrite(
+  run: ActivePersonalRun,
+  job: PersonalPageJob,
+  backend: OpenWikiLocalShellBackend,
+): Promise<PersonalPageWriteResult> {
+  const repair = await repairPersistedFile(
+    backend,
+    job.path,
+    resolveConceptTypeLabel(run.state.language),
+  );
+  const markdown = await readPageMarkdownSnapshot(backend, job.path);
+  if (markdown === null) {
+    throw new RepositoryRunError(
+      "invalid_state",
+      `${job.path} disappeared while it was written.`,
+    );
+  }
+  return {
+    page: job.path,
+    bytes: Buffer.byteLength(markdown, "utf8"),
+    version: toPageVersion(markdown),
+    frontmatter: {
+      valid: repair.validation.valid,
+      repaired: repair.changed,
+      issues: repair.validation.valid ? [] : repair.validation.issues,
+    },
+  };
+}
+
+/**
+ * Creates a backend that may write only the job's page.
+ */
+function createJobBackend(
+  run: ActivePersonalRun,
+  job: PersonalPageJob,
+): OpenWikiLocalShellBackend {
+  return createPersonalBackend(run.wikiDir, [job.path]);
+}
+
+/**
+ * Version of a page's Markdown: its `sha256:` digest, or `"absent"`.
+ */
+function toPageVersion(markdown: string | null): string {
+  if (markdown === null) return "absent";
+  return `sha256:${createHash("sha256").update(markdown, "utf8").digest("hex")}`;
+}
+
+/**
+ * Formats front-matter issues for an error message.
+ */
+function formatIssues(issues: readonly FrontmatterIssue[]): string {
+  return issues
+    .map(
+      ({ code, line, message }) =>
+        `[${code}]${line ? ` line ${line}:` : ""} ${message}`,
+    )
+    .join("; ");
+}
+
+/**
  * Projects run state into the driver-facing begin view.
  */
 function toBeginView(
@@ -895,8 +1419,14 @@ function toBeginView(
 
 /**
  * Creates the wiki backend used by code-owned lifecycle work.
+ *
+ * @param writableWikiPages - Pages the backend may write.
+ *   @default undefined - every page.
  */
-function createPersonalBackend(wikiDir: string): OpenWikiLocalShellBackend {
+function createPersonalBackend(
+  wikiDir: string,
+  writableWikiPages?: readonly string[],
+): OpenWikiLocalShellBackend {
   return new OpenWikiLocalShellBackend({
     docsOnly: true,
     maxOutputBytes: 100_000,
@@ -904,6 +1434,7 @@ function createPersonalBackend(wikiDir: string): OpenWikiLocalShellBackend {
     rootDir: wikiDir,
     timeout: 120,
     virtualMode: true,
+    ...(writableWikiPages ? { writableWikiPages } : {}),
   });
 }
 
@@ -933,7 +1464,7 @@ function normalizeScope(
   }
   if (scope.pages) {
     for (const page of scope.pages) {
-      if (!isCanonicalPagePath(page)) {
+      if (!isCanonicalPersonalPagePath(page)) {
         throw new RepositoryRunError(
           "invalid_input",
           `Scope names a page that is not a canonical wiki path: ${page}`,
@@ -943,19 +1474,6 @@ function normalizeScope(
     normalized.pages = [...new Set(scope.pages)].sort(compareCodeUnits);
   }
   return normalized.connectors || normalized.pages ? normalized : undefined;
-}
-
-/**
- * Whether a path is a canonical virtual Markdown path such as `/topics/x.md`.
- */
-function isCanonicalPagePath(page: string): boolean {
-  if (!page.startsWith("/") || !page.endsWith(".md") || page.includes("\\")) {
-    return false;
-  }
-  return page
-    .slice(1)
-    .split("/")
-    .every((segment) => segment !== "" && segment !== "." && segment !== "..");
 }
 
 /**

@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   mkdir,
   readFile,
@@ -47,12 +47,23 @@ import { createOpenWikiContentSnapshot } from "../../src/agent/utils.ts";
 import { RepositoryRunError } from "../../src/generation/errors.ts";
 import {
   beginPersonalRun,
+  capturePersonalPageSnapshot,
   closePersonalGathering,
+  editPersonalPage,
   finishPersonalRun,
+  nextPersonalPage,
+  readPersonalOpenQuestions,
+  readPersonalPageVersion,
   releasePersonalRun,
+  restorePersonalPage,
+  skipPersonalPage,
+  submitPersonalPage,
+  submitPersonalPlan,
+  writePersonalPage,
   type ActivePersonalRun,
   type BeginPersonalRunInput,
   type PersonalBeginView,
+  type PersonalPageJobView,
 } from "../../src/generation/personal-run.ts";
 import {
   PersonalRunLockConflictError,
@@ -1054,6 +1065,498 @@ describe("finishPersonalRun", () => {
       (await readSynthesisCursor(wikiDir)).connectors.google
         ?.synthesizedThrough,
     ).toBe(RUN_1);
+    expect(await exists(".run.json")).toBe(false);
+  });
+});
+
+describe("plan and page operations", () => {
+  const GMAIL = `raw://google/${RUN_1}/items.json`;
+
+  /**
+   * Begins an update with one Gmail pull and an existing open-questions page.
+   */
+  async function seedPlanningRun(): Promise<ActivePersonalRun> {
+    await connect("google");
+    await writeRawRun("google", RUN_1);
+    await writePage(
+      "open-questions.md",
+      "# Open Questions\n\n## Active\n\n### gym: Where is the class?\n\n## Answered\n",
+    );
+    return (await beginActive()).run;
+  }
+
+  /**
+   * Returns the next job, which must be pending.
+   */
+  async function nextJob(run: ActivePersonalRun): Promise<PersonalPageJobView> {
+    const next = await nextPersonalPage(run);
+    if (next.status !== "pending") throw new Error("expected a pending job");
+    return next.job;
+  }
+
+  function sha256(markdown: string): string {
+    return `sha256:${createHash("sha256").update(markdown, "utf8").digest("hex")}`;
+  }
+
+  test("submitPersonalPlan installs the ordered queue and moves to generating", async () => {
+    const run = await seedPlanningRun();
+
+    const result = await submitPersonalPlan(run, {
+      pages: [
+        {
+          path: "/people/dana.md",
+          title: "Dana",
+          purpose: "New collaborator",
+          seedEvidence: [`${GMAIL}#/items/0`],
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      status: "accepted",
+      totalPages: 4,
+      pages: [
+        "/people/dana.md",
+        "/sources/google.md",
+        "/open-questions.md",
+        "/quickstart.md",
+      ],
+    });
+    const persisted = await readPersonalRunState(wikiDir);
+    expect(persisted?.phase).toBe("generating");
+    expect(persisted?.plan?.pages.map(({ path: page }) => page)).toEqual(
+      result.pages,
+    );
+  });
+
+  test("a rejected plan writes nothing, and the driver can resubmit", async () => {
+    const run = await seedPlanningRun();
+    const before = await readFile(path.join(wikiDir, ".run.json"), "utf8");
+
+    await expect(
+      submitPersonalPlan(run, {
+        pages: [
+          {
+            path: "/a.md",
+            title: "A",
+            purpose: "A",
+            seedEvidence: [`raw://google/${RUN_2}/items.json`],
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+
+    expect(await readFile(path.join(wikiDir, ".run.json"), "utf8")).toBe(
+      before,
+    );
+    expect(run.state.phase).toBe("planning");
+    await expect(submitPersonalPlan(run, { pages: [] })).resolves.toMatchObject(
+      { status: "accepted" },
+    );
+  });
+
+  test("resubmitting the same plan is accepted; a different one is not", async () => {
+    const run = await seedPlanningRun();
+    const proposal = {
+      pages: [{ path: "/a.md", title: "A", purpose: "A" }],
+    };
+    const first = await submitPersonalPlan(run, proposal);
+
+    await expect(submitPersonalPlan(run, proposal)).resolves.toEqual(first);
+    await expect(submitPersonalPlan(run, { pages: [] })).rejects.toMatchObject({
+      code: "invalid_state",
+    });
+  });
+
+  test("a plan is refused while gathering", async () => {
+    await connect("notion");
+    const { run } = await beginActive();
+
+    await expect(submitPersonalPlan(run, { pages: [] })).rejects.toMatchObject({
+      code: "invalid_state",
+    });
+  });
+
+  test("nextPersonalPage returns page versions, honors exclude, then completes", async () => {
+    const run = await seedPlanningRun();
+    await submitPersonalPlan(run, { pages: [] });
+
+    const first = await nextJob(run);
+    expect(first).toMatchObject({
+      path: "/sources/google.md",
+      mode: "update",
+      existing: false,
+      pageVersion: "absent",
+      seedEvidence: [GMAIL],
+    });
+    expect(first).not.toHaveProperty("activeEntries");
+
+    const second = await nextPersonalPage(run, {
+      exclude: new Set([first.id]),
+    });
+    expect(second).toMatchObject({
+      status: "pending",
+      job: { path: "/open-questions.md" },
+    });
+
+    for (const job of run.state.plan?.pages ?? []) {
+      await writePage(job.path.slice(1), `# ${job.title}\n`);
+      await submitPersonalPage(run, { jobId: job.id });
+    }
+    await expect(nextPersonalPage(run)).resolves.toEqual({
+      status: "complete",
+    });
+  });
+
+  test("a maintenance job carries Active entries and the pages changed so far", async () => {
+    const run = await seedPlanningRun();
+    await submitPersonalPlan(run, { pages: [] });
+    const source = await nextJob(run);
+    await writePage("sources/google.md", "# Google\n");
+    await submitPersonalPage(run, { jobId: source.id });
+
+    const maintenance = await nextJob(run);
+
+    const markdown = await readFile(
+      path.join(wikiDir, "open-questions.md"),
+      "utf8",
+    );
+    expect(maintenance).toMatchObject({
+      path: "/open-questions.md",
+      maintenance: true,
+      seedEvidence: [],
+      existing: true,
+      pageVersion: sha256(markdown),
+      activeEntries: "### gym: Where is the class?",
+      changedPages: ["/sources/google.md"],
+    });
+    await expect(readPersonalOpenQuestions(wikiDir)).resolves.toBe(
+      "### gym: Where is the class?",
+    );
+  });
+
+  test("page writes check baseVersion and report the new version (PLC-017)", async () => {
+    const run = await seedPlanningRun();
+    await submitPersonalPlan(run, { pages: [] });
+    const job = await nextJob(run);
+
+    const written = await writePersonalPage(run, {
+      jobId: job.id,
+      baseVersion: job.pageVersion,
+      content: "# Google\n\nFirst pull.\n",
+    });
+    const onDisk = await readFile(
+      path.join(wikiDir, "sources/google.md"),
+      "utf8",
+    );
+    expect(written).toEqual({
+      page: "/sources/google.md",
+      bytes: Buffer.byteLength(onDisk),
+      version: sha256(onDisk),
+      frontmatter: { valid: true, repaired: true, issues: [] },
+    });
+    expect(onDisk).toMatch(/^---\n/u);
+
+    // A write based on the version before the last write is stale.
+    await expect(
+      writePersonalPage(run, {
+        jobId: job.id,
+        baseVersion: job.pageVersion,
+        content: "# Overwritten\n",
+      }),
+    ).rejects.toMatchObject({ code: "conflict" });
+
+    // The user edits the page in an editor while the job runs.
+    const userEdit = `${onDisk}\nUser note.\n`;
+    await writeFile(path.join(wikiDir, "sources/google.md"), userEdit);
+    await expect(
+      editPersonalPage(run, {
+        jobId: job.id,
+        baseVersion: written.version,
+        oldString: "First pull.",
+        newString: "Second pull.",
+      }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    expect(
+      await readFile(path.join(wikiDir, "sources/google.md"), "utf8"),
+    ).toBe(userEdit);
+
+    // Re-read, re-apply, and write with the new version.
+    const current = await readPersonalPageVersion(run, job.id);
+    expect(current).toBe(sha256(userEdit));
+    const edited = await editPersonalPage(run, {
+      jobId: job.id,
+      baseVersion: current,
+      oldString: "First pull.",
+      newString: "Second pull.",
+    });
+    const final = await readFile(
+      path.join(wikiDir, "sources/google.md"),
+      "utf8",
+    );
+    expect(final).toContain("Second pull.");
+    expect(final).toContain("User note.");
+    expect(edited.version).toBe(sha256(final));
+  });
+
+  test("a write based on absent fails once the page exists", async () => {
+    const run = await seedPlanningRun();
+    await submitPersonalPlan(run, { pages: [] });
+    const job = await nextJob(run);
+    await writePage("sources/google.md", "# Created elsewhere\n");
+
+    await expect(
+      writePersonalPage(run, {
+        jobId: job.id,
+        baseVersion: "absent",
+        content: "# Google\n",
+      }),
+    ).rejects.toMatchObject({ code: "conflict" });
+    expect(
+      await readFile(path.join(wikiDir, "sources/google.md"), "utf8"),
+    ).toBe("# Created elsewhere\n");
+  });
+
+  test("page writes and submits require a pending job of this run", async () => {
+    const run = await seedPlanningRun();
+    await expect(
+      writePersonalPage(run, {
+        jobId: randomUUID(),
+        baseVersion: "absent",
+        content: "x",
+      }),
+    ).rejects.toMatchObject({ code: "invalid_state" });
+
+    await submitPersonalPlan(run, { pages: [] });
+    await expect(
+      writePersonalPage(run, {
+        jobId: randomUUID(),
+        baseVersion: "absent",
+        content: "x",
+      }),
+    ).rejects.toMatchObject({ code: "invalid_state" });
+    await expect(
+      submitPersonalPage(run, { jobId: randomUUID() }),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+
+    const job = await nextJob(run);
+    await writePage("sources/google.md", "# Google\n");
+    await submitPersonalPage(run, { jobId: job.id });
+    await expect(
+      writePersonalPage(run, {
+        jobId: job.id,
+        baseVersion: await sha256Of("sources/google.md"),
+        content: "# Late\n",
+      }),
+    ).rejects.toMatchObject({ code: "invalid_state" });
+  });
+
+  async function sha256Of(relative: string): Promise<string> {
+    return sha256(await readFile(path.join(wikiDir, relative), "utf8"));
+  }
+
+  test("submitPersonalPage requires the page, repairs it, and is idempotent", async () => {
+    const run = await seedPlanningRun();
+    await submitPersonalPlan(run, { pages: [] });
+    const job = await nextJob(run);
+
+    await expect(
+      submitPersonalPage(run, { jobId: job.id }),
+    ).rejects.toMatchObject({ code: "invalid_input" });
+
+    await writePage("sources/google.md", "# Google\n");
+    const first = await submitPersonalPage(run, { jobId: job.id });
+    expect(first).toEqual({
+      status: "complete",
+      page: "/sources/google.md",
+      remaining: 2,
+    });
+    expect(
+      await readFile(path.join(wikiDir, "sources/google.md"), "utf8"),
+    ).toMatch(/^---\n/u);
+    await expect(submitPersonalPage(run, { jobId: job.id })).resolves.toEqual(
+      first,
+    );
+    expect((await readPersonalRunState(wikiDir))?.plan?.pages[0]).toMatchObject(
+      { status: "complete", completedBy: actor.producerActor },
+    );
+  });
+
+  test("restore keeps the job pending; skip restores and resume re-queues it", async () => {
+    const run = await seedPlanningRun();
+    await submitPersonalPlan(run, { pages: [] });
+    await nextJob(run);
+    const maintenance = run.state.plan!.pages[1];
+    const original = await readFile(
+      path.join(wikiDir, "open-questions.md"),
+      "utf8",
+    );
+    const snapshot = await capturePersonalPageSnapshot(run, maintenance.id);
+
+    await writePage("open-questions.md", "# Broken attempt\n");
+    await restorePersonalPage(run, snapshot);
+    expect(
+      await readFile(path.join(wikiDir, "open-questions.md"), "utf8"),
+    ).toBe(original);
+    expect(run.state.plan!.pages[1].status).toBe("pending");
+
+    await writePage("open-questions.md", "# Second broken attempt\n");
+    await skipPersonalPage(run, snapshot);
+    expect(
+      await readFile(path.join(wikiDir, "open-questions.md"), "utf8"),
+    ).toBe(original);
+    expect((await readPersonalRunState(wikiDir))?.plan?.pages[1]).toMatchObject(
+      { id: maintenance.id, status: "skipped" },
+    );
+    await expect(skipPersonalPage(run, snapshot)).rejects.toMatchObject({
+      code: "invalid_state",
+    });
+
+    const resumed = await beginActive();
+    expect(resumed.run.state.plan!.pages[1]).toMatchObject({
+      id: maintenance.id,
+      status: "pending",
+    });
+  });
+
+  test("page operations fail once the lock is lost", async () => {
+    const run = await seedPlanningRun();
+    await submitPersonalPlan(run, { pages: [] });
+    const job = await nextJob(run);
+    await releasePersonalRun(run);
+
+    for (const operation of [
+      () => nextPersonalPage(run),
+      () => capturePersonalPageSnapshot(run, job.id),
+      () =>
+        writePersonalPage(run, {
+          jobId: job.id,
+          baseVersion: "absent",
+          content: "# x\n",
+        }),
+      () => submitPersonalPage(run, { jobId: job.id }),
+      () => submitPersonalPlan(run, { pages: [] }),
+    ]) {
+      await expect(operation()).rejects.toMatchObject({ code: "conflict" });
+    }
+    expect(await exists("sources/google.md")).toBe(false);
+  });
+});
+
+describe("resume after a crash (PLC-011)", () => {
+  const PLAN = {
+    pages: [
+      {
+        path: "/people/dana.md",
+        title: "Dana",
+        purpose: "New collaborator",
+        seedEvidence: [`raw://google/${RUN_2}/items.json#/items/0`],
+      },
+    ],
+  };
+
+  /**
+   * Drives a run from wherever it stopped to finish, as any driver would.
+   */
+  async function drive(
+    run: ActivePersonalRun,
+    stopAfter: number = Number.POSITIVE_INFINITY,
+  ): Promise<number> {
+    let steps = 0;
+    const step = async (operation: () => Promise<unknown>) => {
+      if (steps >= stopAfter) throw new Error("crash");
+      await operation();
+      steps += 1;
+    };
+    if (run.state.phase === "planning") {
+      await step(() => submitPersonalPlan(run, PLAN));
+    }
+    for (;;) {
+      const next = await nextPersonalPage(run);
+      if (next.status === "complete") break;
+      const { job } = next;
+      await step(() =>
+        writePersonalPage(run, {
+          jobId: job.id,
+          baseVersion: job.pageVersion,
+          content: `# ${job.title}\n\nFrom ${job.seedEvidence.length} seed(s).\n`,
+        }),
+      );
+      await step(() => submitPersonalPage(run, { jobId: job.id }));
+    }
+    await step(() => finishPersonalRun(run));
+    return steps;
+  }
+
+  async function seed(): Promise<void> {
+    await connect("google");
+    await writeRawRun("google", RUN_2);
+    await writePage("quickstart.md", "# Quickstart\n");
+  }
+
+  test("a run crashed after any step is resumed and finished", async () => {
+    await seed();
+    const total = await drive((await beginActive()).run);
+    expect(total).toBe(1 + 3 * 2 + 1);
+
+    for (let crashAt = 0; crashAt < total; crashAt += 1) {
+      for (const entry of await readdir(home)) {
+        await rm(path.join(home, entry), { recursive: true, force: true });
+      }
+      await mkdir(wikiDir, { recursive: true });
+      await seed();
+
+      await expect(drive((await beginActive()).run, crashAt)).rejects.toThrow(
+        "crash",
+      );
+      expect(await exists(".run.json")).toBe(true);
+
+      // The crashed process left its lock; the restarted driver holds the
+      // same holder ID and resumes.
+      const resumed = await beginActive();
+      expect(resumed.view.resumed).toBe(true);
+      await drive(resumed.run);
+
+      expect(await exists(".run.json")).toBe(false);
+      expect(await exists(".run.lock")).toBe(false);
+      expect(await exists("people/dana.md")).toBe(true);
+      expect(await exists("sources/google.md")).toBe(true);
+      expect(await readLastUpdate()).toMatchObject({ status: "complete" });
+      expect(
+        (await readSynthesisCursor(wikiDir)).connectors.google
+          ?.synthesizedThrough,
+      ).toBe(RUN_2);
+    }
+  });
+
+  test("a crash inside finish is finished by the next begin", async () => {
+    await seed();
+    const { run } = await beginActive();
+    await submitPersonalPlan(run, PLAN);
+    for (;;) {
+      const next = await nextPersonalPage(run);
+      if (next.status === "complete") break;
+      await writePersonalPage(run, {
+        jobId: next.job.id,
+        baseVersion: next.job.pageVersion,
+        content: `# ${next.job.title}\n`,
+      });
+      await submitPersonalPage(run, { jobId: next.job.id });
+    }
+    // finish fails after finalizing and advancing the cursor.
+    failureHarness.metadataWrites = 1;
+    await expect(finishPersonalRun(run)).rejects.toThrow(
+      "injected metadata failure",
+    );
+    expect(await exists(".run.json")).toBe(true);
+
+    const resumed = await beginActive();
+    await expect(nextPersonalPage(resumed.run)).resolves.toEqual({
+      status: "complete",
+    });
+    await expect(finishPersonalRun(resumed.run)).resolves.toMatchObject({
+      lastUpdateStatus: "complete",
+    });
     expect(await exists(".run.json")).toBe(false);
   });
 });

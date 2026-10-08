@@ -61,7 +61,20 @@ independent and can ship at any time.
     evidence.
   - PLC-013's "scheduled ingestion never takes over" is an entry-point
     property and is checked with C5.
-- [ ] **C3.** Plan and page operations
+- [x] **C3.** Plan and page operations
+  - [x] C3.1 `personal-run-plan.ts`: plan validation, required jobs, seed
+        merging, and tier ordering
+  - [x] C3.2 `submitPersonalPlan` and `nextPersonalPage` (with
+        `pageVersion`, and Active entries and `changedPages` for a
+        maintenance job)
+  - [x] C3.3 Snapshot, restore, skip, and `submitPersonalPage`
+  - [x] C3.4 Page change check: `writePersonalPage`, `editPersonalPage`, and
+        `readPersonalPageVersion` take or report the `baseVersion`, and
+        repair front matter after each write
+  - The plan also rejects deleting a source page that receives this run's
+    evidence, deletions outside `scope.pages`, and hidden path segments.
+  - `/open-questions.md` is a maintenance job only while it carries no
+    seeds. A planner that seeds it makes it a regular job.
 - [ ] **C4.** Native driver, opt-in
 - [ ] **C5.** Entry-point rewiring
 - [ ] **C6.** Default flip
