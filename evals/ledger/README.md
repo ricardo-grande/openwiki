@@ -195,18 +195,34 @@ test (`LEDGER_LIVE=1`).
 
 ### Legacy personal baseline
 
-Three runs per benchmark of today's legacy personal path. Later personal-mode
-milestones are compared against these numbers, so every later run must use the
-same system and evaluator models.
+The three-run baseline is deferred: live runs cost more than the extra
+precision was worth, since every shakedown landed at about 5% supported. The
+one recorded run is a single partial `inbox-week` run (T0–T2), not a baseline.
+Any later comparison needs fresh runs of both the legacy path and the change,
+with the same system and evaluator models.
 
-- System model: not yet recorded
-- Evaluator model: not yet recorded
-- Evaluator gold agreement (`precision-gold-personal.json`): not yet recorded
+- System model: `gemini-3.8-flash` (provider `gemini`)
+- Evaluator model: `gemini-3.1-pro-preview` (provider `gemini`)
+- Evaluator gold agreement (`precision-gold-personal.json`): extraction 1.00
+  (9/9), grounding 1.00 (13/13), measured 2026-10-07, before the two
+  wiki-identifier cases were added. Recalibrate before relying on it. On the
+  repository set (`precision-gold.json`) it scored extraction 0.71 and
+  grounding 0.86 before the quote-boundary scoring fix, so it is not valid for
+  repository runs.
 
-| Benchmark    | Runs | LEDGER score     | Supported | Stale | Hallucinated | Unverified | Structural checks |
-| ------------ | ---- | ---------------- | --------- | ----- | ------------ | ---------- | ----------------- |
-| inbox-week   | –    | not yet recorded | –         | –     | –            | –          | –                 |
-| cross-source | –    | not yet recorded | –         | –     | –            | –          | –                 |
+| Checkpoint | Claims | Supported | Stale | Hallucinated | Unverified | Structural checks |
+| ---------- | ------ | --------- | ----- | ------------ | ---------- | ----------------- |
+| T0         | 415    | 0%        | 0%    | 0%           | 100%       | 6/6               |
+| T1         | 420    | 5% (23)   | 0%    | 0%           | 95%        | 6/6               |
+| T2         | 444    | 5% (24)   | 0%    | 0%           | 95%        | 6/6               |
+
+`inbox-week`, run 2026-10-08, judged before the wiki-identifier grounding fix.
+Every planted fact through T2 was handled correctly: the deck moving to March 9
+(and the March 5 version forgotten), the March 11 research presentation, and
+the March 10 dentist appointment. The low score comes from about 400 claims the
+legacy init invents with no source: placeholder commitments and appointments,
+people who appear in no message, and pages describing triage rules, connectors,
+and themes.
 
 An evaluator is valid only for the benchmark kinds whose gold set it passes at
 the 0.9 floor. A judge that passes the personal set but not the repository set

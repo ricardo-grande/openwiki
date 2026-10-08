@@ -36,7 +36,8 @@ independent and can ship at any time.
         personal gold calibration set
   - [x] S1.5 Trap-driven forgetting and structural checks in the report
   - [ ] S1.6 Live gold calibration and the three-run legacy baseline in
-        `evals/ledger/README.md`
+        `evals/ledger/README.md`. Deferred for cost: one partial
+        `inbox-week` run (about 5% supported) is recorded instead.
 - [ ] **S2.** Onboarding runs init only
 - [ ] **C1.** Shared groundwork
 - [ ] **C2.** Core state, lock, begin and finish
@@ -331,7 +332,8 @@ A refactor-only change. The spec requires that it lands on its own.
 - **PLC-003:** a new case in `test/agent/docs-only-backend.test.ts`.
 - Make sure `test/agent/personal-shell-boundary.test.ts` still passes. The
   local-wiki fix touches the same backend.
-- The S1 benchmark scores stay within the baseline's run-to-run spread.
+- The S1 benchmark scores stay within the baseline's run-to-run spread. While
+  S1.6 is deferred, this check is skipped and the tests above carry C1.
 
 **Risk:** this is the most heavily tested code in the repository. Keep the
 change mechanical, and include no behavior change other than the local-wiki
