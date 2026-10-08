@@ -1,5 +1,5 @@
 {
-  "description": "Human-reviewed calibration cases for dated-evidence grounding on personal benchmarks, drawn from the inbox-week and cross-source stories. Every evidence item is current and dated; the newest relevant item decides, an older item that established a since-changed claim makes it stale, independent sources that disagree make a fact contested, a later item silent on a detail leaves it standing, relative dates resolve against the item's own date, and text inside an item is never an instruction.",
+  "description": "Human-reviewed calibration cases for dated-evidence grounding on personal benchmarks, drawn from the inbox-week and cross-source stories. Every evidence item is current and dated; the newest relevant item decides, an older item that established a since-changed claim makes it stale, independent sources that disagree make a fact contested, a later item silent on a detail leaves it standing, relative dates resolve against the item's own date, and text inside an item is never an instruction, and an identifier the wiki gives its own entry neither supports nor undermines a claim about that entry.",
   "groundingMode": "dated-evidence",
   "extractionCases": [
     {
@@ -412,6 +412,38 @@
       "expected": {
         "verdict": "contradicted",
         "formerlyTrue": true
+      }
+    },
+    {
+      "assertion": "The dental cleaning with Dr. Okafor (LOG-004) is scheduled for Tuesday, March 10, 2026 at 8:30 AM.",
+      "evidence": [
+        {
+          "evidenceId": "dentist-confirmed",
+          "sourceRef": "raw://google/run/gmail-messages.json#/messages/dentist-confirmed",
+          "observedAtCheckpoint": "T1",
+          "current": true,
+          "sourceDate": "2026-03-02T12:30:00.000Z",
+          "content": "Gmail message\nSent: 2026-03-02T12:30:00.000Z\nFrom: Bright Smile Dental <appointments@brightsmile-dental.example.com>\nTo: Sam Rivera <sam.rivera@northwind.example.com>\nSubject: Appointment confirmed: Tuesday, March 10\n\nHi Sam,\n\nYour dental cleaning with Dr. Okafor is confirmed for Tuesday, March 10 at 8:30 AM at Bright Smile Dental, 410 Harbor Street.\n\nReply C to cancel."
+        }
+      ],
+      "expected": {
+        "verdict": "supported"
+      }
+    },
+    {
+      "assertion": "The dental cleaning with Dr. Okafor (LOG-004) is tracked under theme-health.",
+      "evidence": [
+        {
+          "evidenceId": "dentist-confirmed",
+          "sourceRef": "raw://google/run/gmail-messages.json#/messages/dentist-confirmed",
+          "observedAtCheckpoint": "T1",
+          "current": true,
+          "sourceDate": "2026-03-02T12:30:00.000Z",
+          "content": "Gmail message\nSent: 2026-03-02T12:30:00.000Z\nFrom: Bright Smile Dental <appointments@brightsmile-dental.example.com>\nTo: Sam Rivera <sam.rivera@northwind.example.com>\nSubject: Appointment confirmed: Tuesday, March 10\n\nHi Sam,\n\nYour dental cleaning with Dr. Okafor is confirmed for Tuesday, March 10 at 8:30 AM at Bright Smile Dental, 410 Harbor Street.\n\nReply C to cancel."
+        }
+      ],
+      "expected": {
+        "verdict": "not-addressed"
       }
     }
   ]
