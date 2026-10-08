@@ -59,6 +59,22 @@ export function IngestionSummary({ result }: IngestionSummaryProps) {
           value={`${sourceResult.status}; ${sourceResult.rawFiles.length} raw file(s)`}
         />
       ))}
+      {result.synthesis ? (
+        <StatusLine
+          label="Personal wiki"
+          tone={
+            result.synthesis.status === "conflict" ||
+            result.synthesis.status === "error"
+              ? "error"
+              : "success"
+          }
+          value={
+            result.synthesis.message
+              ? `${result.synthesis.status}; ${result.synthesis.message}`
+              : result.synthesis.status
+          }
+        />
+      ) : null}
     </Panel>
   );
 }

@@ -24,8 +24,12 @@ import {
   type PersonalPageJobView,
   type PersonalPageSnapshot,
 } from "../generation/personal-run.js";
+import { PersonalRunLockConflictError } from "../generation/personal-run-lock.js";
 import { PERSONAL_QUICKSTART_PAGE } from "../generation/personal-run-plan.js";
-import type { PersonalRunMode } from "../generation/personal-run-state.js";
+import type {
+  PersonalRunMode,
+  PersonalRunScope,
+} from "../generation/personal-run-state.js";
 import { readOpenWikiOnboardingConfig } from "../setup/onboarding.js";
 import { OPENWIKI_PRODUCER_ACTOR } from "../version.js";
 import {
@@ -52,7 +56,10 @@ import {
   createPersonalRawEvidenceTools,
   PersonalPageWorkerBackend,
 } from "./personal-worker-tools.js";
-import type { OpenWikiRunEvent } from "./types.js";
+import type {
+  OpenWikiRunEvent,
+  PersonalTakeoverConfirmation,
+} from "./types.js";
 
 /**
  * Environment flag that opts `openwiki personal --init/--update` in to the
@@ -150,6 +157,23 @@ export interface NativePersonalGenerationOptions {
   instruction?: string | null;
 
   /**
+   * Narrowing of a new run's connectors and pages. A resumed run keeps the
+   * scope it started with.
+   *
+   * @default undefined - every connected source and no page restriction.
+   */
+  scope?: PersonalRunScope;
+
+  /**
+   * Asks the user whether to take over an expired lock. Without it, an
+   * expired lock fails the run with `conflict`; scheduled ingestion never
+   * passes it.
+   *
+   * @default undefined - never take over.
+   */
+  confirmTakeover?: PersonalTakeoverConfirmation;
+
+  /**
    * Stable model identity written to `.last-update.json`.
    */
   modelId: string;
@@ -229,16 +253,7 @@ export interface NativePersonalGenerationResult {
 export async function runNativePersonalGeneration(
   options: NativePersonalGenerationOptions,
 ): Promise<NativePersonalGenerationResult> {
-  const begun = await beginPersonalRun({
-    mode: options.mode,
-    language: options.language ?? undefined,
-    instruction: options.instruction ?? undefined,
-    actor: {
-      producerActor: OPENWIKI_PRODUCER_ACTOR,
-      metadataModel: options.modelId,
-    },
-    holder: options.holder ?? `native:${os.hostname()}:${process.pid}`,
-  });
+  const begun = await beginWithTakeoverConfirmation(options);
   for (const warning of begun.view.warnings) {
     emitText(options.onEvent, `${warning}\n`);
   }
@@ -314,6 +329,46 @@ export async function runNativePersonalGeneration(
     throw error;
   } finally {
     stopRenewal();
+  }
+}
+
+/**
+ * Begins or resumes the run. When the lock is expired and the caller can ask
+ * the user, a confirmed takeover begins again with `takeover: true`.
+ *
+ * @throws PersonalRunLockConflictError when the lock is fresh, or expired and
+ *   not taken over.
+ */
+async function beginWithTakeoverConfirmation(
+  options: NativePersonalGenerationOptions,
+): Promise<Awaited<ReturnType<typeof beginPersonalRun>>> {
+  const input = {
+    mode: options.mode,
+    language: options.language ?? undefined,
+    instruction: options.instruction ?? undefined,
+    ...(options.scope ? { scope: options.scope } : {}),
+    actor: {
+      producerActor: OPENWIKI_PRODUCER_ACTOR,
+      metadataModel: options.modelId,
+    },
+    holder: options.holder ?? `native:${os.hostname()}:${process.pid}`,
+  };
+  try {
+    return await beginPersonalRun(input);
+  } catch (error) {
+    if (
+      !(error instanceof PersonalRunLockConflictError) ||
+      !error.expired ||
+      !options.confirmTakeover
+    ) {
+      throw error;
+    }
+    const confirmed = await options.confirmTakeover({
+      holder: error.holder,
+      ageMs: error.ageMs,
+    });
+    if (!confirmed) throw error;
+    return beginPersonalRun({ ...input, takeover: true });
   }
 }
 

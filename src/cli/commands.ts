@@ -208,6 +208,7 @@ export type CliCommand =
       exitCode: 0;
       modelId: string | null;
       print: boolean;
+      pullOnly: boolean;
       scheduledOnly: boolean;
       target: IngestionTarget;
     }
@@ -216,6 +217,13 @@ export type CliCommand =
       action: "delete" | "list" | "pause" | "resume";
       exitCode: 0;
       target: CronTarget | null;
+    }
+  | {
+      kind: "cron";
+      action: "pull-only";
+      exitCode: 0;
+      pullOnly: boolean;
+      target: CronTarget;
     }
   | { kind: "help"; exitCode: 0 }
   | {
@@ -514,12 +522,13 @@ export function parseCommand(argv: string[]): CliCommand {
         kind: "error",
         exitCode: 1,
         message:
-          "Usage: openwiki ingest <source|source-instance|all> [--scheduled] [--print] [--modelId <id>]",
+          "Usage: openwiki ingest <source|source-instance|all> [--pull-only] [--scheduled] [--print] [--modelId <id>]",
       };
     }
 
     let modelId: string | null = null;
     let print = false;
+    let pullOnly = false;
     let scheduledOnly = false;
     const optionArgs = argv.slice(2);
     for (let index = 0; index < optionArgs.length; index += 1) {
@@ -527,6 +536,11 @@ export function parseCommand(argv: string[]): CliCommand {
 
       if (arg === "--print" || arg === "-p") {
         print = true;
+        continue;
+      }
+
+      if (arg === "--pull-only") {
+        pullOnly = true;
         continue;
       }
 
@@ -586,12 +600,37 @@ export function parseCommand(argv: string[]): CliCommand {
       exitCode: 0,
       modelId,
       print,
+      pullOnly,
       scheduledOnly,
       target,
     };
   }
 
   if (argv[0] === "cron") {
+    if (argv[1] === "pull-only") {
+      const target = parseIngestionTarget(argv[2] ?? "");
+      const setting = argv[3];
+      if (
+        target !== "all" ||
+        (setting !== "on" && setting !== "off") ||
+        argv.length > 4
+      ) {
+        return {
+          kind: "error",
+          exitCode: 1,
+          message: "Usage: openwiki cron pull-only all <on|off>",
+        };
+      }
+
+      return {
+        kind: "cron",
+        action: "pull-only",
+        exitCode: 0,
+        pullOnly: setting === "on",
+        target,
+      };
+    }
+
     if (argv[1] === "list" && argv.length === 2) {
       return {
         kind: "cron",
@@ -624,7 +663,7 @@ export function parseCommand(argv: string[]): CliCommand {
         kind: "error",
         exitCode: 1,
         message:
-          "Usage: openwiki cron list | pause all | resume all | delete all",
+          "Usage: openwiki cron list | pause all | resume all | delete all | pull-only all <on|off>",
       };
     }
   }
@@ -1245,11 +1284,12 @@ export const helpContent: HelpContent = {
     "openwiki auth <provider>",
     "openwiki auth configure <provider> [--force]",
     "openwiki auth tools <provider>",
-    "openwiki ingest <source|source-instance|all> [--scheduled] [--print] [--modelId <id>]",
+    "openwiki ingest <source|source-instance|all> [--pull-only] [--scheduled] [--print] [--modelId <id>]",
     "openwiki cron list",
     "openwiki cron pause all",
     "openwiki cron resume all",
     "openwiki cron delete all",
+    "openwiki cron pull-only all <on|off>",
     "openwiki ngrok start [url] [--port <port>]",
     "openwiki visualize [path] [--port <port>] [--no-open] [--export <dir>]",
     "openwiki integrations list [--project [path]]",
@@ -1318,6 +1358,11 @@ export const helpContent: HelpContent = {
       label: "openwiki cron delete all",
       description:
         "Delete saved connector schedules and remove stale local schedule files.",
+    },
+    {
+      label: "openwiki cron pull-only all <on|off>",
+      description:
+        "Make scheduled ingestion only pull source data, leaving the wiki update to the next ingest or personal --update. Requires OPENWIKI_PERSONAL_CORE=1.",
     },
     {
       label: "openwiki ngrok start [url]",
@@ -1391,6 +1436,11 @@ export const helpContent: HelpContent = {
         "For ingest only: run scheduled-only ingestion for scheduler-managed runs.",
     },
     {
+      label: "--pull-only",
+      description:
+        "For ingest only: pull source data without updating the wiki. The next update reads it. Requires OPENWIKI_PERSONAL_CORE=1.",
+    },
+    {
       label: "--telemetry-file <path>",
       description:
         "Write the exact anonymous telemetry payload to a local JSON file.",
@@ -1430,12 +1480,14 @@ export const helpContent: HelpContent = {
     'openwiki personal --update "Refresh the wiki from configured connectors"',
     "openwiki ingest all",
     "openwiki ingest all --scheduled --print",
+    "openwiki ingest all --pull-only",
     "openwiki ingest web-search",
     "openwiki ingest web-search-2",
     "openwiki cron list",
     "openwiki cron pause all",
     "openwiki cron resume all",
     "openwiki cron delete all",
+    "openwiki cron pull-only all on",
     "openwiki auth slack",
     "openwiki auth gmail",
     "openwiki auth notion",

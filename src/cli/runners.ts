@@ -8,13 +8,18 @@ import {
 import { startNgrokTunnel } from "../auth/ngrok.js";
 import { formatAuthProviderList, runOAuthAuth } from "../auth/oauth.js";
 import { createOpenWikiThreadId, runOpenWikiAgent } from "../agent/index.js";
+import { isPersonalCoreEnabled } from "../agent/personal-runner.js";
 import type { OpenWikiRunEvent, OpenWikiRunOptions } from "../agent/types.js";
 import { resolveConfiguredProvider } from "../config/constants.js";
+import { openWikiHomeDisplayPath } from "../config/openwiki-home.js";
 import {
   ensureCodeModeRepoSetup,
   runCodeModeConnectors,
 } from "../ingestion/code-mode.js";
-import { runOpenWikiIngestion } from "../ingestion/ingestion.js";
+import {
+  ingestionFailed,
+  runOpenWikiIngestion,
+} from "../ingestion/ingestion.js";
 import { getErrorMessage } from "../platform/diagnostics.js";
 import {
   deleteConnectorSchedules,
@@ -22,6 +27,7 @@ import {
   listConnectorSchedules,
   pauseConnectorSchedules,
   resumeConnectorSchedules,
+  setConnectorSchedulePullOnly,
 } from "../scheduling/schedules.js";
 import {
   readOpenWikiOnboardingConfig,
@@ -45,6 +51,7 @@ import {
   formatScheduleMutationResult,
   formatScheduleStatus,
 } from "./schedule-format.js";
+import { createTerminalTakeoverConfirmation } from "./takeover-prompt.js";
 
 export async function runNgrokCommand(
   command: Extract<CliCommand, { kind: "ngrok" }>,
@@ -102,6 +109,16 @@ export async function runCronCommand(
         throw new Error(`Target is required for cron ${command.action}.`);
       }
 
+      if (
+        command.action === "pull-only" &&
+        command.pullOnly &&
+        !isPersonalCoreEnabled()
+      ) {
+        throw new Error(
+          `A pull-only schedule requires OPENWIKI_PERSONAL_CORE=1 in ${openWikiHomeDisplayPath}/.env, where scheduled runs read it: the legacy ingestion path never synthesizes pulled-only data.`,
+        );
+      }
+
       const result =
         command.action === "pause"
           ? await pauseConnectorSchedules(config, command.target)
@@ -111,7 +128,14 @@ export async function runCronCommand(
                 cwd: process.cwd(),
                 target: command.target,
               })
-            : await deleteConnectorSchedules(config, command.target);
+            : command.action === "pull-only"
+              ? await setConnectorSchedulePullOnly({
+                  config,
+                  cwd: process.cwd(),
+                  pullOnly: command.pullOnly,
+                  target: command.target,
+                })
+              : await deleteConnectorSchedules(config, command.target);
 
       await saveOpenWikiOnboardingConfig(result.config);
       process.stdout.write(
@@ -156,11 +180,18 @@ export async function runIngestCommand(
     const result = await runOpenWikiIngestion(process.cwd(), {
       debug: isDebugMode(),
       modelId: command.modelId,
+      pullOnly: command.pullOnly,
       scheduledOnly: command.scheduledOnly,
       target: command.target,
+      // Scheduled ingestion never takes over a lock; nobody is there to ask.
+      ...(command.scheduledOnly
+        ? {}
+        : { confirmTakeover: createTerminalTakeoverConfirmation() }),
       onEvent: (event) => {
         if (event.type === "text") {
           process.stdout.write(event.text);
+        } else if (event.type === "repository_progress") {
+          process.stdout.write(formatRepositoryPrintProgress(event, "update"));
         }
       },
     });
@@ -171,12 +202,13 @@ export async function runIngestCommand(
         `- ${sourceResult.displayName}: ${sourceResult.status}; ${sourceResult.rawFiles.length} raw file(s)\n`,
       );
     }
+    if (result.synthesis) {
+      process.stdout.write(
+        `- Personal wiki: ${result.synthesis.status}${result.synthesis.message ? `; ${result.synthesis.message}` : ""}\n`,
+      );
+    }
 
-    const hadError = result.results.some(
-      (sourceResult) => sourceResult.status === "error",
-    );
-
-    process.exitCode = hadError ? 1 : 0;
+    process.exitCode = ingestionFailed(result) ? 1 : 0;
   } catch (error) {
     process.stderr.write(`${getErrorMessage(error)}\n`);
     writePrintErrorDiagnostics(error);
@@ -289,6 +321,7 @@ export async function runPrintCommand(
       threadId: createOpenWikiThreadId(runtimeCwd),
       telemetryFile: command.telemetryFile ?? undefined,
       onEvent: handlePrintEvent,
+      confirmPersonalTakeover: createTerminalTakeoverConfirmation(),
     };
 
     // withRunTelemetry is the single boundary that records this run, wrapping repo

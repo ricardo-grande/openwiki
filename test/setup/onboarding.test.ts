@@ -562,6 +562,7 @@ describe("normalizeOnboardingConfig (via readOpenWikiOnboardingConfig)", () => {
         expression: "0 3 * * *",
         launchAgentPath: "/Library/LaunchAgents/openwiki.plist",
         pausedAt: "2026-02-01T00:00:00.000Z",
+        pullOnly: true,
         updatedAt: "2026-01-01T00:00:00.000Z",
         warning: "battery only",
       },
@@ -577,9 +578,30 @@ describe("normalizeOnboardingConfig (via readOpenWikiOnboardingConfig)", () => {
       expression: "0 3 * * *",
       launchAgentPath: "/Library/LaunchAgents/openwiki.plist",
       pausedAt: "2026-02-01T00:00:00.000Z",
+      pullOnly: true,
       updatedAt: "2026-01-01T00:00:00.000Z",
       warning: "battery only",
     });
+  });
+
+  test("drops a pull-only value that is not exactly true", async () => {
+    const home = await createTempHome();
+    const onboarding = await loadOnboardingModule(home);
+    await seedRawOnboardingJson(onboarding, {
+      ingestionSchedule: {
+        description: "nightly",
+        expression: "0 3 * * *",
+        pullOnly: "yes",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      sourceInstances: [],
+      sources: {},
+      version: 1,
+    });
+
+    const config = await onboarding.readOpenWikiOnboardingConfig();
+
+    expect(config.ingestionSchedule).not.toHaveProperty("pullOnly");
   });
 
   test("preserves every optional pmset field when present", async () => {

@@ -2599,10 +2599,12 @@ export function useInitSetup({
     setIsSaving(true);
 
     try {
+      const pullOnly = onboardingConfig.ingestionSchedule?.pullOnly === true;
       const result = await installConnectorSchedule({
         connectorId: "git-repo",
         cronExpression,
         cwd: process.cwd(),
+        pullOnly,
       });
       const nextConfig: OpenWikiOnboardingConfig = {
         ...onboardingConfig,
@@ -2610,6 +2612,7 @@ export function useInitSetup({
           description: result.description,
           expression: result.expression,
           launchAgentPath: result.launchAgentPath,
+          ...(pullOnly ? { pullOnly } : {}),
           updatedAt: new Date().toISOString(),
           warning: result.warning,
         },

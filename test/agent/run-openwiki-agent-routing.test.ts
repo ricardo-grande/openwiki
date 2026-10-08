@@ -203,19 +203,111 @@ describe("runOpenWikiAgent personal core opt-in", () => {
     expect(harness.runNativeRepositoryGeneration).not.toHaveBeenCalled();
   });
 
-  test("keeps per-source ingestion runs and chat on the legacy path", async () => {
+  test("passes an ingest's connector scope and the takeover confirmation to the driver", async () => {
+    process.env.OPENWIKI_PERSONAL_CORE = "1";
+    harness.runNativePersonalGeneration.mockResolvedValueOnce({
+      skipped: false,
+      lastUpdateStatus: "interrupted",
+    });
+    const confirmPersonalTakeover = vi.fn(() => Promise.resolve(false));
+    const root = await mkdtemp(path.join(tmpdir(), "openwiki-routing-"));
+    temporaryDirectories.push(root);
+
+    const result = await runOpenWikiAgent("update", root, {
+      outputMode: "local-wiki",
+      personalScope: { connectors: ["google", "slack"] },
+      confirmPersonalTakeover,
+    });
+
+    expect(result.lastUpdateStatus).toBe("interrupted");
+    expect(harness.runNativePersonalGeneration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "update",
+        scope: { connectors: ["google", "slack"] },
+        confirmTakeover: confirmPersonalTakeover,
+      }),
+    );
+  });
+
+  test("makes personal chat read-only, with a one-page edit run for edit requests", async () => {
+    process.env.OPENWIKI_PERSONAL_CORE = "1";
+    harness.runNativePersonalGeneration.mockResolvedValueOnce({
+      skipped: false,
+      lastUpdateStatus: "complete",
+    });
+    const root = await mkdtemp(path.join(tmpdir(), "openwiki-routing-"));
+    temporaryDirectories.push(root);
+
+    await runOpenWikiAgent("chat", root, {
+      outputMode: "local-wiki",
+      isFollowup: true,
+      userMessage: "Mark the Q4 review commitment as done.",
+    });
+
+    expect(harness.createDeepAgent).toHaveBeenCalledTimes(1);
+    const params = harness.createDeepAgent.mock.calls[0]?.[0] as {
+      tools: { name: string; invoke: (input: unknown) => Promise<unknown> }[];
+      systemPrompt: string;
+    };
+    expect(params.tools.map(({ name }) => name).sort()).toEqual([
+      "openwiki_edit_page",
+      "openwiki_list_connectors",
+      "openwiki_list_raw_items",
+      "openwiki_read_raw_item",
+    ]);
+    expect(params.systemPrompt).toContain("This chat is read-only.");
+    expect(harness.runNativePersonalGeneration).not.toHaveBeenCalled();
+
+    const editPage = params.tools.find(
+      ({ name }) => name === "openwiki_edit_page",
+    );
+    const output = await editPage?.invoke({
+      path: "/commitments.md",
+      request: "Mark the Q4 review commitment as done.",
+    });
+
+    expect(JSON.parse(String(output))).toEqual({ status: "complete" });
+    expect(harness.runNativePersonalGeneration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "update",
+        instruction: "Mark the Q4 review commitment as done.",
+        scope: { connectors: [], pages: ["/commitments.md"] },
+      }),
+    );
+  });
+
+  test("rejects a chat edit of a non-canonical path without starting a run", async () => {
     process.env.OPENWIKI_PERSONAL_CORE = "1";
     const root = await mkdtemp(path.join(tmpdir(), "openwiki-routing-"));
     temporaryDirectories.push(root);
 
-    await runOpenWikiAgent("update", root, {
-      outputMode: "local-wiki",
-      legacyPersonalPath: true,
-    });
+    await runOpenWikiAgent("chat", root, { outputMode: "local-wiki" });
+    const params = harness.createDeepAgent.mock.calls[0]?.[0] as {
+      tools: { name: string; invoke: (input: unknown) => Promise<unknown> }[];
+    };
+    const output = await params.tools
+      .find(({ name }) => name === "openwiki_edit_page")
+      ?.invoke({ path: "/.run.json", request: "Reset the run." });
+
+    expect(JSON.parse(String(output))).toMatchObject({ status: "rejected" });
+    expect(harness.runNativePersonalGeneration).not.toHaveBeenCalled();
+  });
+
+  test("keeps the legacy chat, with its ingest tools, without the opt-in", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "openwiki-routing-"));
+    temporaryDirectories.push(root);
+
     await runOpenWikiAgent("chat", root, { outputMode: "local-wiki" });
 
-    expect(harness.runNativePersonalGeneration).not.toHaveBeenCalled();
-    expect(harness.createDeepAgent).toHaveBeenCalledTimes(2);
+    const params = harness.createDeepAgent.mock.calls[0]?.[0] as {
+      tools: { name: string }[];
+    };
+    expect(params.tools.map(({ name }) => name)).toContain(
+      "openwiki_ingest_connector",
+    );
+    expect(
+      params.tools.map(({ name }) => name).includes("openwiki_edit_page"),
+    ).toBe(false);
   });
 
   test.each(["0", "true", ""])(

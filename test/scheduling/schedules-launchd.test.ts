@@ -52,6 +52,7 @@ import {
   installOpenWikiPowerSchedule,
   listConnectorSchedules,
   resumeConnectorSchedules,
+  setConnectorSchedulePullOnly,
 } from "../../src/scheduling/schedules.ts";
 
 const LABEL = "com.openwiki.ingestion";
@@ -423,5 +424,91 @@ describe("resumeConnectorSchedules (darwin reinstall + power reconcile)", () => 
       PLIST_PATH,
     ]);
     expect(findCall("osascript", "-e")).toBeDefined();
+  });
+
+  test("keeps a pull-only schedule pull-only", async () => {
+    const result = await resumeConnectorSchedules({
+      config: configWithSchedule("0 2 * * *", {
+        pausedAt: "2026-01-02T00:00:00.000Z",
+        pullOnly: true,
+      }),
+      cwd: "/repo",
+      target: "all",
+    });
+
+    expect(result.config.ingestionSchedule?.pullOnly).toBe(true);
+    expect(await readFile(PLIST_PATH, "utf8")).toContain(
+      "<string>--pull-only</string>",
+    );
+  });
+});
+
+describe("setConnectorSchedulePullOnly", () => {
+  test("reinstalls an active schedule with --pull-only after --scheduled", async () => {
+    const result = await setConnectorSchedulePullOnly({
+      config: configWithSchedule("0 2 * * *"),
+      cwd: "/repo",
+      pullOnly: true,
+      target: "all",
+    });
+
+    expect(result.connectorIds).toEqual(["all"]);
+    expect(result.config.ingestionSchedule).toMatchObject({
+      expression: "0 2 * * *",
+      launchAgentPath: PLIST_PATH,
+      pullOnly: true,
+    });
+    const plist = await readFile(PLIST_PATH, "utf8");
+    expect(plist).toContain(
+      [
+        "    <string>ingest</string>",
+        "    <string>all</string>",
+        "    <string>--scheduled</string>",
+        "    <string>--pull-only</string>",
+        "    <string>--print</string>",
+      ].join("\n"),
+    );
+  });
+
+  test("turning pull-only off reinstalls a full ingest", async () => {
+    const result = await setConnectorSchedulePullOnly({
+      config: configWithSchedule("0 2 * * *", { pullOnly: true }),
+      cwd: "/repo",
+      pullOnly: false,
+      target: "all",
+    });
+
+    expect(result.config.ingestionSchedule).not.toHaveProperty("pullOnly");
+    expect(await readFile(PLIST_PATH, "utf8")).not.toContain("--pull-only");
+  });
+
+  test("records the setting on a paused schedule without loading it", async () => {
+    const result = await setConnectorSchedulePullOnly({
+      config: configWithSchedule("0 2 * * *", {
+        pausedAt: "2026-01-02T00:00:00.000Z",
+      }),
+      cwd: "/repo",
+      pullOnly: true,
+      target: "all",
+    });
+
+    expect(result.config.ingestionSchedule).toMatchObject({
+      pausedAt: "2026-01-02T00:00:00.000Z",
+      pullOnly: true,
+    });
+    expect(findCall("launchctl", "bootstrap")).toBeUndefined();
+  });
+
+  test("skips when no schedule exists", async () => {
+    const config = createEmptyOnboardingConfig();
+    const result = await setConnectorSchedulePullOnly({
+      config,
+      cwd: "/repo",
+      pullOnly: true,
+      target: "all",
+    });
+
+    expect(result.config).toBe(config);
+    expect(result.skippedConnectorIds).toEqual(["all"]);
   });
 });

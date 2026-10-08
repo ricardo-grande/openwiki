@@ -23,6 +23,13 @@ export type OnboardingSourceScheduleConfig = {
   expression: string;
   launchAgentPath?: string;
   pausedAt?: string;
+  /**
+   * Whether the scheduled run only pulls, leaving synthesis to the next
+   * ingest or update. Set with `openwiki cron pull-only all on`.
+   *
+   * @default undefined - a full ingest.
+   */
+  pullOnly?: boolean;
   updatedAt: string;
   warning?: string;
 };
@@ -462,6 +469,7 @@ function normalizeSourceScheduleConfig(
         ? value.launchAgentPath
         : undefined,
     pausedAt: typeof value.pausedAt === "string" ? value.pausedAt : undefined,
+    ...(value.pullOnly === true ? { pullOnly: true } : {}),
     updatedAt:
       typeof value.updatedAt === "string"
         ? value.updatedAt

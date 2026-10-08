@@ -23,12 +23,15 @@ import {
   resolveConnectorRawPath,
 } from "../config/openwiki-home.js";
 import { createOpenWikiThreadId, runOpenWikiAgent } from "../agent/index.js";
+import { isPersonalCoreEnabled } from "../agent/personal-runner.js";
 import { createConnectorSynthesisGuidance } from "../agent/prompts/personal-guidance.js";
 import type {
   OpenWikiRunEvent,
   OpenWikiRunOptions,
   OpenWikiRunResult,
+  PersonalTakeoverConfirmation,
 } from "../agent/types.js";
+import { RepositoryRunError } from "../generation/errors.js";
 import {
   withRunTelemetry,
   type RunTelemetryContext,
@@ -50,11 +53,45 @@ export type SourceIngestionResult = {
   displayName: string;
   rawFiles: string[];
   sourceInstanceId: string;
-  status: "agent-updated" | "error" | "skipped";
+  /**
+   * `agent-updated` on the legacy path, where each source has its own run.
+   * On the lifecycle core, a deterministic source is `pulled`, and an agentic
+   * one is `gathered` by the ingest's single run, or `skipped` with
+   * `--pull-only`.
+   */
+  status: "agent-updated" | "error" | "gathered" | "pulled" | "skipped";
+};
+
+/**
+ * Outcome of the single lifecycle-core run that follows an ingest's pulls.
+ */
+export type PersonalSynthesisResult = {
+  /**
+   * `complete` or `interrupted` as written to `.last-update.json`, `noop`
+   * when nothing was new, `conflict` when another process holds the wiki or
+   * an interrupted run does not match, and `error` for any other failure.
+   * The pulls are kept in every case.
+   */
+  status: "complete" | "conflict" | "error" | "interrupted" | "noop";
+
+  /**
+   * Failure description for `conflict` and `error`.
+   *
+   * @default undefined
+   */
+  message?: string;
 };
 
 export type OpenWikiIngestionResult = {
   results: SourceIngestionResult[];
+
+  /**
+   * The single run over all of the ingest's pulls, on the lifecycle core.
+   *
+   * @default undefined - on the legacy path, with `--pull-only`, or when no
+   *   source matched.
+   */
+  synthesis?: PersonalSynthesisResult;
 };
 
 export type OpenWikiIngestionOptions = Pick<
@@ -70,6 +107,24 @@ export type OpenWikiIngestionOptions = Pick<
   connectorRegistry?: Record<ConnectorId, ConnectorRuntime>;
   scheduledOnly?: boolean;
   target: IngestionTarget;
+
+  /**
+   * Pull deterministic sources without synthesizing them. Their evidence
+   * waits in the frontier of the next lifecycle-core run. Requires
+   * `OPENWIKI_PERSONAL_CORE=1`: the legacy path synthesizes only the raw
+   * files of its own pull, so it would never read these.
+   *
+   * @default false
+   */
+  pullOnly?: boolean;
+
+  /**
+   * Asks the user whether to take over an expired personal wiki lock.
+   * Ignored for scheduled ingestion, which never takes over.
+   *
+   * @default undefined - never take over.
+   */
+  confirmTakeover?: PersonalTakeoverConfirmation;
 };
 
 export async function runOpenWikiIngestion(
@@ -78,6 +133,13 @@ export async function runOpenWikiIngestion(
 ): Promise<OpenWikiIngestionResult> {
   void _cwd;
   await loadOpenWikiEnv();
+  // Read after the env load, so OPENWIKI_PERSONAL_CORE may come from .env.
+  const personalCore = isPersonalCoreEnabled();
+  if (options.pullOnly && !personalCore) {
+    throw new Error(
+      "--pull-only requires OPENWIKI_PERSONAL_CORE=1: the legacy ingestion path synthesizes only the data it pulls in the same run, so pulled-only data would never reach the wiki.",
+    );
+  }
   await ensureOpenWikiHome();
   const config = await readOpenWikiOnboardingConfig();
   const registry = options.connectorRegistry ?? createConnectorRegistry();
@@ -94,6 +156,20 @@ export async function runOpenWikiIngestion(
     throw new Error(
       `No configured ingestion source matched ${formatTarget(options.target)}.`,
     );
+  }
+
+  if (personalCore) {
+    return runCoreIngestion({
+      // Scheduled ingestion never takes over a lock (core §3.4).
+      confirmTakeover: options.scheduledOnly
+        ? undefined
+        : options.confirmTakeover,
+      emit: options.onEvent,
+      modelId: options.modelId,
+      pullOnly: options.pullOnly ?? false,
+      registry,
+      sourceInstances,
+    });
   }
 
   for (const sourceConfig of sourceInstances) {
@@ -114,6 +190,21 @@ export async function runOpenWikiIngestion(
   return { results };
 }
 
+/**
+ * Whether an ingest should exit non-zero: a source failed, or its single
+ * lifecycle-core run hit a lock conflict or an error.
+ *
+ * @param result - Ingestion result to inspect.
+ * @returns `true` when the ingest failed in any part.
+ */
+export function ingestionFailed(result: OpenWikiIngestionResult): boolean {
+  return (
+    result.results.some(({ status }) => status === "error") ||
+    result.synthesis?.status === "conflict" ||
+    result.synthesis?.status === "error"
+  );
+}
+
 export function parseIngestionTarget(value: string): IngestionTarget | null {
   if (value === "all") {
     return "all";
@@ -129,6 +220,190 @@ export function parseIngestionTarget(value: string): IngestionTarget | null {
         id: value,
       }
     : null;
+}
+
+/**
+ * Lifecycle-core ingestion: every requested pull first, then exactly one
+ * `begin(update, scope.connectors)` and the native driver. Agentic sources
+ * are not pulled; the run's gather worker queries them.
+ *
+ * A failed pull stops neither the other pulls nor the run. A failed run
+ * keeps the pulls: the cursor has not moved past them, so the next run reads
+ * them.
+ */
+async function runCoreIngestion({
+  confirmTakeover,
+  emit,
+  modelId,
+  pullOnly,
+  registry,
+  sourceInstances,
+}: {
+  confirmTakeover: PersonalTakeoverConfirmation | undefined;
+  emit?: (event: OpenWikiRunEvent) => void;
+  modelId?: string | null;
+  pullOnly: boolean;
+  registry: Record<ConnectorId, ConnectorRuntime>;
+  sourceInstances: readonly OnboardingSourceInstanceConfig[];
+}): Promise<OpenWikiIngestionResult> {
+  const results: SourceIngestionResult[] = [];
+  for (const sourceConfig of sourceInstances) {
+    results.push(
+      await pullSource(
+        registry[sourceConfig.connectorId],
+        sourceConfig,
+        pullOnly,
+        emit,
+      ),
+    );
+  }
+
+  if (pullOnly) {
+    if (sourceInstances.length > 0) {
+      emitText(
+        emit,
+        "\nPulled only. Run openwiki personal --update or openwiki ingest to add this data to the wiki.\n",
+      );
+    }
+    return { results };
+  }
+  if (sourceInstances.length === 0) {
+    return { results };
+  }
+
+  const connectors = [
+    ...new Set(sourceInstances.map(({ connectorId }) => connectorId)),
+  ];
+  return {
+    results,
+    synthesis: await runCoreSynthesis({
+      confirmTakeover,
+      connectors,
+      emit,
+      modelId,
+    }),
+  };
+}
+
+/**
+ * Pulls one deterministic source. An agentic source is not pulled: the run's
+ * gather worker queries it.
+ */
+async function pullSource(
+  connector: ConnectorRuntime,
+  sourceConfig: OnboardingSourceInstanceConfig,
+  pullOnly: boolean,
+  emit: ((event: OpenWikiRunEvent) => void) | undefined,
+): Promise<SourceIngestionResult> {
+  const displayName = getSourceDisplayName(connector, sourceConfig);
+  const base = {
+    connectorId: connector.id,
+    displayName,
+    sourceInstanceId: sourceConfig.id,
+  };
+  if (!isDeterministicConnector(connector)) {
+    emitText(
+      emit,
+      pullOnly
+        ? `\nSkipping ${displayName}: it is gathered during a wiki update, not pulled.\n`
+        : `\n${displayName} will be gathered during the wiki update.\n`,
+    );
+    return {
+      ...base,
+      rawFiles: [],
+      status: pullOnly ? "skipped" : "gathered",
+    };
+  }
+
+  emitText(emit, `\nPulling ${displayName}.\n`);
+  try {
+    const deterministicPull = await connector.ingest({
+      connectorConfig: sourceConfig.connectorConfig,
+      instanceId: sourceConfig.id,
+      windowHours: INGESTION_WINDOW_HOURS,
+    });
+    const failed =
+      deterministicPull.status === "error" &&
+      deterministicPull.rawFiles.length === 0;
+    if (failed) {
+      emitText(
+        emit,
+        `${connector.displayName} deterministic pull failed: ${deterministicPull.message}\n`,
+      );
+    } else {
+      emitDeterministicPullSummary(emit, deterministicPull);
+    }
+    return {
+      ...base,
+      deterministicPull,
+      rawFiles: deterministicPull.rawFiles,
+      status: failed ? "error" : "pulled",
+    };
+  } catch (error) {
+    emitText(
+      emit,
+      `${connector.displayName} pull failed: ${getErrorMessage(error)}\n`,
+    );
+    return { ...base, rawFiles: [], status: "error" };
+  }
+}
+
+/**
+ * Runs the ingest's single lifecycle-core update over the pulled connectors.
+ */
+async function runCoreSynthesis({
+  confirmTakeover,
+  connectors,
+  emit,
+  modelId,
+}: {
+  confirmTakeover: PersonalTakeoverConfirmation | undefined;
+  connectors: string[];
+  emit?: (event: OpenWikiRunEvent) => void;
+  modelId?: string | null;
+}): Promise<PersonalSynthesisResult> {
+  emitText(
+    emit,
+    `\nUpdating the personal wiki from ${connectors.join(", ")}.\n`,
+  );
+  const runOptions: OpenWikiRunOptions = {
+    isFollowup: false,
+    modelId,
+    onEvent: emit,
+    outputMode: "local-wiki",
+    threadId: createOpenWikiThreadId(openWikiLocalWikiDir),
+    personalScope: { connectors },
+    ...(confirmTakeover ? { confirmPersonalTakeover: confirmTakeover } : {}),
+  };
+
+  // withRunTelemetry is the single boundary that records this update run,
+  // matching the CLI paths so ingestion runs land in telemetry too.
+  const telemetryContext: RunTelemetryContext = {};
+  try {
+    const agentResult = await withRunTelemetry(
+      "update",
+      runOptions,
+      telemetryContext,
+      () =>
+        runOpenWikiAgent(
+          "update",
+          openWikiLocalWikiDir,
+          runOptions,
+          telemetryContext,
+        ),
+    );
+    if (agentResult.skipped) return { status: "noop" };
+    return { status: agentResult.lastUpdateStatus ?? "complete" };
+  } catch (error) {
+    const message = getErrorMessage(error);
+    const conflict =
+      error instanceof RepositoryRunError && error.code === "conflict";
+    emitText(
+      emit,
+      `${conflict ? "The personal wiki was not updated" : "Personal wiki update failed"}: ${message} The pulled data is kept for the next update.\n`,
+    );
+    return { status: conflict ? "conflict" : "error", message };
+  }
 }
 
 async function runSourceIngestion({
@@ -184,7 +459,6 @@ async function runSourceIngestion({
 
     const runOptions: OpenWikiRunOptions = {
       isFollowup: false,
-      legacyPersonalPath: true,
       modelId,
       onEvent: emit,
       outputMode: "local-wiki",

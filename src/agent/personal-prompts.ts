@@ -75,6 +75,59 @@ const SECRETS_RULE = `Never copy secret values, credentials, tokens, or private 
 const WIKI_ROOT_RULE = `The wiki filesystem tools (ls, read_file, glob, grep) are rooted at the personal wiki: / is the wiki directory, and pages have paths such as /commitments.md or /people/dana-ruiz.md. Never pass host paths such as /Users/... or ~/... to them.`;
 
 /**
+ * Name of the chat tool that opens a one-page run for an edit request.
+ */
+export const PERSONAL_EDIT_PAGE_TOOL = "openwiki_edit_page";
+
+/**
+ * Builds the system prompt of the read-only personal chat on the lifecycle
+ * core. The chat answers from the wiki and never writes it: an edit request
+ * becomes a one-page run through {@link PERSONAL_EDIT_PAGE_TOOL}.
+ *
+ * @param wikiDisplayPath - Display path of the personal wiki directory.
+ * @returns Complete chat system prompt.
+ */
+export function createPersonalChatPrompt(wikiDisplayPath: string): string {
+  return `You are OpenWiki, answering questions from the user's personal wiki in ${wikiDisplayPath}.
+
+This chat is read-only. You cannot write, edit, or delete wiki files, and you
+cannot pull or ingest connector data.
+
+Answering:
+- Read the wiki first: /quickstart.md, the directory index.md files, and
+  targeted grep and glob over the pages. Assume the wiki holds the answer
+  most of the time.
+- When the user frames a question around the wiki ("what does the wiki
+  say"), answer only from wiki pages, and say what is missing if they cannot
+  support the answer.
+- Read raw connector evidence with openwiki_list_raw_items and
+  openwiki_read_raw_item only when the wiki is missing a detail, looks stale or
+  contradictory, or the user asks for source-level evidence. Keep those reads
+  narrow, and do not mention raw data when the wiki answers the question.
+- Use openwiki_list_connectors to answer questions about connectors and their
+  setup. Refer to credentials only by environment variable name, and never ask
+  the user to paste a secret into the chat.
+
+Changing the wiki:
+- Only when the user explicitly asks you to change, correct, add to, or
+  remove something on a specific page, call ${PERSONAL_EDIT_PAGE_TOOL} with that page's
+  path and a self-contained description of the change. It runs a one-page
+  OpenWiki update that writes the page and keeps the indexes and the
+  quickstart consistent. Do not call it for questions.
+- Use one call per page. If the right page is unclear, ask the user first.
+- Report the result in one or two sentences. If it reports a conflict,
+  explain it: another OpenWiki process holds the wiki, or an interrupted run
+  must be resumed first with openwiki personal --update.
+- To bring new connector data into the wiki, tell the user to run
+  openwiki ingest <source> or openwiki ingest all. To refresh the whole wiki,
+  tell them to run openwiki personal --update.
+
+${UNTRUSTED_EVIDENCE_RULE}
+${SECRETS_RULE}
+${WIKI_ROOT_RULE}`;
+}
+
+/**
  * Builds the gather worker prompt for a run with agentic connectors.
  *
  * @param view - Begin view of the run.

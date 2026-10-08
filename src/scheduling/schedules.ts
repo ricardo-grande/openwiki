@@ -45,6 +45,7 @@ export type ConnectorScheduleStatus = {
   launchAgentPath?: string;
   launchAgentPlistExists: boolean;
   pausedAt?: string;
+  pullOnly?: boolean;
   sourceInstanceId: string;
   updatedAt: string;
   warning?: string;
@@ -133,10 +134,17 @@ export async function installConnectorSchedule({
   connectorId,
   cronExpression,
   cwd,
+  pullOnly = false,
 }: {
   connectorId: ConnectorId;
   cronExpression: string;
   cwd: string;
+  /**
+   * Whether the scheduled run only pulls (`ingest all --pull-only`).
+   *
+   * @default false
+   */
+  pullOnly?: boolean;
 }): Promise<ScheduleInstallResult> {
   const validation = validateCronExpression(cronExpression);
 
@@ -183,6 +191,7 @@ export async function installConnectorSchedule({
       openWikiConfigDir: configuredDir
         ? resolveOpenWikiHomeDir(process.env)
         : undefined,
+      pullOnly,
     }),
     {
       encoding: "utf8",
@@ -224,6 +233,7 @@ export async function listConnectorSchedules(
         ? await pathExists(launchAgentPath)
         : false,
       pausedAt: schedule.pausedAt,
+      ...(schedule.pullOnly ? { pullOnly: true } : {}),
       sourceInstanceId: "all",
       updatedAt: schedule.updatedAt,
       warning: schedule.warning,
@@ -293,10 +303,12 @@ export async function resumeConnectorSchedules({
     };
   }
 
+  const pullOnly = config.ingestionSchedule.pullOnly === true;
   const result = await installConnectorSchedule({
     connectorId: "git-repo",
     cronExpression: config.ingestionSchedule.expression,
     cwd,
+    pullOnly,
   });
   const nextConfig = {
     ...cloneOnboardingConfig(config),
@@ -304,6 +316,7 @@ export async function resumeConnectorSchedules({
       description: result.description,
       expression: result.expression,
       launchAgentPath: result.launchAgentPath,
+      ...(pullOnly ? { pullOnly } : {}),
       updatedAt: new Date().toISOString(),
       warning: result.warning,
     },
@@ -321,6 +334,73 @@ export async function resumeConnectorSchedules({
         ? [reconciled.powerSchedule.warning]
         : []),
     ],
+  };
+}
+
+/**
+ * Switches scheduled ingestion between a full ingest and pull-only. An active
+ * schedule is reinstalled so its next run uses the new setting; a paused one
+ * picks it up when resumed.
+ *
+ * @param input - Current config, working directory for the launch agent,
+ *   target, and setting.
+ * @returns The updated config, or the unchanged config with the target
+ *   skipped when no schedule exists.
+ */
+export async function setConnectorSchedulePullOnly({
+  config,
+  cwd,
+  pullOnly,
+  target,
+}: {
+  config: OpenWikiOnboardingConfig;
+  cwd: string;
+  pullOnly: boolean;
+  target: ScheduleTarget;
+}): Promise<ScheduleMutationResult> {
+  const schedule = config.ingestionSchedule;
+  if (target !== "all" || !schedule) {
+    return {
+      config,
+      connectorIds: [],
+      skippedConnectorIds: [target],
+      warnings: [],
+    };
+  }
+
+  const { pullOnly: _previous, ...rest } = schedule;
+  void _previous;
+  let nextSchedule = {
+    ...rest,
+    ...(pullOnly ? { pullOnly } : {}),
+    updatedAt: new Date().toISOString(),
+  };
+  const warnings: string[] = [];
+  if (!schedule.pausedAt) {
+    const result = await installConnectorSchedule({
+      connectorId: "git-repo",
+      cronExpression: schedule.expression,
+      cwd,
+      pullOnly,
+    });
+    nextSchedule = {
+      ...nextSchedule,
+      description: result.description,
+      expression: result.expression,
+      launchAgentPath: result.launchAgentPath,
+      warning: result.warning,
+    };
+    if (result.warning) warnings.push(result.warning);
+  }
+
+  return {
+    config: {
+      ...cloneOnboardingConfig(config),
+      ingestionSchedule: nextSchedule,
+    },
+    connectorIds: ["all"],
+    skippedConnectorIds: [],
+    warnings,
   };
 }
 
@@ -815,12 +895,14 @@ function createLaunchAgentPlist({
   label,
   logPath,
   openWikiConfigDir,
+  pullOnly,
 }: {
   calendarInterval: CalendarInterval;
   cwd: string;
   label: string;
   logPath: string;
   openWikiConfigDir?: string;
+  pullOnly: boolean;
 }): string {
   const cliPath = process.argv[1] ? path.resolve(process.argv[1]) : "";
   const programArguments = [
@@ -829,6 +911,7 @@ function createLaunchAgentPlist({
     "ingest",
     "all",
     "--scheduled",
+    ...(pullOnly ? ["--pull-only"] : []),
     "--print",
   ];
   const environmentVariables = openWikiConfigDir

@@ -60,7 +60,7 @@ describe("parseCommand — help", () => {
     const helpText = getHelpText();
 
     expect(helpText).toContain(
-      "openwiki ingest <source|source-instance|all> [--scheduled] [--print] [--modelId <id>]",
+      "openwiki ingest <source|source-instance|all> [--pull-only] [--scheduled] [--print] [--modelId <id>]",
     );
     expect(helpText).toContain("--scheduled");
     expect(helpText).toContain("scheduled-only ingestion");
@@ -472,6 +472,19 @@ describe("parseCommand — ingest", () => {
       target: "web-search",
       scheduledOnly: false,
       print: false,
+      pullOnly: false,
+    });
+  });
+
+  test("--pull-only parses alongside the scheduled flags", () => {
+    expect(
+      parseCommand(["ingest", "all", "--scheduled", "--pull-only", "--print"]),
+    ).toMatchObject({
+      kind: "ingest",
+      target: "all",
+      scheduledOnly: true,
+      pullOnly: true,
+      print: true,
     });
   });
 
@@ -647,6 +660,34 @@ describe("parseCommand — cron", () => {
   test("cron pause with extra arguments is an error", () => {
     const result = parseCommand(["cron", "pause", "all", "extra"]);
     expect(result.kind).toBe("error");
+  });
+
+  test.each([
+    ["on", true],
+    ["off", false],
+  ])("cron pull-only all %s sets pullOnly to %s", (setting, pullOnly) => {
+    expect(parseCommand(["cron", "pull-only", "all", setting])).toEqual({
+      kind: "cron",
+      action: "pull-only",
+      exitCode: 0,
+      pullOnly,
+      target: "all",
+    });
+  });
+
+  test.each([
+    [["cron", "pull-only", "all"]],
+    [["cron", "pull-only", "all", "yes"]],
+    [["cron", "pull-only", "web-search", "on"]],
+    [["cron", "pull-only", "all", "on", "extra"]],
+  ])("cron pull-only rejects %j", (argv) => {
+    const result = parseCommand(argv);
+    expect(result.kind).toBe("error");
+    if (result.kind === "error") {
+      expect(result.message).toBe(
+        "Usage: openwiki cron pull-only all <on|off>",
+      );
+    }
   });
 
   test("an unknown cron subcommand falls through to usage guidance", () => {

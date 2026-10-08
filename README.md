@@ -440,14 +440,24 @@ Connector secrets are referenced by env var name and stored in `~/.openwiki/.env
 <details>
 <summary><b>Experimental: resumable personal runs</b></summary>
 
-Set `OPENWIKI_PERSONAL_CORE=1` to run `openwiki personal --init` and `openwiki personal --update` on the same resumable page-job lifecycle as code mode:
+Set `OPENWIKI_PERSONAL_CORE=1` to run the personal wiki on the same resumable page-job lifecycle as code mode. Put it in `~/.openwiki/.env` so scheduled runs use it too.
 
 - Each run reads only the connector pulls the wiki has not absorbed yet. A connector's first run reads only its newest pull.
 - A planner routes that evidence to pages, then one fresh worker writes each page. `OPENWIKI_PAGE_CONCURRENCY` applies.
 - An interrupted run resumes when you run the same command again. A lock in `~/.openwiki/wiki/.run.lock` stops a second process from writing the wiki at the same time.
 - If you edit a page while a worker is writing it, the worker reads your edit again instead of overwriting it.
 
-`openwiki ingest` and `openwiki personal` chat do not use it yet.
+With the flag set, the entry points change:
+
+- `openwiki personal --init` and `openwiki personal --update [message]` start or resume a run.
+- `openwiki ingest <source|all>` runs every requested pull first, then one update over all of them, instead of one update per source. Notion and Custom MCP are not pulled; the update queries them.
+- `openwiki ingest <source|all> --pull-only` only pulls. The next update reads the data.
+- `openwiki cron pull-only all on` makes scheduled ingestion pull-only. `off` restores the full ingest.
+- `openwiki personal` chat answers from the wiki and does not write it. When you ask it to change a page, it runs a one-page update for that page.
+
+If another process holds the wiki, the command names it and exits with an error. `ingest` keeps what it pulled for the next update. If that process is gone and its lock has expired, an interactive command asks before taking over the run; scheduled ingestion never takes over.
+
+Without the flag, `--pull-only` and `cron pull-only all on` are refused, because the default ingestion never reads data it did not pull itself.
 
 </details>
 

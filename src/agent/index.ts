@@ -27,6 +27,7 @@ import {
 import {
   openWikiHomeDisplayPath,
   openWikiLocalWikiDir,
+  openWikiLocalWikiDisplayPath,
 } from "../config/openwiki-home.js";
 import { requireResolvedLanguage } from "../platform/language.js";
 import {
@@ -58,6 +59,12 @@ import {
   CONVERSATION_HISTORY_MOUNT,
   createAgentBackend,
 } from "./agent-backend.js";
+import {
+  createPersonalChatTools,
+  PERSONAL_CHAT_WIKI_TOOLS,
+  type PersonalChatEditRunner,
+} from "./personal-chat.js";
+import { createPersonalChatPrompt } from "./personal-prompts.js";
 import {
   isPersonalCoreEnabled,
   runNativePersonalGeneration,
@@ -213,7 +220,6 @@ export async function runOpenWikiAgent(
   const isPersonalCoreGeneration =
     outputMode === "local-wiki" &&
     (command === "init" || command === "update") &&
-    !options.legacyPersonalPath &&
     isPersonalCoreEnabled();
 
   if (isPersonalCoreGeneration) {
@@ -226,6 +232,8 @@ export async function runOpenWikiAgent(
           mode: command,
           language: options.language,
           instruction: options.userMessage,
+          ...(options.personalScope ? { scope: options.personalScope } : {}),
+          confirmTakeover: options.confirmPersonalTakeover,
           modelId: config.modelId,
           model,
           pageConcurrency: config.pageConcurrency,
@@ -297,7 +305,10 @@ async function runNativeGeneration(
   generate: (
     model: BaseChatModel,
     config: Awaited<ReturnType<typeof resolveRunConfig>>,
-  ) => Promise<{ skipped: boolean }>,
+  ) => Promise<{
+    skipped: boolean;
+    lastUpdateStatus?: OpenWikiRunResult["lastUpdateStatus"];
+  }>,
 ): Promise<OpenWikiRunResult> {
   const debugFetchCapture = installOpenRouterDebugFetch(options);
   try {
@@ -329,6 +340,9 @@ async function runNativeGeneration(
       command,
       model: config.modelId,
       ...(generation.skipped ? { skipped: true } : {}),
+      ...(generation.lastUpdateStatus
+        ? { lastUpdateStatus: generation.lastUpdateStatus }
+        : {}),
     };
   } catch (error) {
     attachOpenRouterDebugInfo(error, debugFetchCapture.getLastFailure());
@@ -517,11 +531,23 @@ type OpenWikiAgentGraphOptions = OpenWikiAgentOptions & {
    * Single provenance time shared by generated and verified events.
    */
   runTimestamp: string;
+
+  /**
+   * Makes a personal chat read-only on the lifecycle core: an edit request
+   * runs through this one-page update instead of writing the wiki directly.
+   *
+   * @default undefined - the legacy chat, which may write the wiki.
+   */
+  personalChatEdit?: PersonalChatEditRunner;
 };
 
 function createOpenWikiAgentGraph(
   options: OpenWikiAgentGraphOptions,
 ): ReturnType<typeof createDeepAgent> {
+  if (options.personalChatEdit) {
+    return createPersonalChatGraph(options, options.personalChatEdit);
+  }
+
   const wikiBackend = new OpenWikiLocalShellBackend({
     docsOnly: options.command !== "chat",
     openWikiIgnore: options.openWikiIgnore,
@@ -626,6 +652,48 @@ function createOpenWikiAgentGraph(
   });
 }
 
+/**
+ * Creates the read-only personal chat of the lifecycle core: wiki read tools,
+ * the reading connector tools, and the one-page edit tool. It has no write,
+ * shell, pull, or ingest tool, and no middleware that writes the wiki.
+ *
+ * @param options - Graph options of the chat turn.
+ * @param editPage - Runs a one-page update for an edit request.
+ * @returns Configured chat graph.
+ */
+function createPersonalChatGraph(
+  options: OpenWikiAgentGraphOptions,
+  editPage: PersonalChatEditRunner,
+): ReturnType<typeof createDeepAgent> {
+  const wikiBackend = new OpenWikiLocalShellBackend({
+    docsOnly: true,
+    writableWikiPages: [],
+    maxOutputBytes: 100_000,
+    outputMode: "local-wiki",
+    rootDir: options.cwd,
+    timeout: 120,
+    virtualMode: true,
+  });
+  const backend = createAgentBackend(wikiBackend);
+  return createDeepAgent({
+    model: options.model,
+    tools: createPersonalChatTools(editPage),
+    checkpointer: options.checkpointer,
+    backend,
+    middleware: [
+      createFilesystemMiddleware({
+        backend,
+        permissions: AGENT_FILESYSTEM_PERMISSIONS,
+        tools: [...PERSONAL_CHAT_WIKI_TOOLS],
+      }),
+    ],
+    skills: ["/skills/"],
+    subagents: [],
+    permissions: AGENT_FILESYSTEM_PERMISSIONS,
+    systemPrompt: createPersonalChatPrompt(openWikiLocalWikiDisplayPath),
+  });
+}
+
 async function runOpenWikiAgentCore(
   command: OpenWikiCommand,
   cwd: string,
@@ -696,6 +764,17 @@ async function runOpenWikiAgentCore(
         context,
         openWikiIgnore,
         runTimestamp,
+        ...(command === "chat" &&
+        outputMode === "local-wiki" &&
+        isPersonalCoreEnabled()
+          ? {
+              personalChatEdit: createPersonalChatEditRunner(
+                model,
+                modelId,
+                options,
+              ),
+            }
+          : {}),
       }),
     { errorClass: "build_error", errorDetail: "agent" },
   );
@@ -867,6 +946,38 @@ async function runOpenWikiAgentCore(
   return {
     command,
     model: modelId,
+  };
+}
+
+/**
+ * Binds the one-page update of a read-only personal chat to the chat's model.
+ *
+ * @param model - Chat model, reused by the run's workers.
+ * @param modelId - Model identity written to `.last-update.json`.
+ * @param options - Run options of the chat turn.
+ * @returns A runner for `begin(update, scope.pages = [page])` and the native
+ *   driver.
+ */
+function createPersonalChatEditRunner(
+  model: BaseChatModel,
+  modelId: string,
+  options: OpenWikiRunOptions,
+): PersonalChatEditRunner {
+  return async ({ page, request }) => {
+    const result = await runNativePersonalGeneration({
+      mode: "update",
+      language: options.language,
+      instruction: request,
+      scope: { connectors: [], pages: [page] },
+      confirmTakeover: options.confirmPersonalTakeover,
+      modelId,
+      model,
+      pageConcurrency: resolvePageConcurrency(),
+      onEvent: options.onEvent,
+    });
+    return {
+      status: result.skipped ? "noop" : (result.lastUpdateStatus ?? "complete"),
+    };
   };
 }
 

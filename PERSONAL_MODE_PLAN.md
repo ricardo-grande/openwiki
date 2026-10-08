@@ -93,7 +93,29 @@ independent and can ship at any time.
   - A run with no evidence and no request submits an empty plan without a
     planner, so init on a fresh home runs only the `/quickstart.md` job.
   - CLI progress events carry `wiki: "personal"` and a `gathering` stage.
-- [ ] **C5.** Entry-point rewiring
+- [x] **C5.** Entry-point rewiring
+  - [x] C5.1 `openwiki ingest` runs every requested pull, then exactly one
+        `begin(update, scope.connectors)` and the driver; agentic sources are
+        gathered by that run, not pulled. A failed pull stops neither the
+        other pulls nor the run
+  - [x] C5.2 `--pull-only`, and `openwiki cron pull-only all <on|off>` for a
+        pull-only schedule (`ingestionSchedule.pullOnly`, `--pull-only` in the
+        launch agent). Both are refused without the opt-in, because the
+        legacy path never reads data it did not pull itself
+  - [x] C5.3 Read-only `openwiki personal` chat: wiki read tools, raw read
+        tools, and `openwiki_edit_page`, which opens a one-page run with
+        `scope: {connectors: [], pages: [path]}`
+  - [x] C5.4 `git-repo` is deterministic (`supportsAgenticDiscovery: false`)
+        on both paths, so the C6 benchmark can replay it on each
+  - [x] C5.5 Lock conflicts: the CLI reports the holder and exits non-zero;
+        `ingest` keeps its pulls. An expired lock is taken over only after
+        a terminal or TUI confirmation. Scheduled ingestion never gets a
+        confirmation, which closes PLC-013's entry-point half
+  - `legacyPersonalPath` is gone: under the opt-in, ingestion no longer
+    makes per-source runs.
+  - A chat edit that meets an expired lock reuses the session's takeover
+    confirmation (terminal or TUI), not the chat model.
+  - Personal onboarding still offers "Run ingestion now"; that is S2.
 - [ ] **C6.** Default flip
 - [ ] **C7.** Remove the legacy path
 - [x] **H1.** Personal server and installer components
