@@ -36,10 +36,10 @@ sources:
     resource: repo://src/integrations/install/registry.ts
   - id: openwiki-source-349c953869b025f9d4935470
     resource: repo://src/platform/language.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # OpenWiki Quickstart
@@ -75,7 +75,7 @@ OpenWiki is a pnpm + TypeScript project. The commands you will use most:
 
 ```sh
 pnpm install          # install dependencies
-pnpm run build        # tsc (server + client) then copy visualizer assets
+pnpm run build        # tsc (server + client), copy visualizer assets, generate the personal reference
 pnpm run dev          # run the CLI from source via tsx (src/cli/cli.tsx)
 pnpm run coverage     # run the Vitest suite with coverage
 pnpm test             # typecheck + build + coverage (the full CI-equivalent gate)
@@ -188,6 +188,8 @@ the canonical wiki pages; each one links into the deeper source map.
 | I want to…                                                                  | Read                                             |
 | --------------------------------------------------------------------------- | ------------------------------------------------ |
 | Run OpenWiki inside IBM Bob, Codex, Claude Code, OpenCode, Cursor, Kiro, Oh My Pi, Antigravity CLI, or GitHub Copilot CLI | [Coding-Agent Integrations](./integrations/coding-agents.md) |
+| Let a host coding agent read and maintain the personal wiki through the separate `openwiki-personal` MCP server and skill | [Personal Host Agent Mode](./integrations/personal-host-mode.md) |
+| Understand the durable, model-free personal lifecycle (run state, single-writer lock, plan rules, page jobs, gathering, finalization) | [Personal Lifecycle Core](./workflows/personal-lifecycle.md) |
 | Understand the built-in source connectors, the ConnectorRuntime contract, and how to add a new one | [Source Connectors](./integrations/connectors.md) |
 | Explore the interactive graph visualizer (live server and static export)    | [Interactive Visualizer](./integrations/visualizer.md) |
 
@@ -257,10 +259,12 @@ and the same six MCP operations as native generation:
 `openwiki_inspect_page_claims`, `openwiki_submit_page`, and `openwiki_finish`. The
 host owns repository research, planning, and factual authoring; OpenWiki owns the
 durable queue, Claims reconciliation, source-drift handling, and deterministic
-finalization. Host-driven runs currently support repository code wikis (not
-personal brains), use the host's authenticated model session, and use repository
-source and tests only — connector context (including LangSmith) is not yet
-supported. The host submits only sparse Claim decisions for each page
+finalization. Host-driven repository runs use the host's authenticated model
+session and use repository source and tests only — connector context (including
+LangSmith) is not yet supported. The personal wiki has its own, separate
+`openwiki-personal` MCP server and skill, installed at user scope with
+`openwiki integrations install <host> --personal`; see
+[Personal Host Agent Mode](./integrations/personal-host-mode.md). The host submits only sparse Claim decisions for each page
 (`confirmedClaimIds` for rechecked issue Claims kept unchanged, `claims` for
 revisions and additions, `retractedClaimIds` for removals); OpenWiki
 automatically retains current issue-free Claims and makes the full Claim set

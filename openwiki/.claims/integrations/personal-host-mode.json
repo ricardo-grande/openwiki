@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a838e554a05e53110f536776407cba86fcc92487ad470b76a52a9bc43e48e0c2",
+  "claims": [
+    {
+      "id": "claim_65959cec596c4167846641caa6f333f0",
+      "statement": "The personal component installs user-scope only: its skill is openwiki-personal, its MCP entry is openwiki-personal, and the entry launches openwiki mcp personal --host <host>; project scope is rejected with invalid_input.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/install/install-paths.ts#L74-L95",
+          "version": "repo-lines-v1:sha256:4ab3618821181e1b1fe43d4532d7c6e949ac3eb9473aba856778681bdb0b6774:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiYThlZGE4NzVlMGE0MTY3ZDIyYTMwOWEyZTM4ODM5NzhhZjZmMWZlZmRjYWIxMmU5MTExYWViZjZhMTc5MjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNTkxM2ZkNGU5OTFkZmU0YWQ3ODYwOTBlOTE5NmQ2MmEyZDU5NDBhYTRmMjMwMTgxNDdhNjE2ZjE3NGVlNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjYTA5ZGRiZjIxNjUzMzkzMWQ5Y2RhMDZiYzEwNWZlMmUzYzRiYTk0NmUxM2RjZjdhZmVhZTk2MDRjNWM3MjMifQ"
+        },
+        {
+          "resource": "repo://src/integrations/install/registry.ts#L9-L32",
+          "version": "repo-lines-v1:sha256:edae96019082e676c0b96647e44bb69b08ac13a3aa04598a374d80e6b4d837fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUxOTAwMzgwYTYwMmQ2NmRjMTljNTYzMmY1ZjA5NjM0NWU1ZjUzYTMxY2M2NTkyYjdiNmFmODk2MTY5OTJhYWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0MGY2MzAzNDUyODA5NTZlZGRhZGM2MjEzNTNhMzE2NTVjMjBmYTFlNjc4ODAzOTQzMDI0ODg5NjI5NzBjZTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f5654a939ea84139a452a0887c9b85be",
+      "statement": "runOpenWikiPersonalMcp scopes env loading to no keys at startup, and when stdin ends or closes the session waits for the operation in progress, releases the lock of an unfinished run, and keeps .run.json so another driver can resume it.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/mcp/stdio.ts#L40-L66",
+          "version": "repo-lines-v1:sha256:da2eb25f90ee08cb1694fb8e5ce2ae7187d922be41402c3f9fc31344d2dc36cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQwYzUxNGRkNTE3MGNhZmE2ZGIzYzNjNWJjMTVhYjllNjZjMWZlMzEyODQwNGU4NGZhYWEzNWFiZGFjNWQyMTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L520-L535",
+          "version": "repo-lines-v1:sha256:c2c2205c6cef3be243eb1d8a8396863c224bfc5c29de7c80646f5f840968e4e5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MmZmMDFmZTM5YmE1YzZkMDg2MGNhODE2Y2Q0MGNlZTRjMmMzYzVlMjc3OTlmYmFlYTRhOGIwNmExOWQxODciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwYjUwNGM4ZmJiZjFhNWRmZDIzNTFlYWJlNzA0ZmIyZmRkNmY2YTllNmU5MTFkNGY2NDA5ZTE5OWM3MzVkYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyMDIyZTkzMTc3MGVhZDM1YmUxZDUxZTI1NmVkYTkxNDMyYTQzZDQxODA2ZTI0MmUwMDc2Y2M4YTc5ZmFiOGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_99e6d94174f84ad691bb58e2510dd4dc",
+      "statement": "PersonalSessionManager.tools returns the personal retrieval and read-only evidence tools followed by the lifecycle tools, and wraps every handler so results and HostIntegrationError messages are redacted of secret values.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L205-L236",
+          "version": "repo-lines-v1:sha256:a4cbc3568ac162395bfa257407c61ea52f8bfefd053cafeb8b72a6ce6f790615:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjY2UxMGVmNTgwY2RmOTFlYzE2MDcxNWNjN2M5NWQ4Njc5ODkyMDA2NjM4ODVmNjBkNGE1ZjA1MTkzN2NiYjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyMjIzY2VkZGM2NjM1NzQ1YTQ4YjZlMTc5NTBmYjIyNDM4NjY5MDUwMzEwYWFjNWFiMWFiM2VjZGMzZmYwOWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjNjY2NWJmZDIxNDFkYWEyODA5NGIyZDRlMDIyMGYyMWYxYjM1NTkzZDYzZjMxYTkxMWQxODU5MzJlOTVhNjMifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L580-L590",
+          "version": "repo-lines-v1:sha256:4a8bd80a549f97f245208ae6097dff21f6e1fd6feaceb802c58f46650306a94e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5ZDdlYzIyZjMzNjFiYjkyYTY3NjhlZmQ1MjViM2I4YmRkNmU4NjM2MzkxMDY4ZTg5MjRjMGZjM2JlZjVmNWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkYWIyMDY3NThiMGFkOGY0NmMxNWEzMzUyNDNiNTc0OTgwNDk0YzNkNTc4ZTlkNzg1MzQ3ZjY3ZThlNWU0NmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0MzVkMmUzMmM4MjNlMTE2M2RmNDRiZmRjZThkMjc3Yzk3MjEyMjViN2U0Nzk3Njc0NDIxYTJmNGI1ZjMyNGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d6ef4e5293374e2091f7e31fead136b3",
+      "statement": "The personal retrieval tools search, read, and list the personal wiki through a fixed WikiRetrievalTarget rooted at the personal wiki directory with page prefix /, so no Git root or workspace is resolved, and they reject page paths beginning with openwiki/.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/retrieval-tools.ts#L100-L125",
+          "version": "repo-lines-v1:sha256:acb5b11bbcb552836455e257e249b579ea6e9a9589528ee654fbe0b539ac67f4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzM2Q5ZDFhNjAxYTVmYzQzMzhlYTBhNGYwZGIzMmM3OWNkNzZjYzI0OTAzMjRkMzZhMDA0YmQzYzI4M2QxZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlZjRjMTEwNjdhMmRlZTE4NjVjYzQyNTgxMTFkYjg2NmQ2NjEzODdlYjRiMmY2YjkxYTUxYzJmOTg3ODIyMTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2ZTlmOWM5N2ZmZGI5YzdiNzYyNWQwMGY4MDM0NzQzNzY5YmY2NzE3ZGZkN2VlYmFkY2Q3Y2I4YmMxM2MzYjUifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/retrieval-tools.ts#L255-L280",
+          "version": "repo-lines-v1:sha256:4c1368520373629b6a41814ac2933d46b3b2c67083a4f35a9eb33fb9751db6a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwY2VjYmUxOTdmYzhhM2U4OGNiYjM2YTg2ODE4MTNmNzUxZGE5ZmQxNjZkYWFlNzM1NjJlMjhiOTE3ZWQxNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNTA5M2MwNzJkNzJlM2EwYTZiNzQwZjk3ZGJkZDFjNDI2NmYzOTAzNTI0NjkzODU1NGIzZDNhNmI2MzAxOTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzNjQxMTllMzVmYzkzMzBiNWRkODA1YmU5ZWEwMjI1ZGNiYjdiZWQ3YjliNmQwZjM3MmViNzViNzRiYTcxZjkifQ"
+        },
+        {
+          "resource": "repo://src/retrieval/wiki.ts#L255-L282",
+          "version": "repo-lines-v1:sha256:9a1ddbfbe281abb979cc734d54383dabb1a6852c825fa400cb1e6341005ecc6e:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlNzExMjdmN2Y1ZjE3MTdiOTZlN2U5NzY5MGE3ZDE4MWE1MDcyMzdmY2FkMTg4NDBiYmIwOTM0MDIyYTkyMGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyOGQyNDBjNTg5NjgxZWQ3YTU4MDcxNDg5OWYwZjRmYWVmZjhiYzMzYTczNWQ3MDE1NjU5ZTM3OWY2YTcwNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3NDU0NTFhNjRiMWQzMWZhYWY3ZTg2ZjAwNzc2ZmI5OTI4MWFjMjg4ZTQ4YjA4ZTk1NDAxMDI3MzNkZDhlNWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fd5f3e36cc9143ef98af23effd138917",
+      "statement": "openwiki_personal_status reports wiki directory, last update, source instances, connector readiness by env key name only, synthesis cursor, pending raw runs, and the active run with its lock, reading saved env keys without loading them.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/status.ts#L174-L260",
+          "version": "repo-lines-v1:sha256:4092346626db9bee467b1f2a6cb3145904d41180000bb2373ddc3a6be4a4c12c:eyJzZWxlY3RlZExpbmVDb3VudCI6ODcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5OWM4MGRiMzkzMzcwNzg4ZmIwY2NjNDNhNTM3YzhjNzkxOTQ0NWUxZTQ0ODE4OTZiN2MwMDdkZDkzOWU0OGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjYmM4ODc4ZDAzMjgyZWJiNDRjY2JlZDdhOGMxNzdhNTRhMWJmM2Q5MzI3M2RiZDk0MjMwODY5Zjk1ODgxZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjExYTcyZTc0ODg1ZThiZGY3MGQ2MGI5NmM2MzM0ZjZlYjk5NWE1ZTk2NzhhZmM4MzRjMjg2ZWEzYTkxNDY4ZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwMWE1N2IwZTAxYjQ1ODliNjg1MzhiM2JlZTdlOTdlMWQyNjJjZGJhOGVjNGRlYjlmMjAzNGI1NDQ1YTU0NDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_217ecf527be0460b9d6e121e989fa991",
+      "statement": "openwiki_personal_ingest pulls every connected source instance of a non-agentic connector without starting a run, refuses agentic connectors and unconnected connectors, and loads the scoped connector environment before fetching.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/lifecycle-tools.ts#L14-L30",
+          "version": "repo-lines-v1:sha256:321f1e5d5678070335cc08a336a880cf9528a4bfa183d4dbedbf21b9e913b8b8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyYTAwMDQ5MzBmNWZmNTRhZmRkNDFmNGNmZDgxOGYzMWZmOTc4ZGFiMDEwYWM5OTAyN2UxNTg2OTJhMzgzNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzMDEwNWY3MWE4ZTVjYzRhYTNjY2ZmNDBhOGZkMWViYzhlOWRkMWZmYTZiZDA2NmEzNTJiNWJmNzc2YjkwMTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2ODYzOTgxYjAyN2U1ZDM4ZGM0OTc4MjI2MjZiMmU4NTBjNjU1MDY4OGUxN2UwMmRmYWJjMzQ0NzA2Yjc5OTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkOTE4MTUzZjI3M2FlNzY0ZGEwYmZjZmI4NDg3ZGVlYTcxNzI1YmEyMjU0NjUxOTUxZTQ1YTcwYTY3Nzg1NGIifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L270-L322",
+          "version": "repo-lines-v1:sha256:b1db5475cde9a63d2b52dd2d5d7168264856327efe7f56b1f0e97cb9d5f2111d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1ZDU4ODM4YmYxODllMWQ2ZDE4MjgzNGY0NTIxZGIwNDE3YjUwZTgxOGU2YTc1ZTliMWNjODQyMTQ0NjEyZmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxNTdmNzljOTAwNWFhYjMwMTI2NGRhNjQ0ZDcxMWNjMTZlOTNiYzgyZWRiM2E5NGQzZTNiZDA5N2RmMDgxNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjYzI0MjIxODQxZTdmMDFhM2RlZmJkNTlhOWRkMTgzMmY1NmM1OTExMzgxODhkOThkNTRhNjQyOTE3ZThiNDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1f8200d032614c3cb6d01e4b24c98e31",
+      "statement": "openwiki_personal_begin starts or resumes the run under the lock holder host-<hostId>:<hostname>:<pid> and, for a run needing work, returns the core view plus per-connector briefs and the Active section of open-questions; a no-op update clears the session's active run.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L173-L190",
+          "version": "repo-lines-v1:sha256:c2a787a26c79213ae12f6761b634e10ef89087da99a736b66f3b69e6f4630600:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3YzE2YWNmYTVlY2U3YjRmM2E3NTg3ZWMwMzM1NjJiNzFiNjhmMTNhYWIzODg2NzlkOGU4MjMzNTMzYzk0MGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhNTQyZjdmNGYyNDg0Y2MzOWVjOTBlMDE5ZWJjZTUwMTczYzRlYjZiMzE1NWE0N2Q5MzNlOTllZmFjY2JiMzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkOThkZWM4MTBhZGMyNzg4NzM4Mjk4ODAxOWU4NzA0YWJlYjE1YTQ0ODU5MzI5ZmFkOWE4ODc5NjM3Y2FiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2MTQ4N2ZlYjFjMzFjZjY1Y2FmNWYxODMzOTg5OTBjZTc4ZmRhOTYyYzE3YjUyZjYwOGFmOTdmMjY3MWQ5MzUifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L396-L422",
+          "version": "repo-lines-v1:sha256:439df7dec4346b07da8b62950ad4d31d32c962ee263aae90f11166a643983c5d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmZjA3ZmI3ZDdkYzYyNDdlN2ExZjhjY2Q4MTZkNzA4ZDQwNDE2MjJlYzM3OWExMTYwYjFjYWU4Y2E0Njk3YmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4YTk4ZGQyNGEzMTUzNWMwM2Y3NzAxMTY0NmI5NTlmYzgwNTVjNmZlNjE5M2I3N2M4YmVlZGNlZWJmYzU5MDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwZWEwYjkyYWI0NjFiNDlkZTU3YzU1NmUzMjU2ZTk3ZDBlNDQ3NDE5YzhkZTIzZmJlMTJhYTQwZWFjN2VkZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyODA1OWYwOWRjOTM4MjliNmMwNjc3MDVhYzQzODJkYmFkMDUwZGIzM2MzYWM0MjkzMzk0MWE1OGM3MjljMjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9d038aa70ec04f39b97881dbfc8214ef",
+      "statement": "The gathering tools (list_mcp_tools, call_mcp_tool) require the active run in the gathering phase and a connector whose gathering is still open, renew the run lock, load the scoped connector environment, and return results in an untrusted envelope capped at 100,000 characters with a raw:// ref that joins the frontier when gathering closes.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L325-L382",
+          "version": "repo-lines-v1:sha256:042753f84b527242771ec13ab734eee6c7c3d8370f873791d76d66356f1b2bb4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1MDJlZDY4ZTc1YWI5MjcyYWMzYjY5OGM3ZDhiZjM0NzlhYjQ4MDFmMTQ0YjNiYzEzYTk0NTJlNzU0ZWY5NzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3YTY4ZmE4NDE3YmE1YTJmMzFiYmYwOTY3OTAwOTBmNTE0NzUwNjVkMzFjYTJlMzI1NWE1ZmUzOTVmNWNhYmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkMmUyMzdiNGU5M2FjZGRjOWE3MzNmNmZmYjk0OWFmM2IzMTJjNjI5ZDg5YmYxMzNmNDAxNTNlNWIyOTJjMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyYTU5YTQ3NjIyOTBiNjBhN2E2NTk1YWJjMTY3OGIxYTY1ZTFmNzc5N2RkYmZhZTE3YTdiNWY2NTJlOGFkMDIifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L550-L580",
+          "version": "repo-lines-v1:sha256:892c3c546e8acfdcf9f0ae9c37cf449dc773a119f663e0f4acdfd6e22f7e1f14:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwMDA3MmMyMmJiNDM5OTU1OGY4ZTE2YWU3NjFmYjFhMTA4ZGUwYTRhZTNlZmE0OGJkOWJlZjFlNGM0YmUzZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhOTI5M2ZkODA1NGI2ZTQ3MjQ4MzczZjM5ZjRkZDc3ODAwMTA1ZWI3NTgzNDg2ODcyNTQyODVjZDEyODJiNzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkODg5MzNkYTI1YThmZGVkYmE5ZTliNDQ0MTQ2MDI0NWRlYTVlN2JjOTAwZWJjN2I0ZTBkMWNjZWY5NTljNTAifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L590-L625",
+          "version": "repo-lines-v1:sha256:0d9f2d05e8b9fb48d5e86003b448aca1143e3da37cf185c82616bcabef3ef574:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5ZDdlYzIyZjMzNjFiYjkyYTY3NjhlZmQ1MjViM2I4YmRkNmU4NjM2MzkxMDY4ZTg5MjRjMGZjM2JlZjVmNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyM2NiNGMxM2Q2Nzc1OWQ1NGY3NjcxZDQ0MDM0OTcyZDA5MDNhMzlkMDhhZmFlNzNiYjk4MWViOWFiMGRjZjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5NjgwNGQxNDVkY2VjMjRmZWMyYTk4Nzk5MTM1NWE5YjQ1ODExMzJkYjFlZmY2MTE4MGUzNDY5YTI2NDViMGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b262157f257a45f99910ef4efec97893",
+      "statement": "Page writes and edits through the personal host tools reject content or edit strings over 512 KB, and run-bound operations require the exact active runId or fail with invalid_state; all operations are serialized by the shared OperationGuard.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L455-L492",
+          "version": "repo-lines-v1:sha256:0b7f11e88bd723c75aea120af1e624613b6d88bd83442816a7c427eb9b0c710f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkZmFjZTc3NDEyN2FiODU0NjBhNTBjN2M3NTE1YzNkMGFjMGY3NjYwOTQ4NTM4MTlhYmM0MDk0M2ZlNGI1Y2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmOGJlYThhMWY0YjcwYzEzYzk5NWI0MjdjM2Y3ZjM2YWFiZWE3YjA4MjZjYmYyZDQ2OWY5M2EwMmI4NWVhMmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5ZDAwYjE2Njk1ZTNlNDcwMGZmZjQ2YmViYWRiMGU2OTAyMzRlMjIzMGI1ODBmYzEwMWI2YTU4YWMxMjY4NzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhM2YyYTdiZTZlMzYxNDU3ZTk1OTQ2ODA5YjQwMmYzOGE4N2I3ODkyOGYzZWQwMWU2YWIzMDkxNWZkOGE2YjEifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L536-L550",
+          "version": "repo-lines-v1:sha256:33473518e384e8ea27d9946d3efde417b95d0e1fe1404d6a9591f04a2e443c0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlOWZiYmViZTczODhlYjZlNDM0ZTU4MTU3Mjc1MDczNjljYWIzZTE2MmQ4NjBiMzc3YTg1YmM2ZmJkNjU2ZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwMDA3MmMyMmJiNDM5OTU1OGY4ZTE2YWU3NjFmYjFhMTA4ZGUwYTRhZTNlZmE0OGJkOWJlZjFlNGM0YmUzZTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY3Njc4OTVmNTRmMDY5MTBmOGNlYmI2YWUyYjkyODFlNTY5OGNmNzk5MTAyMmMzZjhhNGE3YThlMWUzYzk5M2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5MTQ2YmE1MWQ4OWVjNWUwYjhmNGJlNDg2YzU4NTNmZjg3NDY2MDU2YjEyOTNmNzg4MThiZmI0MGE4NGE1ZjUifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/session-manager.ts#L705-L719",
+          "version": "repo-lines-v1:sha256:e747ae021accd748f3e7159012de24997350fb0e4af66943774e2d63dfa0cd3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJkOTM2NmJkZmI4ZTE0YWQzM2NhMWE3ZmNjMjMxN2M5MzYzN2EyOTEwOTk4N2I2NzA4N2ZlNTUwZTZmNGRlZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_346a5e582a86423d8cdb01a8bf9e751e",
+      "statement": "loadScopedConnectorEnv limits the process's .env loading to connector keys (personal connectors' required keys, the Tavily key, OAuth client and token keys, and variables referenced by Notion and custom-MCP transport configs) and never loads model-provider keys.",
+      "evidence": [
+        {
+          "resource": "repo://src/config/env.ts#L288-L310",
+          "version": "repo-lines-v1:sha256:891cf972ddbbb7e39dda33eea7068d1b6b4786d39e1862da8153044d97481b9d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA4NjQ1ZGIyNjNhYTAxOTc0NjZkNjYxNjNjOGRjMjZmMGMyMWUxMDA1NWUzZWQyZTUxYzA0OTE2NmM5M2M2ZWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzZmQyZDAyODNlMjA1ZTRiNDk3ZTIwNmU2ZGIzMmU2YTRjNzJhNmE3ZDExMDAzYjY3NTcwNTNhNjRmNjZhMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUyYWJjNDFkMDQ1Y2VhMWNiNDIxZWMyZmU5ZmIwNzk1MzIwODNhOTdiZjQ4YjU5MDdmOWFhN2YxYWI5NzJlOGMifQ"
+        },
+        {
+          "resource": "repo://src/integrations/personal/connector-env.ts#L20-L80",
+          "version": "repo-lines-v1:sha256:ba8c3bee55fd4b34c80f36d99eadf8e004b7d0a059cf49a3fe4c9cd7d8ab917f:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyZDg4NGU0NGNkMzhmNDEzNDA2Y2EyMjY2OWJlYTczNGU4NGQzZWMwZWM3MjUzNDljMDliNDZlOWJjZDhiNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhZDRhMmVhZmMwMjYwY2NjMTRkNzQ4NmIyNTgzODAyMmE0YjMwZjA2YTk1NGU1YjJkMzE0YzRkZmQxMDE0ZDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNjMTI3MmFkNzgxMGVhYzk3MzE3N2I2MmQzMjBjNTg0NGRmMmU3NDU4MmY0M2FjZjJmYzA1ZGFhYTA2YTU0ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0M2QzMDM5ZmZjMWZlYWQ0YWM1OTFhYmNhYzcyYmVhZWJkZmJiMDVmMGMyOTdhYzMzMTBlYzk1OTY5MDU5NjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_78b846aeb5e8468dbf87b2aaa0baf696",
+      "statement": "Secret redaction replaces every value the scoped load read, plus every process env value whose key looks secret and is at least 8 characters, with [redacted] in strings and object keys of tool results and errors.",
+      "evidence": [
+        {
+          "resource": "repo://src/integrations/personal/secret-redaction.ts#L1-L71",
+          "version": "repo-lines-v1:sha256:305666381b5a8a1bdd31fc69fee9d1a43bfa1d4510e7e1b239228fe276840b46:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwMTVmMTkzNjMzNDEzNjY0MzZlZTBmMThlNmM4ODljN2I3MjgzYjdhMjBiMTAzZGRjM2YzYzI2ZTBkMzU0NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_50f108f2c9ea49f6bc729b7f80941acb",
+      "statement": "The openwiki-personal skill reference file is generated at build time from the shared personal guidance module by scripts/generate-personal-reference.mjs, which pnpm build runs after tsc.",
+      "evidence": [
+        {
+          "resource": "repo://package.json#L46-L50",
+          "version": "repo-lines-v1:sha256:1d0226ad6091a7757bca7c4c4a502e77698374b37f201ed1084e8e559347c516:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzQ4MzNkNTk0OWMwM2E0MGNhOTUyNDkxNjEwYTY2NTk2NDRiM2FhNDY2MzYyZjc5OTAyMGRiZjE5ODE1NDdkYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTc1NDUwN2NiZmU5MmEzMTlhMmFhNzJkOGVkMTMwY2MzNDQxMDk0NmU4MjhlNjg4Y2FmY2QwMjk5OTIyODkxNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzUwOWM1ZjMxYTc0OWEwM2MzZGU1Y2JiMTNjNTFiMzlhM2U3YzM2YjJmZGFkZjljYTBkNzNhNDRkYzE4NGEwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDE3ZjcwZGVjYjMzZjBkMjUxYmNkYTE1MzcyNjJlNjg0YmMwZDE5ZDI3NjFiMDY4YzlhYzdhYWU1MDRlZTlhZiJ9"
+        },
+        {
+          "resource": "repo://scripts/generate-personal-reference.mjs#L1-L20",
+          "version": "repo-lines-v1:sha256:5997fb012aaa9fa333c8a3e2ad11ba9b5f8e77430ed704d99a1bc8e86ab68b82:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhYWVjNDA0OTQ4OTU0OGEzMTk3ZjU4YmNkODYyMDYxN2E2N2FhMDA4N2RhNGQ0NDkwZDkzY2Q0Mjk2ODljYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5MTIwM2E3MTg0Y2VhZTMzNzlmZGQwNmRmZGRhYTZjZWQ4YWEwOWE5YzEzM2VmNzg2YmJkMDE4ZTYxYzE3NzUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-10-09T14:26:08.776Z"
+  }
+}

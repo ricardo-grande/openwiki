@@ -46,6 +46,8 @@ sources:
     resource: repo://src/generation/page-manifest.ts
   - id: openwiki-source-7c5ecb56558cc061dab24f9d
     resource: repo://src/generation/repository-run.ts
+  - id: openwiki-source-7e0dee8ba0da61adfb6324a9
+    resource: repo://src/generation/shared/pending-job.ts
   - id: openwiki-source-eab9328975981f427c4218d0
     resource: repo://src/integrations/mcp/server.ts
   - id: openwiki-source-349c953869b025f9d4935470
@@ -55,7 +57,7 @@ sources:
 generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Claims Reconciliation on Update

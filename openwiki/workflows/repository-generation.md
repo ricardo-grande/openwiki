@@ -14,6 +14,8 @@ tags:
     parallel-workers,
   ]
 sources:
+  - id: openwiki-source-a75701e8f1c713f866d62919
+    resource: repo://src/agent/page-workers.ts
   - id: openwiki-source-8b316b2a9d744597bffd9c56
     resource: repo://src/agent/repository-prompts.ts
   - id: openwiki-source-6cb3236b8c1412a26d832fcf
@@ -34,6 +36,12 @@ sources:
     resource: repo://src/generation/repository-run.ts
   - id: openwiki-source-080c4525024a9b689e361cbb
     resource: repo://src/generation/run-state.ts
+  - id: openwiki-source-e2592e87374c51c85b04dbc0
+    resource: repo://src/generation/shared/json-state.ts
+  - id: openwiki-source-c5b41bec7ab970ee9139e1e8
+    resource: repo://src/generation/shared/page-snapshot.ts
+  - id: openwiki-source-9b2f7487ca01fc938aff25a2
+    resource: repo://src/generation/shared/run-mutation.ts
   - id: openwiki-source-58835b77ce38a0dd1fed8d09
     resource: repo://src/integrations/core/session-manager.ts
   - id: openwiki-source-5835357b69a5869be210533b
@@ -44,10 +52,10 @@ sources:
     resource: repo://test/agent/repository-runner.test.ts
   - id: openwiki-source-77febf5d49f26cc2405db8dd
     resource: repo://test/generation/repository-run.test.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Repository Generation Lifecycle
@@ -119,7 +127,9 @@ planning context, the stable actor, prior successful metadata, a pre-run content
 snapshot, serialized wiki-preparation state, and — once installed — the ordered
 `plan`.
 
-The checkpoint is loaded and schema-validated on read; a malformed checkpoint
+Reads and writes go through the shared `readJsonState`/`writeJsonState` helpers in
+`src/generation/shared/json-state.ts`, which the personal core also uses. The
+checkpoint is loaded and schema-validated on read; a malformed checkpoint
 raises `invalid_state` rather than being silently discarded, so resumable work is
 never thrown away by accident. Writes are atomic: state is written to a
 per-process temporary file with an exclusive-create flag and then renamed over
@@ -298,7 +308,7 @@ durability guarantee differently:
    rejections with `invalid_input` are by design returned to the worker as
    failed tool results so its loop stays active; only a non-`invalid_input`
    failure triggers a rethrow. A rethrown fatal error propagates past
-   `runPageAgent` to `runWorkerLoop`, which records it in `pool.fatal`.
+   `runPageAgent` to the worker loop, which records it in `pool.fatal`.
 4. **Post-submit failure (durability guarantee)** — a worker that throws after
    `submit_page` succeeds does NOT get rolled back. The `submitted` flag is set
    before `submitRepositoryPage` returns, so the catch block checks
@@ -321,8 +331,8 @@ strict: only the current pending job may be snapshotted, and the page must be
 text (a snapshot of a non-text page rejects with `invalid_state`).
 
 Two functions restore from that snapshot. `restoreRepositoryPage` rolls the
-Markdown and Claims sidecar back to the snapshot — `restoreRepositoryPageMarkdown`
-writes back the snapshot Markdown, or deletes the page if the snapshot had none,
+Markdown and Claims sidecar back to the snapshot — the shared `restorePageMarkdown`
+(in `src/generation/shared/page-snapshot.ts`) writes back the snapshot Markdown, or deletes the page if the snapshot had none,
 and the store writes back or deletes the Claims sidecar — but it leaves the
 pending checkpoint and run metadata untouched. It is the between-attempts reset
 inside `runPageAgent`. When the page is finally given up on, `skipRepositoryPage`
@@ -337,7 +347,7 @@ Claims session is rebuilt from disk. `nextRepositoryPage` then sees the next
 ### Tolerant not-found handling on restore and deletion
 
 Rollback and planned deletion tolerate a "not found" backend error so a missing
-page never aborts the run. `restoreRepositoryPageMarkdown` deletes the page when
+page never aborts the run. `restorePageMarkdown` deletes the page when
 the snapshot Markdown is `null`; if the backend reports that the file is already
 absent, that error is swallowed rather than thrown. `isNotFoundBackendError`
 recognizes both the canonical `"file_not_found"` error code and the
@@ -506,7 +516,9 @@ persisted.
 
 ## One lifecycle, two drivers
 
-Both entrypoints drive the identical durable core.
+Both entrypoints drive the identical durable core. (The personal wiki has a
+sibling core with the same shape; see
+[Personal lifecycle core](personal-lifecycle.md).)
 
 The **native runner** (`runNativeRepositoryGeneration`) begins the run with a
 stable OpenWiki producer actor, then loops: it runs a bounded planning agent when
@@ -535,8 +547,14 @@ the missing-snapshot `invalid_state` unless the host supplies snapshots itself.
 
 ## Parallel page workers
 
-The native runner drives page generation through `runPendingPageAgents`, which
-runs up to `pageConcurrency` worker loops at once (default 1). Each worker still
+The native runner drives page generation through `runPendingPageAgents`, a thin
+wrapper in `repository-runner.ts` that hands the repository core (next, snapshot,
+restore, skip, and the per-attempt worker) to the shared `runPageWorkers` pool in
+`src/agent/page-workers.ts`. That module — pool, `acquireNextJob`, worker loops,
+`runPageAgent`, rate-limit handling, and `streamWorkerTools` — is not
+repository-specific and is reused by the personal driver
+([Personal lifecycle core](personal-lifecycle.md)). The pool runs up to
+`pageConcurrency` worker loops at once (default 1). Each worker still
 owns exactly one page; concurrency is about how many pages are in flight, not
 about splitting a single page.
 
@@ -584,7 +602,7 @@ never finalizes with pending jobs.
 ### Fatal-error handling
 
 A fatal submission error (any error from `runPageAgent` that is not a skipped
-`PageAgentOutcome`) stops new work: `runWorkerLoop` records it in `pool.fatal`,
+`PageAgentOutcome`) stops new work: the worker loop records it in `pool.fatal`,
 removes the in-flight page, and returns. `runPendingPageAgents` rethrows
 `pool.fatal.error` before calling `finishRepositoryRun`, so the run never
 finalizes with pending jobs. In-flight workers that have already submitted or
@@ -624,11 +642,11 @@ sequenceDiagram
     autonumber
     participant Runner as runPendingPageAgents
     participant Pool as PageWorkerPool
-    participant Worker as runWorkerLoop slot N
+    participant Worker as worker loop slot N
     participant Agent as runPageAgent
     participant Core as nextRepositoryPage and submitRepositoryPage
     Runner ->> Pool: initialize claimed, acquiring, size, inFlight
-    Runner ->> Worker: runWorkerLoops starts pool.size loops
+    Runner ->> Worker: runPageWorkers starts pool.size loops
     loop until queue drained or fatal
         Worker ->> Pool: acquireNextJob serialized
         Pool ->> Core: nextRepositoryPage exclude claimed

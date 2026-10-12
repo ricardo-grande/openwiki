@@ -20,6 +20,8 @@ sources:
     resource: repo://README.md
   - id: openwiki-source-a953060a04ccefcf777de48e
     resource: repo://src/agent/index.ts
+  - id: openwiki-source-a75701e8f1c713f866d62919
+    resource: repo://src/agent/page-workers.ts
   - id: openwiki-source-6cb3236b8c1412a26d832fcf
     resource: repo://src/agent/repository-runner.ts
   - id: openwiki-source-adcadc660c1888613ec50f9a
@@ -44,10 +46,10 @@ sources:
     resource: repo://src/integrations/core/protocol.ts
   - id: openwiki-source-58835b77ce38a0dd1fed8d09
     resource: repo://src/integrations/core/session-manager.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Architecture Overview
@@ -76,8 +78,10 @@ and runs its own DeepAgents workers. In _host-driven_ generation, a coding agent
 (Codex, Claude Code, OpenCode, Cursor, IBM Bob / Bob Shell, Kiro, Oh My Pi, or
 Antigravity) uses its own authenticated model and native repository tools, while
 OpenWiki exposes the durable page-job lifecycle over MCP and owns validation
-and finalization. Host-driven runs currently support only repository code wikis,
-not personal brains.
+and finalization. Host-driven runs cover repository code wikis through the
+repository MCP server, and the personal brain through a separate
+`openwiki-personal` MCP server and skill (see
+[Personal host agent mode](../integrations/personal-host-mode.md)).
 
 ```mermaid
 flowchart TD
@@ -182,9 +186,14 @@ are distinct command kinds, each routed to its own runner.
 `~/.openwiki/.env` environment, syncs bundled skills, and then branches on
 whether this is a repository generation run — `outputMode === "repository"`
 combined with an `init` or `update` command. Repository generation is delegated
-to `runNativeRepositoryGeneration` (after the same `resolveRunConfig` that the
-core path uses); every other case (personal-mode runs, chat, ingestion
-synthesis) builds a DeepAgents graph via the core path.
+to `runNativeRepositoryGeneration` through the shared `runNativeGeneration`
+helper (the same `resolveRunConfig` the core path uses). Personal `init`/`update`
+runs take the same native route to `runNativePersonalGeneration` when
+`OPENWIKI_PERSONAL_CORE=1` (see
+[Personal lifecycle core](../workflows/personal-lifecycle.md)); every other case
+(chat, ingestion synthesis, personal runs without the flag) builds a DeepAgents
+graph via the core path. The page-worker pool and retry loop are shared between
+the two native runners in `src/agent/page-workers.ts`.
 
 Run configuration is resolved once, up front, by `resolveRunConfig`: provider,
 credentials, model id, model availability, page concurrency, provider retry
@@ -306,8 +315,10 @@ model and native repository tools — the parallel page-worker pool is a native
 runner capability not exposed over MCP. The coding agent owns repository
 research, planning, and factual authoring; OpenWiki owns the durable queue,
 Claims validation and persistence, source-drift handling, and deterministic
-finalization. Host-driven runs use only repository source and tests; connector
-context is not yet available to them.
+finalization. Repository host runs use only repository source and tests; connector
+context is not yet available to them. The personal wiki has its own
+lifecycle tools, described in
+[Personal host agent mode](../integrations/personal-host-mode.md).
 
 ## Claims
 
@@ -367,3 +378,5 @@ static site (`index.html`, `client.js`, `client-lib.js`, `styles.css`,
 - [Two modes](../concepts/two-modes.md) — code vs personal in detail.
 - [OKF output](../concepts/okf-output.md) — the output format and finalization.
 - [Repository generation workflow](../workflows/repository-generation.md) — the durable lifecycle end to end.
+- [Personal lifecycle core](../workflows/personal-lifecycle.md) — the resumable personal-wiki run.
+- [Personal host agent mode](../integrations/personal-host-mode.md) — personal MCP server and skill.

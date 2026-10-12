@@ -24,16 +24,18 @@ sources:
     resource: repo://src/cli/schedule-format.ts
   - id: openwiki-source-d80f123259efa4712b198b63
     resource: repo://src/cli/startup.ts
+  - id: openwiki-source-321c8c47bd5ee7e08be82767
+    resource: repo://src/cli/takeover-prompt.ts
   - id: openwiki-source-04a008dbe4969919f7141a55
     resource: repo://src/platform/diagnostics.ts
   - id: openwiki-source-349c953869b025f9d4935470
     resource: repo://src/platform/language.ts
   - id: openwiki-source-f5f9f9512cc2874a9127f6e1
     resource: repo://test/cli/diagnostics/error-diagnostics.test.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # CLI Commands and Flags
@@ -213,17 +215,24 @@ Any other form is a parse error
 `parseIntegrationsCommand` and executed by `runIntegrationsCommand`. `install`
 and `uninstall` require a host target validated against the installation
 registry (`getHostTarget`/`listHostTargets`); `list` takes no target and reports
-each registered host's status. Scope defaults to `user` (installing into the home
+each registered host's status, one row per host and component. Scope defaults to `user` (installing into the home
 directory) and switches to `project` when `--project` is supplied, with either an
 explicit path (`--project <path>` or `--project=<path>`) or the current directory
 (`--project` alone defaults to `.`). `--force` is accepted only for `install`
 (allowing replacement of unmanaged skill content) and may appear at most once, as
-may `--project`. On success the runner prints the changed/unchanged status plus
+may `--project`. `--personal` selects the separate `openwiki-personal`
+component for `install` and `uninstall` (it is rejected for `list`, may appear
+once, and cannot be combined with `--project` because the personal wiki is
+user-scoped). On success the runner prints the changed/unchanged status plus
 the skill directory and MCP config paths, and after an install prints
-restart-and-confirm next steps scoped to user or project.
+restart-and-confirm next steps scoped to user or project (a personal install
+prints a shorter restart-and-confirm message naming the `openwiki-personal`
+server).
 
-`openwiki mcp [--host <id>]` is parsed by `parseMcpCommand` and runs the local
-stdio MCP server via `runMcpCommand`. The host id must be 1–64 lowercase
+`openwiki mcp [personal] [--host <id>]` is parsed by `parseMcpCommand` and runs
+the local stdio MCP server via `runMcpCommand`; the optional `personal`
+positional starts the separate personal server (`runOpenWikiPersonalMcp`)
+instead of the repository server. The host id must be 1–64 lowercase
 letters, digits, or hyphens (`isValidHostId`); it defaults to `unknown` and is
 written into run metadata, with the host's `producerActor` looked up from the
 registry when available. Integration and MCP commands deliberately do not load
@@ -246,13 +255,20 @@ providers produce action-specific usage errors. Execution is handled by
 `openwiki ingest <source|source-instance|all>` targets one connector, one source
 instance, or all configured sources (`parseIngestionTarget`, default `all`). It
 accepts `--print`/`-p`, `--scheduled` (limit to scheduled sources), and
-`--modelId`/`--model-id`. `runIngestCommand` streams text events to stdout, then
-prints a per-source summary and exits non-zero if any source errored.
+`--modelId`/`--model-id`, and `--pull-only` (pull source data without updating
+the wiki; the next update reads it; requires `OPENWIKI_PERSONAL_CORE=1`).
+`runIngestCommand` streams text events to stdout, then prints a per-source
+summary and exits non-zero if any source errored. Interactive ingestion passes a
+terminal takeover confirmation (`createTerminalTakeoverConfirmation`), which asks
+`[y/N]` on stderr whether to take over an expired personal wiki lock and returns
+no confirmation at all when stdin or stderr is not a TTY; scheduled ingestion
+never takes over a lock because nobody is there to ask.
 
-`openwiki cron` manages saved connector schedules: `cron list` (no target) and
-`cron pause|resume|delete all` (which require the literal `all` target). Any
-other form is a usage error. `runCronCommand` reads the onboarding config, applies
-the mutation (`pauseConnectorSchedules`, `resumeConnectorSchedules`,
+`openwiki cron` manages saved connector schedules: `cron list` (no target),
+`cron pause|resume|delete all` (which require the literal `all` target), and
+`cron pull-only all <on|off>`. Any other form is a usage error. `runCronCommand`
+reads the onboarding config, applies the mutation (`pauseConnectorSchedules`,
+`resumeConnectorSchedules`, `setConnectorSchedulePullOnly`,
 `deleteConnectorSchedules`), persists the updated config, and prints results.
 Listing and mutation output are formatted by `src/cli/schedule-format.ts`, which
 renders the schedule header, the Mac wake-window (launchd power schedule) block,

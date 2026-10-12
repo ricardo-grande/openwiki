@@ -18,6 +18,8 @@ sources:
     resource: repo://evals/ledger/tsconfig.json
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
+  - id: openwiki-source-a75701e8f1c713f866d62919
+    resource: repo://src/agent/page-workers.ts
   - id: openwiki-source-6cb3236b8c1412a26d832fcf
     resource: repo://src/agent/repository-runner.ts
   - id: openwiki-source-69abc6f0f641147820a274bc
@@ -46,6 +48,8 @@ sources:
     resource: repo://test/agent/repository-runner.test.ts
   - id: openwiki-source-b6fe810a0cf7dea1a9e0eb8b
     resource: repo://test/agent/repository-source-fingerprint.test.ts
+  - id: openwiki-source-e15ee04fc7cc57e405358e39
+    resource: repo://test/agent/run-openwiki-agent-routing.test.ts
   - id: openwiki-source-d485c898eb60ebb173072eab
     resource: repo://test/agent/stream-redaction.test.ts
   - id: openwiki-source-f1b33b05f136bc4ed936d51d
@@ -96,6 +100,10 @@ sources:
     resource: repo://test/generation/page-jobs.test.ts
   - id: openwiki-source-328aca3cf4070aa49cc954a5
     resource: repo://test/generation/page-manifest.test.ts
+  - id: openwiki-source-b74138d8e1f5f4f557c77dcc
+    resource: repo://test/generation/personal-run-boundary.test.ts
+  - id: openwiki-source-1a1993424644f97105a491d5
+    resource: repo://test/generation/personal-run.test.ts
   - id: openwiki-source-77febf5d49f26cc2405db8dd
     resource: repo://test/generation/repository-run.test.ts
   - id: openwiki-source-1adcdcd6832678e0e848f408
@@ -116,6 +124,10 @@ sources:
     resource: repo://test/integrations/mcp-server.test.ts
   - id: openwiki-source-4276c87f04bf113736d85822
     resource: repo://test/integrations/package-contents.test.ts
+  - id: openwiki-source-ca957b9fba93c4de163bdab1
+    resource: repo://test/integrations/personal-connector-env.test.ts
+  - id: openwiki-source-731f49aecd580f5c0cd3cd42
+    resource: repo://test/integrations/personal-host-handoff.test.ts
   - id: openwiki-source-7586182fa3a8278fbe99d348
     resource: repo://test/integrations/protocol.test.ts
   - id: openwiki-source-d1d0d34cd042b7cd70476a68
@@ -140,10 +152,10 @@ sources:
     resource: repo://tsconfig.json
   - id: openwiki-source-fbadcd8591b65031efaaedce
     resource: repo://vitest.config.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Testing Guide
@@ -194,8 +206,9 @@ The `pnpm test` gate: typecheck, then build, then the coverage run.
 
 1. **`typecheck`** runs `tsc --noEmit` against both the server project
    (`tsconfig.json`) and the browser/client project (`tsconfig.client.json`).
-2. **`build`** compiles both TypeScript projects and copies the visualize
-   client assets.
+2. **`build`** compiles both TypeScript projects, copies the visualize
+   client assets, and generates the personal host skill's reference file
+   (`scripts/generate-personal-reference.mjs`).
 3. **`coverage`** runs `vitest run --coverage`, which executes every test and
    produces a coverage report.
 
@@ -264,7 +277,9 @@ the application `src/` root). Two npm scripts wrap the harness:
 - `pnpm run eval:ledger:typecheck` — runs `tsc --noEmit -p
   evals/ledger/tsconfig.json`, the focused typecheck for the LEDGER source.
   (A `eval:ledger:reevaluate` script re-judges a completed run without
-  re-invoking OpenWiki.)
+  re-invoking OpenWiki.) Personal benchmarks (`inbox-week`, `cross-source`) run
+  through the same scripts and have their own fixture test,
+  `evals/ledger/benchmarks/personal-fixtures.test.ts`.
 
 These are separate from the application `typecheck`/`test` scripts and must
 be run explicitly when changing the LEDGER harness.
@@ -448,8 +463,9 @@ env override when set and non-empty, otherwise the durable `runId`; the runner
 passes that value as `configurable.thread_id` to both the planner and each page
 worker's `streamWorkerTools` call.
 
-Finally the suite covers `coerceRepositoryWorkerModelResponse`, the
-normalization the repository-worker `NO_DELEGATION_MIDDLEWARE` applies before
+Finally the suite covers the roleless-response normalization
+(`coerceWorkerModelResponse` in `src/agent/page-workers.ts`) that the shared worker
+`NO_DELEGATION_MIDDLEWARE` applies before
 LangChain validates each `wrapModelCall` response: OpenAI-compatible providers
 can emit a first SSE delta without `role:"assistant"` (for example a
 reasoning-only first delta), so the aggregated message arrives as a generic
@@ -948,6 +964,17 @@ install/dogfood path, the published package-contents guard, the
 transport-neutral protocol schema, the single-run session manager that adapts
 it, and the MCP transport server that exposes it.
 
+### Personal mode: lifecycle core, native driver, host server, and routing
+
+The personal lifecycle is covered by focused suites that mirror the source layout and cite the specs' conformance ids (PLC for the core, PHM for host mode):
+
+- `test/generation/personal-run.test.ts` is the largest suite: begin, gathering, plan, page, and finish over a temporary wiki, including resume of a skipped job, no-op updates, the single-writer lock and takeover, the page change check (`baseVersion` conflicts), and cursor advance versus hold. `personal-run-plan.test.ts` pins plan validation and the code-owned required jobs and ordering, and `personal-run-boundary.test.ts` (PLC-001) enforces the import boundary: every personal core module is checked, none may import prompt or model modules, and the code-mode core never imports the personal core.
+- `test/agent/personal-runner.test.ts` drives `runNativePersonalGeneration` with mocked agents. `run-openwiki-agent-routing.test.ts` pins routing: repository init/update only through the page-job runner, personal init/update through the native driver only with `OPENWIKI_PERSONAL_CORE=1` (no translation pass, PLC-015), connector scope and the takeover confirmation passed through, personal chat read-only with a one-page edit run, and legacy chat unchanged without the opt-in. `personal-prompts.test.ts` and `personal-shell-boundary.test.ts` cover the prompts and the shell denial.
+- `test/integrations/personal-lifecycle-tools.test.ts`, `personal-retrieval-tools.test.ts`, `personal-session-manager.test.ts`, and `personal-connector-env.test.ts` (PHM-003: connector keys load, a model-provider key never does, an empty scope loads nothing) cover the host server. `personal-host-handoff.test.ts` (PHM-014) proves a run begun over MCP is resumed and finished by the native driver and the reverse, and `personal-skill.test.ts` checks the skill's frontmatter, routing, generated reference (PHM-015), absence of repository tools (PHM-017), and host metadata.
+- `test/cli/run-log/progress.test.ts` and `reducer.test.ts` pin that lifecycle progress events carry `wiki: "personal"` with a `gathering` stage and personal-specific labels (and keep the repository labels unchanged), and the reducer retains which wiki a stage belongs to.
+- `test/cli/takeover-prompt.test.ts` covers the terminal takeover question (holder and age in whole minutes, unavailable without a TTY), `test/scheduling/schedules-launchd.test.ts` the pull-only plist argument, and `test/ingestion/core-ingestion.test.ts` the core-driven ingestion and `--pull-only` paths.
+- `test/agent/gemini-tool-schemas.test.ts` sends OpenWiki's real personal-mode tool set through the real `ChatGoogle` client with `fetch` stubbed and asserts no JSON Schema keyword Gemini rejects reaches the request.
+
 ### Integrations: installer, config adapters, dogfood, and package contents
 
 - `test/integrations/installer.test.ts` is the broadest host-installer suite. It
@@ -955,8 +982,10 @@ it, and the MCP transport server that exposes it.
   claude, opencode, cursor, kiro, omp, antigravity, copilot) with their
   per-host `producerActor`, user/project skill-directory and MCP-config
   destinations (JSON for most, Codex TOML, OpenCode JSONC) — pins that bob
-  shares Codex's `.agents/skills/openwiki` directory while every other host's
-  user skill directory is distinct, and exercises `HostIntegrationInstaller`
+  shares Codex's `.agents/skills` root while every other host's user skills root
+  is distinct (the installed directory is `<skillsRoot>/<component skill name>`,
+  so the personal component installs `openwiki-personal` beside `openwiki`), and
+  exercises `HostIntegrationInstaller`
   install / uninstall / status across every target. It asserts a project
   install from a subdirectory writes at the Git root (not the subdirectory)
   and rejects installation outside a Git repository, that user and project
@@ -968,7 +997,8 @@ it, and the MCP transport server that exposes it.
   destination components are rejected, and that
   `resolveCanonicalSkillBundle` resolves the same on-disk
   `integrations/openwiki` bundle from both source (`installer.ts`) and built
-  (`installer.js`) layouts.
+  (`installer.js`) layouts. The personal component is covered too: it installs at
+  user scope only and reports `unsupported` at project scope.
 - `test/integrations/config-adapters.test.ts` exercises the per-format MCP-config
   adapters. The atomic-write suite pins that `writeTextAtomic` preserves file
   mode bits and leaves no temporary sibling. The JSON, Codex TOML, and OpenCode
@@ -984,8 +1014,8 @@ it, and the MCP transport server that exposes it.
   repository, installing Codex at project scope and asserting the on-disk
   artifacts (`SKILL.md`, `.codex/config.toml` with
   `args = ["mcp", "--host", "codex"]`), then listing (the tabular list now
-  includes the `copilot` row alongside bob, codex, claude, opencode, cursor,
-  kiro, omp, and antigravity), reinstalling as `unchanged`, and uninstalling
+  now has one row per host and component, 18 rows in all, with the personal
+  component reported `unsupported` at project scope), reinstalling as `unchanged`, and uninstalling
   (removing `.agents/skills/openwiki`). A parameterized suite across every
   host reports/repairs/uninstalls partial states (removed skill or MCP entry)
   and ends `not-installed` with no stderr.

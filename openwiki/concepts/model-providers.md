@@ -30,10 +30,10 @@ sources:
     resource: repo://test/agent/bob.test.ts
   - id: openwiki-source-21fe6d4741a8225393c37599
     resource: repo://test/agent/create-model.test.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Model Providers and Credentials
@@ -527,10 +527,18 @@ ordered list of every variable OpenWiki reads or persists — including the
 `OPENAI_COMPATIBLE_ENTRA_SCOPE`, plus the reasoning/streaming keys — and the
 credential diagnostics list (`CREDENTIAL_DIAGNOSTIC_ENV_KEYS`) and the agent's
 debug key dump (`DEBUG_ENV_KEYS`) are derived from it so they cannot drift as new
-keys are added.
+keys are added. `MANAGED_ENV_KEYS` begins with the `MODEL_PROVIDER_ENV_KEYS`
+group (provider selection, model id, model run settings, and provider
+credentials) followed by the connector and other keys.
 
 `loadOpenWikiEnv` reads the file into `process.env`, but only for keys not
-already set — a shell export wins over the saved value. It also snapshots the
+already set — a shell export wins over the saved value. A process can narrow
+what it loads with `scopeOpenWikiEnvLoading`: the personal MCP server calls it
+so that every load in that process, including the one inside an OAuth token
+refresh, is limited to connector credentials and never loads a
+`MODEL_PROVIDER_ENV_KEYS` entry (that server is model-free; the host supplies
+the model). `listSavedOpenWikiEnvKeys` reports which keys have a saved value
+without loading them or returning any value. It also snapshots the
 saved values at first load (`getSavedEnvValue`) so the setup wizard can pre-fill
 from the saved config rather than a shadowing shell variable.
 

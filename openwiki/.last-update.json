@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-10-07T09:10:01.294Z",
+  "updatedAt": "2026-10-12T15:45:48.973Z",
   "command": "update",
-  "gitHead": "9d517675e2132a19189e5777fcbda19726f48d06",
-  "model": "z-ai/glm-5.2",
+  "gitHead": "7b6a736ca7e46e478c1bffc580d01f4a5ba471f0",
+  "model": "host-agent/claude",
   "status": "complete",
   "language": "en"
 }

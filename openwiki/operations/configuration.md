@@ -13,14 +13,17 @@ tags:
     entra-id,
     operations,
   ]
-verified:
-  - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
 sources:
   - id: openwiki-source-049f71d42424ecd8987d5e9f
     resource: repo://src/agent/entra-auth.ts
   - id: openwiki-source-a953060a04ccefcf777de48e
     resource: repo://src/agent/index.ts
+  - id: openwiki-source-4c92df2a32845b39906f2019
+    resource: repo://src/agent/personal-runner.ts
+  - id: openwiki-source-7551641210d49d6e1afc59ae
+    resource: repo://src/auth/configure.ts
+  - id: openwiki-source-106c72a9cb6dd904077fc747
+    resource: repo://src/cli/runners.ts
   - id: openwiki-source-278e7e180eac811fc1a24f7a
     resource: repo://src/config/constants.ts
   - id: openwiki-source-c2770ac037a7f4b0116a0dc5
@@ -29,6 +32,8 @@ sources:
     resource: repo://src/config/openwiki-home.ts
   - id: openwiki-source-f1dd0edb129e50f253618ff4
     resource: repo://src/config/reasoning.ts
+  - id: openwiki-source-c6189f89b3f67d0cbf87739f
+    resource: repo://src/ingestion/ingestion.ts
   - id: openwiki-source-04a008dbe4969919f7141a55
     resource: repo://src/platform/diagnostics.ts
   - id: openwiki-source-27fbd70857f0fae28185fe91
@@ -43,7 +48,10 @@ sources:
     resource: repo://test/config/constants.test.ts
   - id: openwiki-source-3782823f29993efcdedd20ac
     resource: repo://test/config/env-behavior.test.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
+verified:
+  - by: openwiki/0.7.1
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Configuration and Environment
@@ -103,7 +111,17 @@ toggles) in the managed list, and the newer `OPENWIKI_PAGE_CONCURRENCY` and
 `COPILOT_BASE_URL`) are managed too. LangChain project/tracing settings
 (`LANGCHAIN_PROJECT`, `LANGCHAIN_TRACING_V2`) are managed but are not
 credentials, so they are excluded from the diagnostics panel via
-`NON_CREDENTIAL_ENV_KEYS`.
+`NON_CREDENTIAL_ENV_KEYS`. The list starts with `MODEL_PROVIDER_ENV_KEYS`
+(provider selection, model id, model run settings, and provider credentials),
+followed by connector and other keys; the split lets a model-free process
+exclude exactly the provider group.
+
+`OPENWIKI_PERSONAL_CORE` is a plain opt-in flag rather than a managed
+credential: when it is exactly `1` (`isPersonalCoreEnabled`; ingestion reads it
+after the env load, so it may come from `~/.openwiki/.env`), `openwiki personal
+--init/--update` runs through the durable personal lifecycle core and native
+personal driver, and `openwiki ingest --pull-only` and pull-only schedules are
+allowed. See [Personal lifecycle core](../workflows/personal-lifecycle.md).
 
 ## Loading and precedence
 
@@ -125,6 +143,13 @@ win over the saved file at runtime: OpenWiki never overwrites a variable the use
 exported in their shell. Deprecated keys (`OPENAI_ORG_ID`, `OPENAI_PROJECT`) are
 skipped on load. Reading a non-existent file is not an error — `readOpenWikiEnv`
 returns an empty map when the file is missing.
+
+A process can restrict what it loads. `scopeOpenWikiEnvLoading(keys)` limits every
+later `loadOpenWikiEnv` in that process to `keys` minus `MODEL_PROVIDER_ENV_KEYS`,
+which are never loaded while a scope is set. The personal MCP server uses this so
+the host's model credentials stay out of a model-free process, and
+`listSavedOpenWikiEnvKeys` reports which keys have a saved non-empty value without
+loading them or returning any value.
 
 To reason about this precedence, OpenWiki captures two in-memory snapshots at
 startup, both held in memory only and never persisted or logged:
