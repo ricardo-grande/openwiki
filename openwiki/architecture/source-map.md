@@ -28,6 +28,8 @@ sources:
     resource: repo://src/agent/entra-auth.ts
   - id: openwiki-source-a953060a04ccefcf777de48e
     resource: repo://src/agent/index.ts
+  - id: openwiki-source-a75701e8f1c713f866d62919
+    resource: repo://src/agent/page-workers.ts
   - id: openwiki-source-8b316b2a9d744597bffd9c56
     resource: repo://src/agent/repository-prompts.ts
   - id: openwiki-source-6cb3236b8c1412a26d832fcf
@@ -70,6 +72,10 @@ sources:
     resource: repo://src/generation/repository-run.ts
   - id: openwiki-source-080c4525024a9b689e361cbb
     resource: repo://src/generation/run-state.ts
+  - id: openwiki-source-c5b41bec7ab970ee9139e1e8
+    resource: repo://src/generation/shared/page-snapshot.ts
+  - id: openwiki-source-9b2f7487ca01fc938aff25a2
+    resource: repo://src/generation/shared/run-mutation.ts
   - id: openwiki-source-c6189f89b3f67d0cbf87739f
     resource: repo://src/ingestion/ingestion.ts
   - id: openwiki-source-410e7efbe6dee8c4d43e9b4d
@@ -108,10 +114,10 @@ sources:
     resource: repo://src/visualize/server.ts
   - id: openwiki-source-d485c898eb60ebb173072eab
     resource: repo://test/agent/stream-redaction.test.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Source Map
@@ -228,7 +234,7 @@ before anything else.
   `restoreRepositoryPage` (also used between worker retries) restores the page
   markdown and sidecar, `skipRepositoryPage` rolls a failed worker back
   (restoring the page markdown and sidecar, marking the job `skipped`), and
-  `restoreRepositoryPageMarkdown` re-applies the snapshot during
+  the shared `restorePageMarkdown` re-applies the snapshot during
   `finishRepositoryRun` for every skipped job, tolerating a not-found page when
   the snapshot recorded no markdown.
 
@@ -243,7 +249,19 @@ calls into `generation/repository-run.ts`, and the in-process counterpart to the
 **host-driven** `integrations/core/session-manager.ts` adapter (both drive the same
 six-operation lifecycle, but the runner owns a bounded page-worker pool and emits
 `RepositoryGenerationProgressEvent`s while the session manager exposes the lifecycle
-as MCP tools one operation at a time). `src/agent/types.ts` owns the
+as MCP tools one operation at a time). The pool, retry loop, worker-event
+streaming, and the no-delegation middleware are shared in
+`src/agent/page-workers.ts` (`runPageWorkers`, `runPageAgent`,
+`streamWorkerTools`, `NO_DELEGATION_MIDDLEWARE`), which `repository-runner.ts`
+and the personal driver `src/agent/personal-runner.ts` both call.
+`personal-runner.ts` (`runNativePersonalGeneration`, enabled by
+`OPENWIKI_PERSONAL_CORE=1`) drives the personal lifecycle with a gather worker,
+a planner, and page workers; its helpers are `personal-worker-tools.ts` (raw
+evidence and gather tools, the page-scoped `PersonalPageWorkerBackend`),
+`personal-prompts.ts` plus `prompts/personal-guidance.ts` and
+`prompts/personal-reference.ts` (prompt builders and the shared reference),
+and `personal-chat.ts` (personal chat tools and the edit runner).
+`src/agent/types.ts` owns the
 `OpenWikiRunEvent` union consumed by the CLI, including
 `RepositoryGenerationProgressEvent` (with `stage`, `page`/`pageIndex`/`pageCount`,
 `completedCount`, and `inFlightPages` for the concurrent pool). `src/agent/utils.ts`
@@ -266,60 +284,56 @@ the IBM Bob fetch adapter (`bob.ts`, whose `createBobFetch` rewrites
 `ibm-bob-openwiki-provider` `User-Agent` required by Bob's Cloudflare WAF —
 wired into `createModel`'s `bob` branch).
 
-`repository-runner.ts` owns the native runner's full responsibility set.
+`repository-runner.ts` owns the native repository driver.
 `runNativeRepositoryGeneration` drives the loop — begin the durable run
-(`beginRepositoryRun`), run the bounded planner (`runPlanningAgent`,
-L433–L524), then run every pending page with fresh shell-free workers
-(`runPendingPageAgents` L615–L658 / `runWorkerLoop` L693+) — emitting
-`repository_progress` events at each stage (`noop`, `planning`, `generating`,
-`finalizing`); the `generating` event from `emitGeneratingProgress` reports the
-focused page's position plus, when more than one worker is configured, the
-`completedCount` and the `inFlightPages` list. `runPageAgent` (L856–L894)
-captures a `RepositoryPageSnapshot` via `captureRepositoryPageSnapshot` before
-any model work, then runs up to `PAGE_WORKER_ATTEMPT_LIMIT` (2) attempts via
-`runPageWorkerAttempt` (L906–L1018); a worker that exits without submitting is
-reset to the pre-run snapshot with `restoreRepositoryPage` before the retry, and
-if it still fails it calls `skipRepositoryPage` to restore the page and mark it
-`skipped`, collecting the snapshots and passing them to `finishRepositoryRun`
-so skipped pages keep their pre-work content and are reconsidered on the next
-update. A rate-limit failure surfaces to the pool immediately rather than
-retrying. Each worker attempt is given an `inspect_claims` tool (backing
-`inspectRepositoryPageClaims`) and a `submit_page` tool (backing the sparse
-`submitRepositoryPage`). The planner and every page worker are grouped into one
-LangSmith thread: `resolveTraceThreadId` (from `config/constants.ts`) supplies
-the shared `configurable.thread_id` passed to `streamWorkerTools` (L1040–L1070);
+(`beginRepositoryRun`), run the bounded planner (`runPlanningAgent`), then run
+every pending page with fresh shell-free workers (`runPendingPageAgents`) —
+emitting `repository_progress` events at each stage (`noop`, `planning`,
+`generating`, `finalizing`); the `generating` event from
+`emitGeneratingProgress` reports the focused page's position plus, when more
+than one worker is configured, the `completedCount` and the `inFlightPages`
+list. `runPageWorkerAttempt` builds one fresh worker per attempt with an
+`inspect_claims` tool (backing `inspectRepositoryPageClaims`) and a
+`submit_page` tool (backing the sparse `submitRepositoryPage`), scoped to its
+own page by `writableWikiPages`. The planner and every page worker are grouped
+into one LangSmith thread: `resolveTraceThreadId` (from `config/constants.ts`)
+supplies the shared `configurable.thread_id` passed to `streamWorkerTools`;
 `PLANNER_AGENT_NAME` names the planner trace and `workerAgentName(page)` names
 each page-worker trace, so a run's thread reads as one planner and one worker
-per page. `parseWorkerToolEvent` (L1078–L1113) normalizes DeepAgents
-`tools`-stream chunks into bounded tool lifecycle events (dropping worker
-narration and any tool outside `WORKER_TOOL_NAMES`). `NO_DELEGATION_MIDDLEWARE`
-strips the general-purpose `task` tool that DeepAgents 1.12 adds even with
-empty subagents, so the non-delegating repository workers keep a bounded tool
-surface; the `coerceRepositoryWorkerModelResponse` helper normalizes
-OpenAI-compatible streaming aggregates that arrive as generic chat messages
-(coercing them back to `AIMessage`/`AIMessageChunk` with parsed tool calls)
-before LangChain validates the `wrapModelCall` response.
+per page. `parseWorkerToolEvent` is built with `createWorkerToolEventParser`
+over the repository's `WORKER_TOOL_NAMES`, dropping worker narration and any
+tool outside that set.
 
-`runPendingPageAgents` runs an in-process page-worker pool rather than a single
-sequential worker. The pool size is the resolved `OPENWIKI_PAGE_CONCURRENCY`
-(between `DEFAULT_PAGE_CONCURRENCY` of 1 and the `MAX_PAGE_CONCURRENCY` cap of
-8); the CLI resolves it via `resolvePageConcurrency` in `config/constants.ts`
-and threads it through `runNativeRepositoryGeneration`. The pool is
-process-local bookkeeping (a `PageWorkerPool` of claimed jobs, in-flight pages,
-a live worker limit, and skipped snapshots) — the durable checkpoint never
-records who owns a pending job, so a resumed run rebuilds ownership from
-scratch. `acquireNextJob` serializes job selection so two loops never claim the
-same pending job (passing already-claimed ids as `exclude` to
-`nextRepositoryPage`). With more than one worker the quickstart page is held
-back to a final single-worker pass so its task-routing map links to pages that
-already exist. The shared-state mutations of `submitRepositoryPage` and
-`skipRepositoryPage` run under `withRunMutation`, a per-run promise chain keyed
-by object identity, so concurrent workers never lose a completion while the
-model-owned work stays outside the lock. A worker that fails on a provider rate
-limit (`isRateLimitError`) lowers the live pool size by one, never below 1; a
-fatal submission error stops new work but lets in-flight workers submit or
-skip, then rethrows before `finishRepositoryRun` so a run never finalizes with
-pending jobs.
+`src/agent/page-workers.ts` owns the generic worker machinery both native
+runners share. `runPageWorkers` is an in-process page-worker pool rather than a
+single sequential worker. The pool size is the resolved
+`OPENWIKI_PAGE_CONCURRENCY` (between `DEFAULT_PAGE_CONCURRENCY` of 1 and the
+`MAX_PAGE_CONCURRENCY` cap of 8); the CLI resolves it via
+`resolvePageConcurrency` in `config/constants.ts` and threads it through the
+native runner. The pool is process-local bookkeeping (a `PageWorkerPool` of
+claimed jobs, in-flight pages, a live worker limit, and skipped snapshots) — the
+durable checkpoint never records who owns a pending job, so a resumed run
+rebuilds ownership from scratch. `acquireNextJob` serializes job selection so
+two loops never claim the same pending job (passing already-claimed ids as
+`exclude` to the core's `next`). With more than one worker the quickstart page
+is held back as a final job for a single-worker pass so its task-routing map
+links to pages that already exist. A worker that fails on a provider rate limit
+(`isRateLimitError`) lowers the live pool size by one, never below 1; a fatal
+submission error stops new work but lets in-flight workers submit or skip, then
+rethrows before finish so a run never finalizes with pending jobs.
+`runPageAgent` captures a page snapshot via the core before any model work,
+then runs up to `PAGE_WORKER_ATTEMPT_LIMIT` (2) attempts; a worker that exits
+without submitting is reset to the pre-run snapshot with the core's restore
+before the retry, and if it still fails (or hits a rate limit) the core's skip
+restores the page and marks it `skipped`, collecting the snapshots and passing
+them to finish so skipped pages keep their pre-work content and are
+reconsidered on the next update. `streamWorkerTools` streams only bounded tool
+lifecycle events. `NO_DELEGATION_MIDDLEWARE` strips the general-purpose `task`
+tool that DeepAgents adds even with empty subagents, so the non-delegating
+workers keep a bounded tool surface; its `coerceWorkerModelResponse` helper
+normalizes OpenAI-compatible streaming aggregates that arrive as generic chat
+messages (coercing them back to `AIMessage`/`AIMessageChunk` with parsed tool
+calls) before LangChain validates the `wrapModelCall` response.
 
 ### generation — repository run lifecycle and page jobs
 
@@ -340,19 +354,30 @@ schema-versioned via `REPOSITORY_PAGE_MANIFEST_SCHEMA_VERSION`), recording each
 completed page's git head, source fingerprint, page version, and producer
 provenance (`completedBy`, `completedRunId`), and is read and rewritten by
 `finishRepositoryRun` to reconcile coverage after skipped pages.
-`src/generation/errors.ts` defines `RepositoryRunError`. The lifecycle exposes a
+`src/generation/errors.ts` defines `RepositoryRunError`. The personal
+counterpart of the repository core is a sibling set of modules:
+`personal-run.ts` (the lifecycle operations — `beginPersonalRun`,
+`closePersonalGathering`, `submitPersonalPlan`, `nextPersonalPage`,
+`writePersonalPage`/`editPersonalPage`, `submitPersonalPage`,
+`finishPersonalRun`, plus snapshot/restore/skip), `personal-run-state.ts` (the
+`.run.json` and `.synthesis-cursor.json` formats and raw-evidence refs),
+`personal-run-plan.ts` (plan validation and required jobs), and
+`personal-run-lock.ts` (the single-writer `.run.lock`); see
+[Personal lifecycle core](../workflows/personal-lifecycle.md). Helpers shared by
+both cores live in `src/generation/shared/` (`json-state.ts`, `page-snapshot.ts`,
+`pending-job.ts`, `run-mutation.ts`). The repository lifecycle exposes a
 six-operation surface (`beginRepositoryRun`, `submitRepositoryPlan`,
 `nextRepositoryPage`, `inspectRepositoryPageClaims`, `submitRepositoryPage`,
 `finishRepositoryRun`). `nextRepositoryPage` returns `claimsRequiringAttention`
 and `existingClaimCount` rather than the full Claim set;
 `inspectRepositoryPageClaims` returns the complete compact Claim set on demand.
 Its snapshot/skip/restore operations (`captureRepositoryPageSnapshot`,
-`restoreRepositoryPage`, `skipRepositoryPage`, `restoreRepositoryPageMarkdown`)
+`restoreRepositoryPage`, `skipRepositoryPage`)
 let a failed page worker be rolled back to its pre-work state and marked
 `skipped` rather than failing the whole run; `restoreRepositoryPage` (also used
 between worker retries) restores both the page markdown and its Claims sidecar,
-while `restoreRepositoryPageMarkdown` tolerates a not-found page when the
-snapshot held no markdown, so deleting a newly added page counts as a clean
+while the shared `restorePageMarkdown` (in `generation/shared/page-snapshot.ts`)
+tolerates a not-found page when the snapshot held no markdown, so deleting a newly added page counts as a clean
 restore; `finishRepositoryRun` requires a snapshot for every skipped job
 (matching `jobId` and `path`) and re-applies those snapshots before finalizing.
 
@@ -464,8 +489,9 @@ Owns credential acquisition and storage. Principal entries: `src/auth/oauth.ts`
 
 Owns the guided setup flow. Principal entry: `src/setup/onboarding.ts`, which
 reads and writes the `~/.openwiki/onboarding.json` state (connected sources,
-their schedules, and power-management settings) and the home
-`INSTRUCTIONS.md`. `src/setup/credentials/` holds the provider-credential setup
+their schedules including a per-source `pullOnly` flag, and power-management
+settings; `connectSourceInstance` marks a connector as connected the way TUI
+onboarding does) and the home `INSTRUCTIONS.md`. `src/setup/credentials/` holds the provider-credential setup
 steps (`steps.ts`), persistence (`persistence.ts`), and formatting
 (`format.ts`), reading provider key/region/model requirements from
 `config/constants.ts` (including the `openai-compatible` `entra-id` auth mode,
@@ -550,7 +576,11 @@ tools — the strict Zod input schemas including the sparse `SubmitPageInput`
 `InspectPageClaimsInput`, and host-id validation (`isValidHostId` against a
 lowercase/digit/hyphen pattern). The retrieval tools themselves are built by
 `retrieval-tools.ts` (`createRetrievalTools`), which delegates to the
-`retrieval/` and `linking/` subsystems; `repository-root.ts` resolves the
+`retrieval/` and `linking/` subsystems; the personal wiki has a parallel set of
+modules under `src/integrations/personal/` — `session-manager.ts`
+(`PersonalSessionManager`), `lifecycle-tools.ts`, `retrieval-tools.ts`,
+`status.ts`, `connector-env.ts`, `secret-redaction.ts`, and `instructions.ts`
+(see [Personal host agent mode](../integrations/personal-host-mode.md)); `repository-root.ts` resolves the
 repository root. `src/integrations/mcp/server.ts` exposes OpenWiki over MCP,
 advertising an `INSTRUCTIONS` preamble that incorporates
 `CLAIMS_RECONCILIATION_GUIDANCE` from `claims/guidance.ts` so the host model
@@ -571,7 +601,9 @@ it.
 
 Owns cron/launchd scheduling. Principal entry: `src/scheduling/schedules.ts`,
 which validates cron expressions and installs, lists, pauses, resumes, and
-deletes connector and "power" schedules.
+deletes connector and "power" schedules, and can mark connector schedules
+pull-only (`setConnectorSchedulePullOnly`) so a scheduled run pulls evidence
+and leaves synthesis to the next ingest or update.
 
 ### telemetry — run recording and error classification
 

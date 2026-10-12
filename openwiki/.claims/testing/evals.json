@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:8d8f934a95221c17beb65b648bdb52420f28627dfd09acc282cc85fc79f54093",
+  "pageVersion": "sha256:5cc937571a50bf9965c1fd6e6d7780afd1a1d9dd3dc3ba9b10e7ef48e9c8fcf6",
   "claims": [
     {
       "id": "claim_94f228e67cb14c1a96bd6c1ca3df4c63",
@@ -35,11 +35,11 @@
       "statement": "The precision pass classifies Markdown text units, extracts atomic claims with verbatim sourceQuote provenance, deduplicates by a conservative normalized key, and grounds claims against current evidence first, consulting historical evidence only after a current contradiction to split stale from invented.",
       "evidence": [
         {
-          "resource": "repo://evals/ledger/evaluator/precision.ts#L1465-L1473",
+          "resource": "repo://evals/ledger/evaluator/precision.ts#L1512-L1520",
           "version": "repo-lines-v1:sha256:c98eddd191feff4b089ac15fd6a1e9b0a520310ca9ff252d1f7d64a2e036cb93:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjI5Njg4MzQzOTNmNGJmMjE4ODM1ZDU1NDQ3MDQ5YTE0NGNjYWY0ZmU2Y2M2MjNiNjIyZjc4YzgxZDE4NTY5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTdiYjkyNDhkZWQ1MzYwMTIyNzE3NmRlYWVmNzIxMmJiMjQxNDA4OGYxYTUzN2Q4NzA0YWY5NWYyYzg5M2ViYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDQyYTY0MDhjMjFkMDcyNjM0ZDFhMzJjMmY4Yjk1NjRlYjljYTM2ZTIxOTU0ODI3M2RjZjQ3YTY3MDAwMGJjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2E2YmUxMzA5YzRlMDI0OTM1Y2MzNmVkNDU2ZjZlZDcxOGM1YThhMWQzNmE1MTVhOWQ3MDRmMWJiZDY2MDllMiJ9"
         },
         {
-          "resource": "repo://evals/ledger/evaluator/precision.ts#L1691-L1773",
+          "resource": "repo://evals/ledger/evaluator/precision.ts#L1739-L1821",
           "version": "repo-lines-v1:sha256:527d39ec27d34642b7155b116850dd76ab216c9de1bb323d66f6514258f90ef9:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0N2ZjMGVkYzkzMjliYjUxZTdhMWY3MzBiOTVmZjllMzRiM2RiYTE3ZDhlNGQ4YjQxOWQyNjM5N2Q3Zjc4ZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3ZDg2MzJlNTRlOTI5OGFiYjk1ODcyN2UyZDUxNDA4YWJhZjEzNjYwMzUzNzkxMDE0MGFiZjY1YjMwYWI2MTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3NTcxYzViYmJkZGQzZTA3MzE5ZGZkOTYyZWEzM2ZlZTM4NmY0MzYxMWU4OGU2OThkYmVjNmZlNTkwYTkzODYifQ"
         }
       ]
@@ -57,32 +57,40 @@
           "version": "repo-lines-v1:sha256:2316f72c4608674d9411dd78c7a02f9e1f38b0d23d0179d2996e055fefb7e0eb:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjM2RiZTBkZGRhOWU4NDQzZDZhOGIyOTA1MjZlNmZiZDZhZGYwMWM2ZjdkM2UzZDVlOTcyYjhmMWFkNjNkNzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiYzUwYjc4Y2E4MDQ5YzgxZmVlZGRjNTQ1YWMyYzY2OTkxMDQzNmIwODYxZWIyODFjZmFiYjA4YzcyMTY5ODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
         },
         {
-          "resource": "repo://evals/ledger/evaluator/precision.ts#L999-L1062",
+          "resource": "repo://evals/ledger/evaluator/precision.ts#L1019-L1082",
           "version": "repo-lines-v1:sha256:d9879b62b65da8f994bed013df0b33446614862aec4a431834dd915d52a484bc:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiYzk4NWQ0ZGUxZDgzMTUzMjVkN2VlMzljNjUxMzFlMzQzNDYwYzFmY2U5MWE5YWZmM2NiNGJjODZmNTdlMDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg1N2YwODYzMjgzODExYzJlMmMwZDExMzVmYmZmMDhlODMyOWQzYjMwYjQwZWYwMjc3ZjJiZjk1ZmQ5Y2Q0YzcifQ"
         }
       ]
     },
     {
       "id": "claim_e2517411e9b74b738181269bde9031b1",
-      "statement": "A benchmark comprises a source Git repository, an ordered frozen trace of pinned checkpoint SHAs, an author-declared difficulty (easy/medium/hard, never computed), and an optional reviewed semantic evidence map that is evaluator-only routing metadata never exposed to the System Under Test.",
+      "statement": "A repository benchmark comprises a source Git repository, an ordered frozen trace of pinned checkpoint SHAs, an author-declared difficulty (easy/medium/hard, never computed), and an optional reviewed semantic evidence map that is evaluator-only routing metadata never exposed to the System Under Test; a benchmark may instead be kind personal, and LedgerBenchmark is the union of the two.",
       "evidence": [
         {
           "resource": "repo://evals/ledger/README.md#L116-L127",
           "version": "repo-lines-v1:sha256:f8a97f644157c596bc1e01e743ec9d501623e112787d4ee7caa637ad4b3bd7af:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMzNkNWVkNjI5MzQyOGNhMWRkODE5NmQ2NmVhMTdjOTdjMDU5YTJlNzA0YWNjM2Q3N2VmNzMyZTBlNjBjNDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYyYmMyYmFlZTZkOGU0NGUzMTUyM2MwOWIzYTFlZGRiN2FlODY5NmVkZWY0NDU0NzE1ZDIyZjk0ZDI3NjE4MzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlZDQ0ZDk4NjgyMmU4NGEzNzA3ZGE5OWVhYTIyOGUzNGY5ZmFmZGZkODI1NmI4YmMzNWMwZGY2ZjhjMTE2MzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg2OTJmN2M1NmY2NmIzZWIwOTFiNDYyODM4NjY3YTQ4ZmMyZDNkMGQyZjE0MTU2YTQxODI0ZTdlNGQwOTNmOTcifQ"
         },
         {
-          "resource": "repo://evals/ledger/core/types.ts#L84-L118",
-          "version": "repo-lines-v1:sha256:f5054d0b1e62ebcd2fef23ef5dcbad33cf6c9e867b7713caaeab6a92e7011f94:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5NmU2ZjBkOTEwZGRlZmFiOGEwZGVjZmI3OGExYzQ0NTU5N2YxYzJiNjhiOTI0NGZiN2FlZjA1YmE5NTFhOWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4MGQzNDI5NGI0NjA3MmZiODkzN2ZiMmZlNWFmNTczMzQ4ZWM3YjEyOWI2ZjIwMTdkMzdhOWFmYjZjZTZkYjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNmYmQ4NjM3ZTU4OGFhYWI0NzNiM2NiOWFmNGM0NDY5OTYwZTYzYzU5ZGM3NjI0YjQ0ZTczY2U1YjZmNDgwYTQifQ"
+          "resource": "repo://evals/ledger/core/types.ts#L356-L361",
+          "version": "repo-lines-v1:sha256:998655a47b2cde2aa2d95f26a4895553fe50d31d83df15da91c31192e654ba44:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWI3MzIzMmZjMWM1NjMyMWExYzJmMDRiNDllODA2OWYzNTY5NWM3NDA2M2IwNTk0ZDQzMWY2NjJkODUwZDVlMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjZjNWVhNjQ5ODJiZDdlMjkzOTQ2NDk1OThmYTk1MzczYTg0ZmZmNTIwN2U1ZGZlYzM1MjYzMmJmODdiNjBlYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDY1NzE1ZGU2MGUwODMzYmYwMjA0NGU1OTU4MDAzOWE5NDAyMTdmMDFkY2E5NzhiM2E0ZTA3MTg4NDRjZWJjNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjQ5ZTkzNmU3ZTU1ZTRiZGZlODlhYjNmZTIxOTk1NDcxMTAzOTNmYmI5Zjc1NGQwNjE2M2YxYTZlOWE5NTQ3OSJ9"
+        },
+        {
+          "resource": "repo://evals/ledger/core/types.ts#L77-L135",
+          "version": "repo-lines-v1:sha256:2e2200e73603ed08f294509549d213420e6179b6f3c485e9907e9147d9553b6d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlMzYzMzNhYTU0ZGFiOWFmYjI4NDQ2NGI0YjdiNWUyZjFkYzEzYzVkZmZhODgzNDQ5YzFlNGE0OGE0OTIxY2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZTYxZmJmYjM1NTk4MWRmYWU5YThhMDdkYzVhMjJkYzI5ZTEyYzY1ZjNlMmQwYWJiOTJjMzg2MGMxZjAyZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYWUxMGE2NThjY2UyZjBlODYwMGIwMGRhZDcxMmJjMGIwYzhkMjcwZTI3Y2MwMDFlM2NkN2E4ODZiMDQ5YTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgifQ"
         }
       ]
     },
     {
       "id": "claim_69c40cef12bd491dac3f0a61e42acb81",
-      "statement": "runBenchmark preflight-validates the trace (every SHA resolves, each checkpoint is a Git ancestor of the next, nothing under openwiki/ is tracked), then walks the trace calling system.init at index 0 and system.update at later indices, capturing an immutable artifact and current+historical evidence per checkpoint before evaluateCheckpoint.",
+      "statement": "runBenchmark preflight-validates a repository trace (every SHA resolves, each checkpoint is a Git ancestor of the next, nothing under openwiki/ is tracked), then walks the trace calling system.init at index 0 and system.update at later indices, capturing an immutable artifact and current+historical evidence per checkpoint before evaluateCheckpoint; it selects the replay and evidence adapter by benchmark kind.",
       "evidence": [
         {
-          "resource": "repo://evals/ledger/run/runner.ts#L140-L256",
-          "version": "repo-lines-v1:sha256:1b532b08afcbd3a17a41b1ccaaa6e560a7f330f8bf82706b2b811b668b329b63:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwNjU5NWY0ZWU1ZmY2M2Q1MDk1MDQxOWRjMzQ0MTQ1MTM4NTFkYzk3MzZmZDE3YTRmN2JmYTkzMGIyNjFiNmYyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3MTdhZjExMDFjOTdiN2MyZjUyNTQwNzgyZTYzNGNjNDQ0MGYwZTk3MDM0MWU1MmY5NzUyMzExZDc4YjdkN2QwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMjU4YTFkZTkyZGQxMjVmNzBmMGVmMTcyZDA2M2E1Y2JhMDNjZjNjNzllOTljZDgxNWU4NWRkMzFhMjg1MmU3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2MDRjNTI4NGNkMjg0ODA3MTE5Y2YwMWY4YWE3NzAyN2ZiNzE4NzExMzE2Mzk1ZTE0MWI0MjU4NTAwZTZiNjE5In0"
+          "resource": "repo://evals/ledger/run/runner.ts#L100-L125",
+          "version": "repo-lines-v1:sha256:0ae0494da4e4856176b71849f16443548041ae5324de6638d7e93d87360966a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MmZmMDFmZTM5YmE1YzZkMDg2MGNhODE2Y2Q0MGNlZTRjMmMzYzVlMjc3OTlmYmFlYTRhOGIwNmExOWQxODciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhZTNlZjhkYjMxYmZiNmM2MTQxZjBhMjI4N2FiN2E1NGY3ZmJhZjdkMDczNjVlNjhjYmFhNThkNTU0YTA0NGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzMGZkYjNlNDdkOTAyNDNiM2E5OTc0YzFkYjA3NDMwMWY2N2M4ZDM2NWRiNThiZGEzNTQ2YjlhNjVkNmRmZmQifQ"
+        },
+        {
+          "resource": "repo://evals/ledger/run/runner.ts#L158-L323",
+          "version": "repo-lines-v1:sha256:2c8a1876307c6fbe045eddeed6c1fca796c4b49d036ffc6f065d1d3b610c36b2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1YzdiYWUzZTk1ODY0Y2FkYTZjOGQ3NTNlNWRmZWI4NTkzN2FmODU1ODk0ZTU0ODBkNTYyYjE0YTQ4M2ZlOWM4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5YjRjOWE4YWI3ODdiYjNhN2NlMTc0NWI3ZjdmMDhiMTVhMzZiYjI4OGIxZWI5M2Q2ZTNhY2I3YzAzZmVkNTZiIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
     },
@@ -91,12 +99,12 @@
       "statement": "evaluateCheckpoint is the loop body shared verbatim by the live runner and the saved-run re-evaluator: it extracts the source surface, diffs against the previous checkpoint, advances the sticky forgetting watch set, runs the evaluation backend, and reduces verdicts into claim-state and evaluator-completeness measurements.",
       "evidence": [
         {
-          "resource": "repo://evals/ledger/run/evaluate-checkpoint.ts#L157-L321",
-          "version": "repo-lines-v1:sha256:dc7f758383afad5b62586a18a5d85ddb8f5b354d707a4d3726666517b3d27d3c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlYWYyMmNmMDczMjU5MmMyNDcxNDFjYmU2MWVmYTExMDEyNjEyZjVhMzEyMmI5YWY5YmJhZjUyZjU3MjRkMTk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2YzM1MWYyMTY0YzI0NjRmM2NkMzg3NjBlYTlmYzU4YTY2OTRiNWQ2NTk5NzI5OTYyMTRhNjZkMDUxYzM4ZTM0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+          "resource": "repo://evals/ledger/run/evaluate-checkpoint.ts#L150-L395",
+          "version": "repo-lines-v1:sha256:438fde7ef8095b7a2a4e4345148ca714c8fdd170b6ce48f53fc070080ef83fde:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQ2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyY2VlZDJlN2YwZWMxOTJjYWY3YzZjY2VjZjQ1ZTY3NmI3ZjUyY2VlOTdjNGJjMDZjODUyMGU4YjllOGYxOWU1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyOWNkMTdhZjdiMTRhYWZjODQ1MTljNDE1ZjMyZGVkNzE4ZGQ3ODI3MmY5MmI2NGMzOTE4Y2YyYzg2ZWMyOTJhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         },
         {
-          "resource": "repo://evals/ledger/run/reevaluator.ts#L108-L223",
-          "version": "repo-lines-v1:sha256:4fcd475983dbb2636c762e71de0a71f37be2d223ff9df263bd593a6f67884779:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlYWYyMmNmMDczMjU5MmMyNDcxNDFjYmU2MWVmYTExMDEyNjEyZjVhMzEyMmI5YWY5YmJhZjUyZjU3MjRkMTk0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjZGMyMjlkYWM5ZjMyYzdjY2VkZTU1YTU4YmJhNzljZTc2YmIyOWVjYjE3ODYzMjY0NDRlYzFjYzVjY2ZmMjQ5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+          "resource": "repo://evals/ledger/run/reevaluator.ts#L100-L245",
+          "version": "repo-lines-v1:sha256:d58c372a9d9c2708c3f1cb9076cdf6c76a59b3798596e217d57d8c1e02f41d39:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2MjNjYjRjMTNkNjc3NTlkNTRmNzY3MWQ0NDAzNDk3MmQwOTAzYTM5ZDA4YWZhZTczYmI5ODFlYjlhYjBkY2YzIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmOTgzMjg0ODQ0NjhjODUwM2ZiOGQ2NDBkMmY0MjFmNDRiN2NhNGZjMTIwM2JiYmNiZWE3OTVlOTM4OWM1YzBlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
     },
@@ -105,11 +113,11 @@
       "statement": "The forgetting watch set is sticky: an obsolete fact version stays under watch for every later checkpoint and is retired only when the requirements revive it, so a version already judged forgotten is still re-checked later, which is what lets the Stale-Knowledge Lifetime diagnostic measure lingering.",
       "evidence": [
         {
-          "resource": "repo://evals/ledger/run/evaluate-checkpoint.ts#L306-L318",
+          "resource": "repo://evals/ledger/run/evaluate-checkpoint.ts#L380-L392",
           "version": "repo-lines-v1:sha256:62308fffe9b1dce1fb63a751c42590558b632a6174e39155c03dac9ecb04fe8e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNDRiMmVjMDYxYTFlMTYxZTU3ZTlmNGM1ODRjODFlY2Y1MDBjZjI4MGNlOTYwMmJjNjNkYjY2YWIyZDU5NDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJmOGI1MjU0ZGQ2NDI2MGFkNjZjNzg3MjZjOWVlYzgxNDBhZmM2NWUxN2NiMjQ0ZGRkNTc0NWQ1ZDcxZDM0N2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYmViZGEyYTdhNDZjYjhkYjlhNjM0ZjU3NTQwOTZmNzg2M2RiMzA3ZjZmNGQ1NjhkNDEwOGI0ODRlOGEzNTYifQ"
         },
         {
-          "resource": "repo://evals/ledger/run/runner.ts#L100-L107",
+          "resource": "repo://evals/ledger/run/runner.ts#L139-L146",
           "version": "repo-lines-v1:sha256:45c8a3830fdff126d2bf7a517a0e0d9c9d9165d7de8155b54b5267fed5fa34cc:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmJlM2RhNjdlYzkzMzQ0MjYxZjljOGRjZWRkMzMxYjdlNGNjOTE3NWMzNWRhYzlkN2QwZDVkYjE5NGM4M2FkNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGFiNDdkNDlmNjViNjMxYTFkZjQyZDNiZjBjOTJhYzU0NjJjZWE3ZjMwYTA0MjgyMDBkZDI2ZDMzNDRiYWU2OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTFhZTlhNjNmNzEyY2EyNGNjMGRjYjAyNTdiNWNiZGY3M2I1MWQ5OTQyOWM1NzMxYWU4MTk1MjI0ODJkMTA5MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzNjYTU0ZDBkYzllNDYzNTQ2MzM1M2U4ZjdiYzAwYzRjODQzZGU4ZTM1Mjc3ZWY2Mzg2YjYxMDc0ZjA3YmZjOCJ9"
         }
       ]
@@ -129,7 +137,7 @@
       "statement": "The LEDGER run-level score is opportunity-weighted claim health: supported current claims divided by all current claims across checkpoints, computed by summing supported and total per CheckpointResult; stale, invented, and unverified all lower it because they remain in the denominator.",
       "evidence": [
         {
-          "resource": "repo://evals/ledger/README.md#L142-L153",
+          "resource": "repo://evals/ledger/README.md#L232-L243",
           "version": "repo-lines-v1:sha256:a543eefb18a6dfcffb3b5c40b3f1339f40cf19f76289a8a46d47b7051c9eead0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxMjI3YTdmNWY3NWMyNDUyMmU5NTQ0NDVjZGE1MzAyODhkMDRjMjI3ODNjOTViOTIyOWU0MjE5NDU0NzU2Y2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4YTJmNjZhNTM1YzU1MjQ1MTVlYzkxOWQxMjc0NmFlYTAzNDAyNmVhMWQ4MDI3OTQ1MmZiMzVlMTdhNDY1NDEifQ"
         },
         {
@@ -154,11 +162,11 @@
     },
     {
       "id": "claim_f8a6d3ef1c604fc880f2b4e3116bcecb",
-      "statement": "Source evidence is collected by GitSourceEvidenceAdapter as a tracked-file manifest plus bounded 6000-char chunks from every tracked regular non-binary file excluding openwiki/, read through one O_NOFOLLOW descriptor to avoid a check/use symlink race; current evidence is marked current and prior-checkpoint evidence is marked historical with checkpoint-prefixed ids.",
+      "statement": "Source evidence for repository benchmarks is collected by GitSourceEvidenceAdapter as a tracked-file manifest plus bounded 6000-char chunks from every tracked regular non-binary file excluding openwiki/, read through one O_NOFOLLOW descriptor to avoid a check/use symlink race; current evidence is marked current and prior-checkpoint evidence is marked historical with checkpoint-prefixed ids.",
       "evidence": [
         {
-          "resource": "repo://evals/ledger/run/runner.ts#L204-L225",
-          "version": "repo-lines-v1:sha256:2450d0d5dbad63954b49cd5d4d8dbbe36e723e377578f8f3622c9453ee4682c6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzM2FhZmNkMzRjZGY1YTM4ZTFiNzE1NmQ5ZmI0Y2VmZTIwNDBjZWJjZmI5ZmNjNTVhNTgxNTEyOGNlMjViMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmODY4MjViYjU0ZGY4N2VjMzI5MjY3ZTZlMzIxZTFmZjJhMDUzZjkwYTZlMzJhN2M5ZTdhNGUxN2FmZTlkODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0NDg0NjI2MmEyMzM4YWM2Yjc5NDU2NmMxYzFmZGI2OWI3YjdlYzNmN2ZhZTQwYTg2MmY0MjQwODk1MjBmZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1NDg5ZDJhNTM5OTkzYzhhYmM5ODRkNmQwZjc5NWIzY2I1YTQzNGVlZDU3ZDlmMzNkMTA1MzUxMmQ4NzA4NWQifQ"
+          "resource": "repo://evals/ledger/run/runner.ts#L158-L260",
+          "version": "repo-lines-v1:sha256:8f96bf2dec2d11e6c34ee88f17cda9143f7cfc89134ba340cda45f87d66cb552:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1YzdiYWUzZTk1ODY0Y2FkYTZjOGQ3NTNlNWRmZWI4NTkzN2FmODU1ODk0ZTU0ODBkNTYyYjE0YTQ4M2ZlOWM4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJjMjk3YjUxNmE2YTdlOTJhN2U5Y2FhMjZmMDFjNmRiY2NkOTkxYTFkMDAyMjIwNGM1ZTczMGY2ZmM2YzlmMzU1IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5YjRjOWE4YWI3ODdiYjNhN2NlMTc0NWI3ZjdmMDhiMTVhMzZiYjI4OGIxZWI5M2Q2ZTNhY2I3YzAzZmVkNTZiIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkODdjNWIzYTVjYTkyMjM4YTgzZjgzZmYyNGFkMDJlYTczNzExMDBhNDRmY2IxYmE4YzNlODVhZWMwNjMyZTFjIn0"
         },
         {
           "resource": "repo://evals/ledger/source/git-evidence.ts#L55-L166",
@@ -179,25 +187,29 @@
           "version": "repo-lines-v1:sha256:996a4270b1242163cee87b6600010cecaf4f757d16d7f5b1814781cd99c54c9c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1YTM5YjBlNzdjMTdkODE0MDZjYmRjZGU2ZGE3OWJhM2Y3ZjExMDJmODM5YTc1MzBiNzA2YWM0YjVhOGMyNjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2ZmEyZmZhZmJiMDFjNTVlYjI5NDIzNGZlNzkyNjVkYzVjMzYxYzJkM2RjMzVhMjZjYzM2ZjA1ZDlkNGNjZjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViZTIzZjQ4MjdjY2Y5YzM2ZjM5Zjg0ZWZlOTRkYTk1YmQyYjMxMTE1MDk2Mzc2ZWUyYmQyYzNjMDU3NDg2MmEifQ"
         },
         {
-          "resource": "repo://evals/ledger/evaluator/precision.ts#L1086-L1109",
+          "resource": "repo://evals/ledger/evaluator/precision.ts#L1106-L1129",
           "version": "repo-lines-v1:sha256:d333ded5c6f71d9cac73e6afc581facaccb8e720dc4330caeac073c8e2d23b0a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyZGQ5MmM3MTFkNDc2ODA4Y2VmMThhOWY2Mjc3MWUyNTgzMTJkMWNkMGUwMmFkYmJiNmY1ODAzYmI0NjdkMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwZWZhNzMzY2RmMWM1MzczZmJmNTdmZmNhNjFiMWU3YjIyYTZkZjk2YjYxNjBjZDg4ZWQwZGEzMzk3NGRlMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0Mzc0MDI4MTgwZThjNGI1ZTYyMTcwYTVkODljMDVlNjVhNzRiYjgyZmVhYjkxYTVjMDdkMDRjZjQ1N2ZhZGUifQ"
         }
       ]
     },
     {
       "id": "claim_2bfdef5f64ce4b8aa8b83217ce5c4617",
-      "statement": "LEDGER CLI is exposed via pnpm scripts eval:ledger (end-to-end), eval:ledger:reevaluate (re-judge a saved run without invoking OpenWiki), and eval:ledger:typecheck, with flags --benchmark, --results, --system-model, --evaluator-model, and --verbose; unknown flags and missing values are hard errors.",
+      "statement": "LEDGER CLI is exposed via pnpm scripts eval:ledger (end-to-end), eval:ledger:reevaluate (re-judge a saved run without invoking OpenWiki), and eval:ledger:typecheck, with flags --benchmark, --results, --system-model, --evaluator-model, and --verbose; unknown flags and missing values are hard errors; personal benchmarks run through the same command.",
       "evidence": [
         {
           "resource": "repo://evals/ledger/README.md#L197-L224",
-          "version": "repo-lines-v1:sha256:3cbfd0f130c26595a396be407ff386a5a4fb93cfd955de0b81eafeb74dbcc131:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxNzllYjg1OWFiZDBmNTI3MTZiZmFjM2U2OWE5YTExNWRhMTc4ZmE3YjZiNWQxMDc3MTkxZmU2MTBjNDk5NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4MTlhOTljMTFhMmRlODVkYjZjMzFkNDcyNWVjZmFhZWM3NmE4ZjYzOWE2NTNlM2MyZjk1OWEzMmZmNGNjYjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3ZDliMjljYTg2M2MwOTMwODBiMzNiZTlmNTA0ZDVjYTgxOWY3NjgxYmVlNTk5NjMwYzI4NTZiYzgzYjRjOTAifQ"
+          "version": "repo-lines-v1:sha256:51f5e880b134d041aa9c14b7b84e86e01f2dad7a665d5194f482eaec40c3c343:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZmY2JmMjc3OGYxOTc0ZmY4NjM3ZWUwMTExMThlNDZlNDA4ZTI5M2NlZmFiNGVmNzZhMjVjZjYyMjJiZTU4NDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiYjFhNmYwYjY3OWRkMzY5NDcxMzU3NmQ3ZmRlOTY0NDBmMWQ5M2EwZDM1MDYyNzE3MTJkZWYwNDdmN2M4ZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkMjBhNzRmYmNjZTViZDM2YjE3ZTY4MWQ1YWY5ODRiM2E4MWE5YTYwNmJlZmFiZWEwNGUwYjAzZTIyZWYxYzUifQ"
         },
         {
-          "resource": "repo://evals/ledger/run/args.ts#L41-L99",
-          "version": "repo-lines-v1:sha256:cbefcc484b067fb8055446a7851f5b9e87bb2018318281b98cfdeb69ebafa098:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4YWMxOWMzM2M1ZjUxNDc3MDFhYjQ4YzE4M2QwNjg1OWU0ODlkMDQyMTE5Mzc4MWU3MjdkNzJlYTcwODIyMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNGZhOTRmZjQ3OTU2ZDNhZmMxMDdlMWU4MDY5NDI0Zjg1ZDM0Mzg2NWE0YTI0ZmQ0NjE2YmNiN2M1OTU1YjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4ZGZmZGRhZjI3NzE5YmViNTJhYzcyNTQ2MjYzZmNhNGM4MWUzNzIzOWIzMmJiMGFiYTliNDE3ZGY5MzA3OTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEifQ"
+          "resource": "repo://evals/ledger/README.md#L290-L305",
+          "version": "repo-lines-v1:sha256:66ce7cb0756c38825a728241a80bf0bda0553c524c7f215259ebb748fd4781a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1YTAxNmExYmUxYzFiM2ZkNDcyODhmNjUyYzY5M2U2YTMwNTRkNmUzMjkxNDUxODE3MGU3MDJkZGE0NmUyYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzYTk3ZDBlODhiNjg2MjAyZDk5ZDBkMTJlYzUwMjZhYmNlNzViMmQ0ZjA0NTJjZTA4ZjU1OGM1MjU1ZDRkOTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5YzlmMWVhNTFhNmI1ZmY3YTI0Y2E3OWUzOWNkNmVjMTQ4MzA3YTU2MjA4Y2NiYzExYjljZDFkNTYwNTliZDEifQ"
         },
         {
-          "resource": "repo://package.json#L44-L46",
+          "resource": "repo://evals/ledger/run/args.ts#L41-L105",
+          "version": "repo-lines-v1:sha256:384e4e5510d307d19c74082add11e89e71045d19ac80fb1cd104ad925d692cc0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4YWMxOWMzM2M1ZjUxNDc3MDFhYjQ4YzE4M2QwNjg1OWU0ODlkMDQyMTE5Mzc4MWU3MjdkNzJlYTcwODIyMmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ4ZGZmZGRhZjI3NzE5YmViNTJhYzcyNTQ2MjYzZmNhNGM4MWUzNzIzOWIzMmJiMGFiYTliNDE3ZGY5MzA3OTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://package.json#L53-L55",
           "version": "repo-lines-v1:sha256:f6e85f50fd57bdfb8c9721119b8200d11c04af8887dda86022388afd0a7fff9f:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDIzMmJlY2Q4YmM4MTE0ZTY1YjNiN2U3YjliMDk3NTRlZDJiMGQ4MmUzNmM3ZDY2ZTk4YTdkNmE4NmY0YWRkOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2VjYjI0ZjY2MmIyMmM3NDYxZjg5MTgxOTkzNTUwM2Q5NjczMGUxYjM2OWU2ZWJlYTA1ZTcwNzBmOWI4MTgwMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODJiNDlkNTE5ODhkM2Y5MGJlZGM0MTQ3Yzg0YTYzMjRkMTY1ZGYwY2FlM2Y4ODUxODk1NDlhZjE2YzVkY2NjNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGRmMThhZGViZjA3NzYxMWNkOThhMjhhOWYzYjMzMjQ4ODIzODczNDlhMDNmYmViYjM1YWI4Y2I0MDhhZWIzMSJ9"
         }
       ]
@@ -295,10 +307,46 @@
           "version": "repo-lines-v1:sha256:4aeb782cb7ed11ec39dea74f78b258d39c72911af24da6f9eb891235ddc645df:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0ZTM5ZmZjYmJkMTg4NTFmYzEwMGIwNTVkYmVhNjFjYmI4NjMwM2FlMTI5NWVlM2QwNTkzZmMxNjZjMGJkZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4OWJmZTg3NTk3OGEyMTY1NDhkNTkxMDY0MjRlY2FhZjIwNmQ3NWUwM2Q3YmYzMDk3MzhmYWQxNjMzNzFlOWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmZmIxOGY4NDRlYTBmNDcyNWI0Yzc3NDdiODMwZTM4YWQzZDE5ZGNjZDMyYmE0YjcwZWJhZjU2YWNiNWU2M2QifQ"
         }
       ]
+    },
+    {
+      "id": "claim_6a3707ec0d954351a8e49c20f6754ab1",
+      "statement": "Personal LEDGER benchmarks replay recorded connector pulls: PersonalReplay builds a temporary OpenWiki home, runs personal init at T0 and then one ingest per checkpoint over copied raw runs, and RawEvidenceAdapter produces a cumulative, deduplicated, dated evidence corpus (one record per email or Slack message) judged with the dated-evidence grounding mode.",
+      "evidence": [
+        {
+          "resource": "repo://evals/ledger/README.md#L141-L180",
+          "version": "repo-lines-v1:sha256:876164119f83f8aca8d795a5b991e9d6bd4f5f7afca729325068631f42a4e00d:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MzVhZjMzZDdjZjFlZGNlNjg2NWY1NzExOTNhM2I2ODVlZTVmOTg5ZmI0YjhkYTE4ODQ2YjllN2Y5MTBjNzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmNTA1YmJjNGIyOWNiZmZhOWRmYTcwNWZiOTJhMWJiM2E5YWMyYTk4MWM3MDRhZDA4ODYxNGI5MmIyY2ViNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxZDg3NjQ0NjRmOGUyMjY3ZDJlNmYxMjBhMTk3NzViNjVmMTk4YzJkZTUyN2ZlZmQwOGJiYTBjZDAzZWM3MTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlOTNhYWU2Mjc5MTU0MDI5NWVhNTY3YjY0ZGE2MjRiZWExM2U1NWRlOGU4NDQ1YzNmMGI0NWUwMzk0MWRjYjgifQ"
+        },
+        {
+          "resource": "repo://evals/ledger/replay/personal-replay.ts#L1-L60",
+          "version": "repo-lines-v1:sha256:830aa7e8972f157c11ee016513a420f53cf764b758508fe83d882cd5dfaccf34:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwMzc4NTFiZjg0ZWIwY2QxMDE3MTM3MjU5Y2Q1ZTcxOTk2MzcxNjUxMDM0MDkxOGZmN2M0MWZkOTllYjlmZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1NDZkMGFkZmY1ODI4YmIwM2ZhODM1MWZkYTQ3YjY2NDE2MGU5OWQ3NjZhMWQ3YjZhN2YwYmNiOTA1Yjc0NWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0YzIxMzk0MDRmMzgyYmZhYjE2MGVkODYxMzliN2JkYzViOWViOGY5MzQwNDMyM2NjMjdjMzY3MGYwNTJkZTcifQ"
+        },
+        {
+          "resource": "repo://evals/ledger/source/raw-evidence.ts#L400-L440",
+          "version": "repo-lines-v1:sha256:b077749fe1737cd5528f52fa11ee6ca633f2919c3c3bacea542a3d87ecf87c20:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0MDE5MGEzMDU4ZDliMWU3NmIzYzU1MzdlNzI3YjViYzM2ZGIwNTU0Yjg3MWU1MGRiYjhkYzk1Yjg2OTgyNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwZDJiNGI2OTZlNmU5OGZlNjU0MWNkNGQwYzE2MWM5YzY2MjVmYTJkNzU5N2EyMzI4YzhhNDUwMDVhMTdiOGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmMGNmZjAzNzk0MmY2M2Y1ZThkY2M5NmRiY2VkZjAwMGE4ZGU2YTcwNGRkNmM2N2FjMDExNDc2ODk4YjE5ZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkZWJhNWM5YWRjZTVlNWEwNGQ1YzYzYTMxZjIzNmViMDc1Y2VlZWFlOTU0MjY0MzQzYzQzNjMxMGZlYmY1N2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_22c379b40efb48d08988983caf6318de",
+      "statement": "Personal benchmark runs execute OpenWiki in a child process with OPENWIKI_CONFIG_DIR pointed at the temporary home, connector credentials removed, and telemetry off, and structural checks verify the quickstart, front matter, completed last-update metadata, canary absence, home isolation, and trap placement.",
+      "evidence": [
+        {
+          "resource": "repo://evals/ledger/README.md#L156-L172",
+          "version": "repo-lines-v1:sha256:c95be6d15dba7460784505aaa8f95e2b3ea14e056201ecb32c199441c8c8106e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2OGY5MjgzODY3ZmRmZTY3ZjE3Y2MwYmZiZGJlOWM1MzI3YWE1NTk4ZjVlNmEzNjk1ZGFkNmMzNWI1YmFhNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0ZTA0ZjIzMjZlMTg3YWU4ZGUyODZiMDU0YzNhZDY3OTI3YTY0OWU2Nzc3Mjk1NDY4ZTBiOGQxMmJkYzk3MzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5YTk3M2VlYzkzM2E3MDk3MWQ1YmQzMDY2MDA0NmY5YzQ0ODMzMTZiMzliNjk3M2FiYzZjY2MxNDAyNmJiZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0NDc1OGU0ZjZlY2U0Y2Q5ZDEzNzQyMGRhZWM0NjExYWQzZTQyYWYzMDVmNzRhNWUwYTViMmMwNDMwMzkwMTkifQ"
+        },
+        {
+          "resource": "repo://evals/ledger/metrics/structural.ts#L1-L80",
+          "version": "repo-lines-v1:sha256:e4ddbdd531094b3c1d70436da5bc38abafc868dff399c9ae29ef51cb6fe9f3d5:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlNTNhZTcwOWRiNTcyOTA5ZWQ4YjRjNjdhNzViYjE2ODkwMWFkNzk2ZDllYjQ2MzVmYTEyZjU5ZWIxNzI1MTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljNDAxOWVhZWVlNjUwOGM4NmZmNDdiYTE5NTUwMWU1NDE1Y2NkNjBmNzNiYjg3MDY2YzdjOGI5MjVmOGRkNzYifQ"
+        },
+        {
+          "resource": "repo://evals/ledger/system/personal-child.ts#L1-L60",
+          "version": "repo-lines-v1:sha256:e3101907b355d5f69abd4ef4e119b152bedaa71f5ad0da506515935a1b1a76da:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4ZGM0Y2I2Yzc0NmFmM2VjNWY5YTMxYjg0NDI5ZDZlN2FiNmVlMTg1MjVlYTFjOTMxNmNjNjUyMmJhMTdjZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI1ZjM3YzI3Nzc2ODU2MWU2NjExZGY1ZDcwNmM4NDU4NThiNmRlNzcwYzI3ODliYmM4OGM1Yzk5OThhNjlkOTkifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.5.1",
-    "at": "2026-09-14T08:10:27.832Z"
+    "by": "openwiki/0.7.1",
+    "at": "2026-10-09T14:26:08.776Z"
   }
 }

@@ -37,10 +37,10 @@ sources:
     resource: repo://src/scheduling/schedules.ts
   - id: openwiki-source-7cf549510278a62e11ae8280
     resource: repo://test/scheduling/schedules.test.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # CI Scheduling and Self-Update
@@ -101,8 +101,8 @@ Cron validation flow in `validateCronExpression`.
 ## Native schedule lifecycle (macOS launchd)
 
 On macOS, `installConnectorSchedule` turns a validated cron expression into a
-`launchd` LaunchAgent that runs `openwiki ingest all --scheduled --print` on the
-configured interval. The agent is written to
+`launchd` LaunchAgent that runs `openwiki ingest all --scheduled --print` (with
+`--pull-only` inserted when the schedule is pull-only) on the configured interval. The agent is written to
 `~/Library/LaunchAgents/com.openwiki.ingestion.plist`, and is (re)loaded by first
 `bootout`-ing any existing agent and then `bootstrap`-ing the new plist into the
 per-user GUI launchd domain via `launchctl`.
@@ -137,6 +137,13 @@ schedule through `runCronCommand`, which dispatches to the scheduling module:
   expression and clears the paused state.
 - `openwiki cron delete all` — removes the schedule from config, unloads the
   agent, and deletes the plist.
+- `openwiki cron pull-only all <on|off>` — switches the schedule between a full
+  ingest and a pull-only run that only writes raw evidence and leaves synthesis
+  to the next ingest or update (`setConnectorSchedulePullOnly`). An active
+  schedule is reinstalled so its next run uses the new setting; a paused one
+  picks it up on resume, which preserves the saved `pullOnly` flag. Turning it
+  on requires `OPENWIKI_PERSONAL_CORE=1` in `~/.openwiki/.env`, because the
+  legacy ingestion path would never synthesize pulled-only data.
 
 Every mutation only accepts the target `all`; the CLI parser rejects any other
 target with a usage error. After each mutation the config is saved and the macOS

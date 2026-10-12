@@ -42,6 +42,8 @@ sources:
     resource: repo://src/connectors/tools.ts
   - id: openwiki-source-d66b21ba71e9866a0b433226
     resource: repo://src/connectors/types.ts
+  - id: openwiki-source-c6189f89b3f67d0cbf87739f
+    resource: repo://src/ingestion/ingestion.ts
   - id: openwiki-source-3644b45ff9c47926aa74026e
     resource: repo://test/connectors/mcp-client.test.ts
   - id: openwiki-source-a0cec66bd3bed0c13c668ff0
@@ -50,10 +52,10 @@ sources:
     resource: repo://test/ingest-all-connectors.test.ts
   - id: openwiki-source-dbb4558a2e1f7159813c79c5
     resource: repo://test/x-connector-stream-isolation.test.ts
-generated: { by: "openwiki/0.5.0", at: "2026-09-09T08:09:59.193Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
-  - by: openwiki/0.5.0
-    at: 2026-09-09T08:09:59.193Z
+  - by: openwiki/0.7.1
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Source Connectors
@@ -107,13 +109,20 @@ cleanly when invoked without a repo root.
 `createConnectorRegistry()` constructs a fresh map from every `ConnectorId` to
 its runtime; the `CONNECTOR_IDS` tuple is the canonical enumeration. Because the
 registry is rebuilt on demand, it always reflects the current process
-environment.
+environment. Callers that need a different set of runtimes can inject one:
+`OpenWikiIngestionOptions.connectorRegistry` (default
+`createConnectorRegistry()`) lets a caller such as the LEDGER personal benchmark
+replay recorded pulls instead of fetching. Only the MCP-backed connectors
+(`custom-mcp`, `notion`) are agentic: `supportsAgenticDiscovery` is `true` for
+them alone, and the personal lifecycle gathers their evidence during the run
+rather than pulling it beforehand (see
+[Personal lifecycle core](../workflows/personal-lifecycle.md)).
 
 | id           | displayName            | backend      | requiredEnv                                                   | agentic discovery |
 | ------------ | ---------------------- | ------------ | ------------------------------------------------------------- | ----------------- |
 | `custom-mcp` | Custom MCP             | `mcp-stdio`  | (none)                                                        | yes               |
 | `notion`     | Notion                 | `mcp-stdio`  | `OPENWIKI_NOTION_MCP_ACCESS_TOKEN`                            | yes               |
-| `git-repo`   | Local Git repositories | `local-git`  | (none)                                                        | yes               |
+| `git-repo`   | Local Git repositories | `local-git`  | (none)                                                        | no                |
 | `google`     | Google / Gmail         | `direct-api` | `OPENWIKI_GMAIL_ACCESS_TOKEN`, `OPENWIKI_GMAIL_REFRESH_TOKEN` | no                |
 | `slack`      | Slack                  | `direct-api` | `OPENWIKI_SLACK_USER_TOKEN`                                   | no                |
 | `x`          | X / Twitter            | `direct-api` | `OPENWIKI_X_ACCESS_TOKEN`                                     | no                |
@@ -171,6 +180,15 @@ personal/local-wiki mode it exposes:
 Secret values are never returned by any tool; env status is reported as presence
 only.
 
+Every connector tool runs through `reportToolResult`: a failure is returned to
+the model as `{ "error": "..." }` JSON instead of being thrown. OpenWiki's
+middleware wraps every tool call and LangChain re-raises errors that pass
+through middleware, so a thrown error would end the whole agent run — for
+example when the model lists the tools of an MCP connector that is not
+configured. `listRawItems` and `readRawItem` are exported so the personal MCP
+retrieval tools and native personal workers reuse them, and raw-item refusals (a path outside the connector raw
+directory, a symbolic link, or a non-file) raise a dedicated `RawItemAccessError`.
+
 ## MCP-backed connectors
 
 `createMcpConnector` builds both `custom-mcp` and `notion` from a shared runtime.
@@ -194,7 +212,9 @@ The MCP runtime enforces a read-only posture at the tool-call boundary
 (for `notion` only) is served by the hosted `https://mcp.notion.com/mcp`
 endpoint and its name/description matches read-only verbs. Anything else is
 rejected. `openwiki_call_mcp_tool` additionally rejects any tool name not
-returned by a live `tools/list`.
+returned by a live `tools/list`. Both refusals raise `McpToolCallRefusedError`
+with a `reason` of `unknown_tool` or `not_read_only`, so callers can tell a
+policy refusal from a transport failure.
 
 ### MCP client transport and safety
 

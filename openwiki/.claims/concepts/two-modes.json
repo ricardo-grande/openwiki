@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:010302356be3bb752f10256ea65d5decf220ffc648eb521cb577fa0f4c75eb86",
+  "pageVersion": "sha256:9d4d9eaed3162aa4a35dab46b3391b73bf96ee71948747ffad7498bafc08bdb3",
   "claims": [
     {
       "id": "claim_b7c92dfb63db42c6ab9db3a60115cec9",
       "statement": "OpenWiki runs in one of two user-facing run modes, OpenWikiRunMode, which is either \"personal\" or \"code\".",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L26-L26",
+          "resource": "repo://src/cli/commands.ts#L27-L27",
           "version": "repo-lines-v1:sha256:5fbf660a3481165dcac9b1673584bdb7ddf8429aa1e161ab446c960ab321ed37:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWZiZjY2MGEzNDgxMTY1ZGNhYzliMTY3MzU4NGJkYjdkZGY4NDI5YWExZTE2MWFiNDQ2Yzk2MGFiMzIxZWQzNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWZiZjY2MGEzNDgxMTY1ZGNhYzliMTY3MzU4NGJkYjdkZGY4NDI5YWExZTE2MWFiNDQ2Yzk2MGFiMzIxZWQzNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzA0YTVjOGIwMzFhODQzZmViNmIxMDRmNDFhY2RjNjllNGIwMTE1NjI3ZGEwOTYxYjk2NmVlNTNiOTVkNDJlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTI1YjA1MWRjODEyZDFjNmJkNjBhMTNkYzllZDRiZWM3YzI1MWQ3M2Q3NzU1YTU1MjY3ODliZmU2MTVmMzM4OCJ9"
         }
       ]
@@ -17,11 +17,11 @@
       "statement": "Each parsed run command carries both the resolved run mode and a modeSource discriminator recording how the mode was chosen: \"default\", \"option\", or \"positional\".",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L210-L231",
+          "resource": "repo://src/cli/commands.ts#L229-L250",
           "version": "repo-lines-v1:sha256:0c504c01f26f871aa7962462f472ad52cbb9d8e887e7e82c536465fb135e401f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyZjA3ZjQ4OTI5NDMxMjkwNWM5Y2MxOTI0Y2RiNmJkZDE3NWNjMTIwMDM2MjhlZGRiYTk5YzNkZWIxYjY4OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY2MDU5MDI0ZDQ1NjRhZTBmZWJhNWQ3MzhlM2I0OTUxNTczMGY1Mjg5OTdhOTM1ZWQ3ZGNmMDBkODQxNWRkYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxZjE0MzM3ZmUzMzk0ZTQxMmQ4ZDc1NDI1OTA4ZjMxNGEzMmU3MWQ4NWQ0MGExOGNlNjczOTljNzcxYmUwMmUifQ"
         },
         {
-          "resource": "repo://src/cli/commands.ts#L1087-L1101",
+          "resource": "repo://src/cli/commands.ts#L1172-L1186",
           "version": "repo-lines-v1:sha256:50df06ed8514999562ffdb8ae9cfaf6cbb7dec760cbe4b80bea3bc21bc92060d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5NWZhMGYxMTE3YjVlYTQwNDM0MTQwZGRlMWEzNDBjNzIwZGRiZjMyNjIxMmUxOTE4MzhkNGIxNTZkMzE2YmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyYTJjYjI1YTEyMmI0NDIyMWE2MjM0ZWM2NjBhN2I1ZmI3ZjliZGU3YjNiOWUyYjNjNTU5YTBkOTZmYWM3MzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlZWVmZGQ1MTEzZDk5MDU2ZjFlMTlkZTFiN2Q1YmVkZTZlMGEzMDFmOWU4ZjdiZTRlYWQzZjhmOGRhODY2YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiZmIyYjJjNjY0YzNhY2Y2ZDBjNjI4NzhhMGM2Yjg3NGE4ZjVmOTUwNDQxYWViYzI2OGZkNTE5NjBjZGM4YWEifQ"
         }
       ]
@@ -45,7 +45,7 @@
       "statement": "Mode selection happens at argument-parse time: a mode word as the first argument selects the mode as a positional, otherwise parsing defaults to code mode with modeSource \"default\".",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L621-L626",
+          "resource": "repo://src/cli/commands.ts#L671-L676",
           "version": "repo-lines-v1:sha256:767f9bb2c5260daf8d0e0f5c0b70010134e3e2d8d98690375b35325577de06f1:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTA4OTJhMzU0MWQ0Mzc4YzBiYjI1NjBhMTY2MzY5MDExZGQyM2IxOWUzMGI3YWY0ODM4YjE2YzhkMjMzZDRjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTdkODYzMmU1NGU5Mjk4YWJiOTU4NzI3ZTJkNTE0MDhhYmFmMTM2NjAzNTM3OTEwMTQwYWJmNjViMzBhYjYxMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2NlYmQ3Yzg1OGFkNGI1Y2QxYjQ3NzVkYTBhNjUwMTI4MGNjZjI4ZDlhNDEyMGEzNzlkMDc5MTNhYzNkNDlkYSJ9"
         }
       ]
@@ -55,7 +55,7 @@
       "statement": "When an init or update command is requested while the mode is still at its default source, the parser explicitly pins the mode to code, so bare openwiki, openwiki --init, and openwiki --update run in code mode.",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L1075-L1077",
+          "resource": "repo://src/cli/commands.ts#L1160-L1162",
           "version": "repo-lines-v1:sha256:8419512428149639cc9fd589d04f36b939166fbe0587d04804d2165a659eb992:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWRiNjg5MzRkMDcxN2FjZTM5ZDA0ODJhNDkyYzhiZTRkYzg4YTFkNGNhOGU5Yzg0MDM4MmJiOWI5YTA1NWM3MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlNTc4OGQ1ZDlkNzNkMjRhODFkYmMwYTVhNzRiZmE4MmM5YzNiM2FmOTllNTJhZjc5NmU5MGI0NjhhOGEzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmVlZWZkZDUxMTNkOTkwNTZmMWUxOWRlMWI3ZDViZWRlNmUwYTMwMWY5ZThmN2JlNGVhZDNmOGY4ZGE4NjZjOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjEzMGIyYTk0ZTRmMTc1ZTNmOTA2NWMzMWJiNDllZDY5NzM1Y2RkMzZjNmMwYTY2YjIzMjQyMGIyZmVmMGQzOSJ9"
         }
       ]
@@ -65,11 +65,11 @@
       "statement": "A mode word in the first positional slot selects the mode even when flags precede it (e.g. openwiki --print code --update); because the parser's default mode is code, without this positional promotion the word would be swallowed into the user message and the run would silently keep code mode (so openwiki --print personal --update would update the repository wiki instead of the personal brain).",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L1041-L1053",
+          "resource": "repo://src/cli/commands.ts#L1126-L1138",
           "version": "repo-lines-v1:sha256:5e4ec6caea62daa6961e61c2578f9b0aae53406aabf31b32ae050db1ddc517e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3YjE2YTg1YTJiOTA0YmUzZDhlOTNlNDc5Y2RjMzhhNTUyYTFkNDJjODcxNGViOTVkODZlYTAzNGQ3OGQzNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmM2E1MDYzMzBiMGU1NDBiZjM1ZDYwZGM2ZjZlNTNmZDBkNmE0ZjllNGM3NGIyOTI0NGQ0YzMyZmNjMTkxZjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjZThkY2U5YTYwOGY4OWI2YWE2YzAwOTkxM2JjNzA3OGExMzQ1YjM4ZjY0YWFmZWNmNjllMzRjZTI2YTgwNjkifQ"
         },
         {
-          "resource": "repo://src/cli/commands.ts#L621-L625",
+          "resource": "repo://src/cli/commands.ts#L671-L675",
           "version": "repo-lines-v1:sha256:ad4df06a369db0b6aff864442860da7170d4be96acac38ad88fa675765f46937:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTA4OTJhMzU0MWQ0Mzc4YzBiYjI1NjBhMTY2MzY5MDExZGQyM2IxOWUzMGI3YWY0ODM4YjE2YzhkMjMzZDRjMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDA4ZjIyYWQ5OGVlZjRmYThkMjA0Mzc1ZjJjMzcwNzNkZjliNzA0ZGM2MjM4ZjYxZDk1MjZiMjJjYzlkNGNjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTdkODYzMmU1NGU5Mjk4YWJiOTU4NzI3ZTJkNTE0MDhhYmFmMTM2NjAzNTM3OTEwMTQwYWJmNjViMzBhYjYxMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5MjllOTFlMGY5OWMzZTgyNWRlNjliNDM1ZmI2NDg0ZDFiMGExZGYyZjQ2NTYxYWJmMWEyOWYwNDE4OGI4OCJ9"
         }
       ]
@@ -79,7 +79,7 @@
       "statement": "resolveExplicitMode rejects a second explicit mode that conflicts with an already-explicit one with a \"Conflicting modes\" error, while accepting a repeat of the current mode or an override of a still-default mode.",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L1104-L1120",
+          "resource": "repo://src/cli/commands.ts#L1189-L1205",
           "version": "repo-lines-v1:sha256:7ca5b465d44d95c0ab4ca887cfc4055538aec19d1fc317585bbc9134c080106f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NWM5NmMyMmU0Njc4MjdiMTMyNGU0NzIwMmU5YzQ5OTNjNTY3ZDNmMmFkZjM0N2QwYzZkYmRmZmZlNjhkZGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExZDVjNGY4OTM0ZmI5YjM2ODk3MzE2MGM0ODkzNWVhNzFkMTljYmQwYzdiZWZjNDczYzk5ZTg3NzMyZTQzZGEifQ"
         }
       ]
@@ -103,18 +103,18 @@
           "version": "repo-lines-v1:sha256:8e6fe0c04e0cf23ad8e358ab6285da5729f5a2813ec766c7c39a23c11382be1e:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWY2YzA1YzAwNTUzNTA2ZTUwMzRjOGU5NjU3ZWI0Y2FkMmQ0YzBhODUzMjdlOWQxMzgxMmMxMGYwM2VlZmE0MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjZhMmM1NzhlODI3NTgzMDdhMzQwYTViNTNjMDhjMTA0ZTc2NGU0OTljZTA4YWFlN2QxZDVkMDI4YjJhZWUyZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTg1YmU4NDJkYzc2MGQ5MmY4NjMyZTdkZjk3ZjEyMzcwZjI5MDMzNmM5OTg5NDllNmQwN2M3NDdmZTI1NjNlMyJ9"
         },
         {
-          "resource": "repo://src/agent/utils.ts#L797-L802",
+          "resource": "repo://src/agent/utils.ts#L804-L809",
           "version": "repo-lines-v1:sha256:68f17356422c8aa019abe0665e82b3d3fe36cd50467b01c7dc69dad30a94851a:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmExNWZiNzA3M2I1YjQ0M2VlZTBjNzc4YTIyMDY1MDJiMzVkMWYxODMzZjUzM2M0NjA2Mjg4OWVmZGJmOGU5ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmI1ODBlOTY0ZjgzYTQ3M2Y0M2Q0NDM4NDYyOTQ5ZDY4YjU2MDBmZGE3ODdmMTYzNzQ1ZDAwZGU4OWNiZjM2YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjdjZjE4N2Y1ZTU0ODA1N2I1YjdmMWU5Yjc5YzhiNGEwMDVjMmRiNWI5Y2NjZmE0Y2EwNGRkMTIwZDk1YjgwOCJ9"
         }
       ]
     },
     {
       "id": "claim_07666b5e78c34af7a8dbae1369025d5d",
-      "statement": "The docs-only write boundary refuses writes outside openwiki/ during repository init/update runs but is relaxed in local-wiki mode, where writes are always allowed.",
+      "statement": "The docs-only write boundary refuses writes outside openwiki/ during repository init/update runs; in local-wiki mode the openwiki/ tree check is skipped, but an optional writableWikiPages allowlist still restricts which pages a worker may write.",
       "evidence": [
         {
-          "resource": "repo://src/agent/docs-only-backend.ts#L577-L599",
-          "version": "repo-lines-v1:sha256:d4d5dee1a013dee66812128826564986be035574261dc47d35af6b17e15b89ad:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmMmEyZjk5NmYwOGU2ODBiZDI5MjEzNWE2ZmE0OTc4YmRhMjZlNjAyZDg0ZjMzY2IxZDU5NDc3NWQ0MzA0YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1NzcyZTYwMzAxOGU5NzRiM2M1ZjlmYTcwYTBlNGE5Mjc3OWE2YmRiODA2MDk0ODNkZjQzZjkzY2NiMTQzMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExZWRhM2Q3NjNjZmQzYTgxNWVhOTY2ZTEzYmI3NjcwZWE3MTY2YTZmZTJmNGYzODI2MDU4OWJhZGNhNDc5MDcifQ"
+          "resource": "repo://src/agent/docs-only-backend.ts#L577-L611",
+          "version": "repo-lines-v1:sha256:af365ecfd8501dc74bee15cd497f2c4c205566ed6e57694464eba81b3242871f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM5ZGM0NjBhZWViM2JlMGMwNjEwNzI5NWU2YjhhYTJhZjIyZmM2Mzk0MmM5NDMzOTY5MzE0ZTVkMTQwMWI1NTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkMDIxNGZlZjM5YmM0ZTM5NmM3OTk3ZjJkOTgxMjA1YTY5NTFjYzI3ZGFhZWYyZWM0NTI0OTJkMTI3MWZmZGMifQ"
         }
       ]
     },
@@ -123,30 +123,30 @@
       "statement": "Grounded Claims state is implementation-owned only in repository output mode: generic reads/writes/edits/deletes and discovery into Claims state paths are refused via getClaimsOwnershipError/isClaimsPath, and shell execute commands referencing Claims state are rejected; isClaimsPath returns false unless outputMode is repository, so the boundary does not apply in personal mode.",
       "evidence": [
         {
-          "resource": "repo://src/agent/docs-only-backend.ts#L557-L564",
+          "resource": "repo://src/agent/docs-only-backend.ts#L558-L565",
           "version": "repo-lines-v1:sha256:5aa130a76dbeeffee4b633fc08b295301cce80822a4a67dbd4e2606416995a5a:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzY3NGZiYmFlYWU4Nzc1OTIxYWI3NmU0NDc5MDViNWVkYTI4YTI5YmY3ZmU5NDYyNTA1YzNmZjNhYjgxNTlhMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg5M2Y0MGUzNzgxZWI4OTZjODJkMDQ2YTA4MDY3YTExZTM1Y2RmMmYxZGZhZjI2ZmVhOTBiOGRiNjY3NjQxMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGYzYTUwNjMzMGIwZTU0MGJmMzVkNjBkYzZmNmU1M2ZkMGQ2YTRmOWU0Yzc0YjI5MjQ0ZDRjMzJmY2MxOTFmNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTVkMjY3MDYxNzc0MGFmNDYzODZjNjc5MjA5OGI0YTBkNTkxMDdjODQ1YmMxYTdlMTFiMmYzZmZiZWFkODliMiJ9"
         },
         {
-          "resource": "repo://src/agent/docs-only-backend.ts#L622-L638",
+          "resource": "repo://src/agent/docs-only-backend.ts#L636-L652",
           "version": "repo-lines-v1:sha256:76185d27e103f6e1c60ef0f559c7285ec843246c049017f7edd2a797fdbfc6a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM1MTQ1NjNhOTk0MzEzNTE1ZWI2NjUyMmJhN2RlMjkxZjI0YmY2NTk2MTc2MzAzN2Y2M2U3OWI0OGU5YzI2M2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4MDVkZDM5MTAyNzI5NDhiNTExMGVmM2I5Njc0ZTJmMTQ4YThmZjU1ZWIyZWM2YmZhYmUyZjliMGM1ZjFhMWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiYjE1ZTk0ZGU0MDlmMjRhOThmNDJhODVjODZmNGZiNGEwNGM0OGE3OGQ3OTkwYTc2OWE5YzIxYmI1YjAyM2MifQ"
         }
       ]
     },
     {
       "id": "claim_2acfcd0e9a1f4778b02f0289bbb7429f",
-      "statement": "Host-driven coding-agent runs currently support repository code wikis only, not personal brains: the MCP lifecycle (openwiki_begin through openwiki_finish) operates on a resolved Git repository root and openwiki/, exposes read-only repository-wiki retrieval plus the page-job generation queue, and never hands the host connector ingestion tools, so the host researches the repository with its own native tools and connector-sourced context (including LangSmith) is not yet supported in that path.",
+      "statement": "The repository MCP lifecycle (openwiki_begin through openwiki_finish) supports repository code wikis only: it operates on a resolved Git repository root and openwiki/, exposes read-only repository-wiki retrieval plus the page-job generation queue, and never hands the host connector ingestion tools, so the host researches the repository with its own native tools and connector-sourced context (including LangSmith) is not yet supported in that path; the personal wiki is served by a separate openwiki-personal MCP server and skill.",
       "evidence": [
         {
-          "resource": "repo://README.md#L104-L108",
-          "version": "repo-lines-v1:sha256:7f8f5bcbcee5c78b025c9b357a2f3e4d2bf7bb23b4ef9098983447b348c965d3:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2UyZDYyZWE1YTZkNjAwMjI3MDJhYmM3NjA0NjZhNzhkZDQ1NmZhMWY0YWMzYmUzYjUzYTg4Mzc2ZDA0YzA4MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWU4YTZlZjk2NGM5Yzg2Mjg1ODk3NDVjMzEzNzUwODFmODU5MDRiODdlNzk0YWQyZTdlM2RjN2MwOGJlMDc4ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODE5OWVjODgxODA4OGI0MDY3MTZkMDk3NzA1MDYzMzIxZTE2MzIyZjg5NjAxMTMwYmNjZTJiNWUxNDI0MWU1NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTg0NDRlZDRiYTJiNjk3NDhjM2IzMjNlMGI5YTkzODllYmRiNTJkZTczZGM4ZjM2YjI3ZDk5MmY3OWViMTFjYyJ9"
+          "resource": "repo://README.md#L104-L112",
+          "version": "repo-lines-v1:sha256:4da66b9af94540c4c5f270badb83d6aef9b29e24ba446d1be434c985e984deee:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2UyZDYyZWE1YTZkNjAwMjI3MDJhYmM3NjA0NjZhNzhkZDQ1NmZhMWY0YWMzYmUzYjUzYTg4Mzc2ZDA0YzA4MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmQ4MTM4NjI2NGM3MzhlZmYxZGE0NDViNjk3YzM1NTg2Zjc5NzhmMTgyZTMzNGVjOTMxOGJmNTFmMDc3NTNmNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODE5OWVjODgxODA4OGI0MDY3MTZkMDk3NzA1MDYzMzIxZTE2MzIyZjg5NjAxMTMwYmNjZTJiNWUxNDI0MWU1NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjZmYzYzZTQyYWE1ZWE2N2Y5MDdhMzAxNjU0ZDI3ZTM5MGRiNjI3OTk3ODY5Mzg1ZWI3ODU4NzAyNDJhYmExOCJ9"
         },
         {
           "resource": "repo://src/integrations/core/retrieval-tools.ts#L29-L59",
           "version": "repo-lines-v1:sha256:e13d9d162d87bc31ea8dec645413e562351f5bf8d0724aca4dadc9d72759f933:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyMDNiN2MzNWQwNzMwNTNkODZlZjRlZTc1Y2E2MDBlYTY1OTQ5YTJlNjJlMTQ2ZTE2N2NmYjdhZTJmZGE1OGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3OTI1YzJiMTg0OWJhZTcwNjVjZDM2Y2Y5NzYwZWVjOGMyODY0N2NlMDc3MmU1NTU3NWY3OWU3NDdiY2I2NzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzNzA5OThjZDY1MTU1YWYxMmVjMjQzNjI0Nzc2NjE4ODBiOWI2NDFkNTI2MDE0NmQ3OTU0NzVjMzRkY2FhMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxOGEwYTljMjcyYzJlMzBjODNmMTQzYTA1ODc0NjA5ODdhNGY5Y2Q2N2YxNmRiM2QwZGE2YzU5YzEyOWRmN2EifQ"
         },
         {
-          "resource": "repo://src/integrations/mcp/server.ts#L11-L47",
-          "version": "repo-lines-v1:sha256:a787ed6f3b9c3e8d03f22737a1bd087a6b854cc96dea66d5a3b7be7ed3eb6787:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3MDU1Y2RmNzg0MDQyYjNlMDhlYmVlMzI4NTI1YjYzODUwYTcwOWVhMWU2Y2I1YzlmYTIyMzJmZGZhZTM2ZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlZDYwOTI1MzgyZDA0YzVkYTc4M2UzZDVhMTMxMTIyYWZkMGIxNmJiMjUxZmRjYTY2YjQ2MGU1MWNmOTdiYWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2YTJlOGIwMzNjMzE5NzNkYjg1ZDcwNDkwNWE0YzU1NzgxN2ZlNjZlMzcwZjJlY2I0YTk1ZGUxNmVlMGY0ZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1MzQxZGYyNTUzMmYzNDFjZWYzNGNiMzQ4ZTA1MmQ2MDYwNzM2YTQzZGRiY2QxMmU3MDVjZjcxZmU5NzcwODAifQ"
+          "resource": "repo://src/integrations/mcp/server.ts#L1-L50",
+          "version": "repo-lines-v1:sha256:8eeb0e5b3f159f8606c9fdeba049a821d70db4d8b453016d0bd30f317b66b2ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MDVjZTc1MTIyOGI4MGRkNTQ2MzVjZWZjMTVkNDM3ZjNjNmFjYzBmZTk5NjNhODNjMTI1ZGVkMDViM2U5NzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZjIyY2YwNzMyNTkyYzI0NzE0MWNiZTYxZWZhMTEwMTI2MTJmNWEzMTIyYjlhZjliYmFmNTJmNTcyNGQxOTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzMjFhMTQ2OWMwNWEyYjg1NmYwZGIxZmJkYTE5MTJlMDU2YmNhZjIyNGM5ZDMyODVkYzYwOWY4MWY3NzA2MjEifQ"
         }
       ]
     },
@@ -165,11 +165,11 @@
       "statement": "Personal ingestion runs execute against the local wiki directory as their working directory and use the local-wiki output mode.",
       "evidence": [
         {
-          "resource": "repo://src/ingestion/ingestion.ts#L177-L190",
+          "resource": "repo://src/ingestion/ingestion.ts#L460-L473",
           "version": "repo-lines-v1:sha256:0132b170c3b297344ed3b2f63857100c5c82f53bf10666072b5e68dc1cd5dabd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkZjMzNjcxN2Y5MDQxZmJmOWVhN2ViZTg3MmU4NjNiMTMzYmY2M2U1YzUzYmMxODNlMDM4ZWIxMWI2M2VlZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVkZjZjZjNhNjc0NGM0N2U4Yjg5MDg2ZmZmMTNlMTg3ODczZTE5ZDRkOThlMzM0M2NhOTkyODFhMThiZmJhNDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiZjhmNmM0ZTY5ODA3Mjc5YjQ1YmY0NTE4NjQxMDliNDI1NGM2YjQyZDcxYTE1YTU3OWFjZGY3YzM4N2NlNzcifQ"
         },
         {
-          "resource": "repo://src/ingestion/ingestion.ts#L91-L104",
+          "resource": "repo://src/ingestion/ingestion.ts#L175-L188",
           "version": "repo-lines-v1:sha256:4931c380016e9bb8aa0fd4a9064bbbd3b295750554448865c85afe65654065d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1OGRjNjUyYzk4ODNhNTQ5MzkwMzkzNGRjZTE4M2EwODEyYWIwYmMwNGE0ZWJiOTUxODE3YjM1NTAxZjI0ZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFkYjNlN2NkMGMzYTYyMzA0NzY2ODE2MWQxMDRlOTlkODYyMDljYTNlNzc1NGEyNWIxMTlhNDkwNzg3ODA0MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU2Y2Y5YTczN2FhMzYxZmRkZDBhMjIwODhkOGE4ZmQyZGIxNDQzODRiMWY2YmVjYzZmZjdlZGZiZjI1NzE4YzkifQ"
         }
       ]
@@ -209,7 +209,7 @@
       "statement": "The OPENWIKI_CONFIG_DIR override merely selects a separate state directory; OpenWiki does not move or delete an existing ~/.openwiki directory.",
       "evidence": [
         {
-          "resource": "repo://README.md#L305-L311",
+          "resource": "repo://README.md#L307-L313",
           "version": "repo-lines-v1:sha256:ecf3c524d5f2cadc27fe91dd80d487241533bd003dcf6b5aa6a6b6b7c16c8521:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYxMTZmYTEzMzQxMDY3NTVjNmFiYjU4OGEwZWJiNjZmN2NhNmNkOTRkMmVjMGM4NmRkZmE5NjVmMzY4Njk4ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjJjNjQ4MDkxMDk0MmFjZWUwMzgxYjQ5MzRhODZlOGIyZWU5MzhmMzAyODExMjk3MTRjNDlkZGE0OTE0MjVkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTQ3OGI3NmNjNzE3ZmM1MzhjYTMxMGU4YmIxNmIyOTQyOGU3MTExY2ZiMjMzMWZiMzhlYjRhMzc5MmM4ZDQ1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGViOGExZmUyMjc1MjRkZGMxNTM4NDQ4NDU2MmZkZWJhMTJjNTkxOTM4ZTkzN2YxYTE3MjQ5NzljODU4ZWVhNyJ9"
         }
       ]
@@ -219,26 +219,30 @@
       "statement": "The --mode <personal|code> flag (and its --mode= form) validates the value and sets the mode with source \"option\", rejecting an unrecognized value with an \"Invalid mode\" error.",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L909-L958",
+          "resource": "repo://src/cli/commands.ts#L994-L1043",
           "version": "repo-lines-v1:sha256:c0d1be879c84ffd86237d746dc9f24ccd6db8237b879bf30466c9e655078bd67:eyJzZWxlY3RlZExpbmVDb3VudCI6NTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2MjhlYjdjMTIzNzA4ZTBmNzhiNWVhN2MyMDdiYzJjOGU1NmRmOTEzZDRlNjZmYTk5MTYzMDYzM2NmYzliNWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3ZjdjNmYxYTFjMGNjOWUyZmI0ODYzYmNhMDEyZTMwZmYyNjMwOWY5NTZhM2Q1YzIwMzExMDljOWIxNDJkZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4NWIwODkyYjVjMTk0NWU5NTliNDEzYmQ2NTkwZjU2ZmM1MzBjMzQ2NDhkMDA4Njg0ZTRlZmRhYTA0YTkwNWYifQ"
         }
       ]
     },
     {
       "id": "claim_23693b29d3214a8ca8cfa8226f9a838b",
-      "statement": "Both CLI dispatch paths (the non-interactive runPrintCommand and the interactive App TUI) compute the output mode from the parsed run mode via getRunModeOutputMode and the working directory via getRunModeCwd, then pass outputMode into runOpenWikiAgent's run options.",
+      "statement": "Both CLI dispatch paths (the non-interactive runPrintCommand and the interactive App TUI) compute the output mode from the parsed run mode via getRunModeOutputMode and the working directory via getRunModeCwd, then pass outputMode, together with a confirmPersonalTakeover callback, into runOpenWikiAgent's run options.",
       "evidence": [
         {
-          "resource": "repo://src/cli/app/app.tsx#L116-L117",
-          "version": "repo-lines-v1:sha256:c30f2f3e23ad7b34c9480d491180c64c4e79cfbf225a7da00d06bf2b54897844:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTVkZWU5NjhjNjY3MjU5NDZlZmJjOGViYmRjYWE5ZDI4MmZhMTVlMWFlNzA4ZDU2ZDFmM2I1MzYyYWRkY2IxNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTRlZjMwMjU0NGI3OWM3ZmRhM2ZlYzM0ZmEzNjlkZTExNmJhMTgwZWMzYzJkYmE0NzdhNjkxZjY4NWE2MjI5MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmZkM2NlYmI4YWQwNjhmMTBlYTZkMmMwNjM5ODFhZjY3Y2VhMGQ5NzRiYThkYjA1Nzg2ZThhY2YxODI0ZGE2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGZmMTcwNTFmZDY0YWZmZWQwY2UxYTM0MTg3YWRjZDc2MDFjYzc5ZmVhNjA5M2JlZDdiOTQ2MTlmYzc4NTI0YiJ9"
+          "resource": "repo://src/cli/app/app.tsx#L118-L126",
+          "version": "repo-lines-v1:sha256:a270eaaad637e57b53fb9a603a8195cd33adea9353128112813a49f796d0cae8:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGI4NTA2N2EwMGI1YWEzYTM0N2QyODRmZDBkYzhlMDkwYTc2ZTVmMGEwNDllOGYyYzdmMjY4MTcyYTdhYTM2MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzMxZjRjMWE4ZmNlM2QwZDY2ODdlODg0ZTdmMjE4NjllODAzZjQ2YjhkMDZiZGE0ZmZiMzRhY2IxNjQ0Zjg5YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmE3ZTNiMGZlOGRhMDI3ODNlYmM0NmQzYTE3ZWU1OGM3OWM0ZGVmNmZhZDIxOTdlZTNhZDNlY2QyNmUwM2ZhMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzQ0ZDZiMGU3Y2ZiOWRhYjIxNDUyZDhkMzZkMzBiNmViMjRiMTA2OThkMDExMzRmNmI3OGU2MWIzYzVlZTg4YiJ9"
         },
         {
-          "resource": "repo://src/cli/app/app.tsx#L558-L567",
-          "version": "repo-lines-v1:sha256:c0a225436b4197d7100e97c57ed724b07ca4a4bb99eed3baaf13c744d9c1e6b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkZjMzNjcxN2Y5MDQxZmJmOWVhN2ViZTg3MmU4NjNiMTMzYmY2M2U1YzUzYmMxODNlMDM4ZWIxMWI2M2VlZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkOWUxMjU0NjQyNTU3NmQzZGVhZThjOWI5ZGJmMTI4ZDVkNmRkYWY1ZDdmZTg1NzkzNDkyN2RlZmZhM2I5ZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFhODBiYjMxYjUyMDZkMzU5MTdmNWYzMWE5NzE4NmUwODU4MTVjNzE4YmVkZjE2MzFmZmE4NmZlM2NkOGNhNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlOTMyM2Y2ZGJmMWVkNWY0MTMyODY3YWZhNDI4MTJmYjVlMDkyODRhMTBhYWFjYTI0YTZlOGE2MGVjMjY5YzkifQ"
+          "resource": "repo://src/cli/app/app.tsx#L155-L175",
+          "version": "repo-lines-v1:sha256:68d7f0287c82c2b0e866421e1f20742057fe7d0bd80101ec574276a92b8c6c72:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmMmEyZjk5NmYwOGU2ODBiZDI5MjEzNWE2ZmE0OTc4YmRhMjZlNjAyZDg0ZjMzY2IxZDU5NDc3NWQ0MzA0YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0ZGIxNjg3NWI1NTY0YzI1NzJhMDY1MDA2MGFjZGIxNjJiODk0NWM2ZmY0ZTg3ODA4MWI4YmQwZTM5YWQ2NzYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI0ZThhMTgyN2FhZGZkOGIzZGY4MmQ1NTUxOWZlNTIzN2M4M2Y5MzA3MzQ4YjhkZWMyZGQxMTE3ZDBlNjhlMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU3NTRmN2NhMGMyNjE3YzhmZWQ3NGZjNmI3ZTIwNjJlMjUwZjU5OWRiNWU5MDRkNTU3MzJmNWVmNjZjODI0ZDEifQ"
         },
         {
-          "resource": "repo://src/cli/runners.ts#L267-L284",
-          "version": "repo-lines-v1:sha256:0be7cfd8763cd0edce46ad872c5a5e90d6d2664cdf9fa9ee236acea6080787aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0MjkxNDJkMmE0NjUxYzY4NTM0OTBjMDJhYmE2NmJkOGMxYTAwMzEzNjJjYzQ4OTVjZDJmMTg0NjIxNTkwNTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMGQ4ZDU4YWRhOTBlYzZhNTQwMThhYWFmNThjMmNhYzljNWM0NDJjMWY3M2E4NWFhOWI1MmEzNGE3NzJhOGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhMGFjMDllNzFiMDM2Njg2NDc1ZTI0NWMwYjFhZmQzMWI4YjAwZmIxMzQ0NWM3N2IzOTI1YzI1ZDFmNGQ0N2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3OTc5YjBjYjA5ZDQzYzkzZTI1ZTMyYTIwNTA2NTM4MDgzYTUzYmVmMTAyNmY4ZjRlNDkwMTQ2ZWQ4NDk2MWIifQ"
+          "resource": "repo://src/cli/app/app.tsx#L590-L602",
+          "version": "repo-lines-v1:sha256:f5027d054e974fd01ab80ee9d0c327fa8dbc18a0b9f459e53dac3b7862a8ec78:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUyYWE2NDE0MThjYzAzNTYzZDM1OWU4NGY1YjljMTAwODAxNzJiNzQ5NjZkYjg5YWIwMmU5OTU1NmIwNWYzMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYwMDZiYjQ1ODQzMjQ5NTdkNDlmYWU0MWNjNjk4NDUyM2ZmMTZiZjY3MmE3OTY0MWFiOTI0NWIwMzAyYTEwNWMifQ"
+        },
+        {
+          "resource": "repo://src/cli/runners.ts#L298-L326",
+          "version": "repo-lines-v1:sha256:25061ddecb8249848e56782d34668b990386e19925ae00435268187d0cce2099:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNGJiZGEzN2E5NmI2YzgyOGM4YzdkODhmZmUzY2Y4ZDU0OTcxMzNlYzFhOGRiNWJmZjY4ZGVjMjdmM2M2YzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5YzVlMjYzNmQ1ODZhNzRhMWExOWFkNWQxNGUyMzRhM2RkOGIxNDEzOWJjZmY5OTQ4ZDBmMDNjNjViNTdiMDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyMmIxNTc4NmFlNjI1NWE5MzI0MTUxOTNhYzRjYTI3OGRlNThkODgzZDRhZWQ4Njg1MmM5NTY0ZDZjOThiM2MifQ"
         }
       ]
     },
@@ -247,11 +251,11 @@
       "statement": "Inside runOpenWikiAgent, outputMode defaults to local-wiki when not supplied; repository init/update is routed to the native page-job generation runner instead of the conversational agent, and .openwikiignore is loaded from the runtime cwd only in repository mode (personal mode uses an empty ruleset).",
       "evidence": [
         {
-          "resource": "repo://src/agent/index.ts#L168-L189",
+          "resource": "repo://src/agent/index.ts#L179-L200",
           "version": "repo-lines-v1:sha256:0505957d1077443915aa311edd0c65ff020591fef15c4ddd2457e0b4f4aa63a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkZWQ3NWU0MTU0OWI5NGUwYmEwYjdlNjdkY2VhNDBhMzg2MDMzNWZiNTM3NDZhMmQyMzAwMWI3NDNlYzA4YzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4MTA0YWI0MzIwYTQyZGU4YmExNDQ3NjY0OTBhNTgyYzdkODZkODdkOTU4YzRhOWJmMDI4OTk3ZjFkNGU0NjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5MGRiMmEyNGIyNjJjMGVkYjAxMmZiNWIwYjYwMWZjNjA4YzUxYmQ5Njg0OTNhNjg1YjNkMjgwM2UzYTA5NjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI2MzFiNzk0NDdjNTNkMGM5NWQzMzQ5MDViZWZkOWRmOTEzOTNlYmYzZGZiZTFmNGI5N2ZlNGM4MzkwNTM3OGQifQ"
         },
         {
-          "resource": "repo://src/agent/index.ts#L242-L245",
+          "resource": "repo://src/agent/index.ts#L245-L248",
           "version": "repo-lines-v1:sha256:da4bdc7af236e3f5a32e6ae43589d0f0ff8ed0e882f773ef02c2b85f60bd8db0:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDg2YjRiYmYyMDM2YzMzZTQ3MGIzOGMwOWNkZjk4NTljOWM0ZGQzZWM3NTBhMGQwNTdjNDZlOWQwMzkxMDMwNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2Q1NDFlMjM2ZGQxMDVkNDhlOWViNDEzMmU3ZDAwMWQ3YWMzNzdlODgxYWMwNTcyZTZmNGQ0OTNiYzJjZWYyNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTdkODYzMmU1NGU5Mjk4YWJiOTU4NzI3ZTJkNTE0MDhhYmFmMTM2NjAzNTM3OTEwMTQwYWJmNjViMzBhYjYxMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDJkODhjNmJkYjE1ODhkMGEwYzM4Y2I3MWVmMjlmNDlkNzVhYzQxNzFiZTQzZWE4NzY0ZDk4MDI5YTk4ZWFjOSJ9"
         }
       ]
@@ -261,7 +265,7 @@
       "statement": "createOpenWikiAgent refuses repository init/update commands, directing them to runOpenWikiAgent and the page-job runner instead of the low-level agent factory.",
       "evidence": [
         {
-          "resource": "repo://src/agent/index.ts#L417-L421",
+          "resource": "repo://src/agent/index.ts#L485-L489",
           "version": "repo-lines-v1:sha256:ba5513f0965236838b576bafbf8fca5016e56508a17d3c3f6c481e13189e5f8d:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTVkZjEzNWZkNjMwMGI2N2JmZDYyYzM5OGM4OWExNTA4NmFjNzhjNDY2MjI3ODVmZjA2MjQwNTlhYTAwZWNlYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjdlNTc4OGQ1ZDlkNzNkMjRhODFkYmMwYTVhNzRiZmE4MmM5YzNiM2FmOTllNTJhZjc5NmU5MGI0NjhhOGEzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTVhZGM3NDFmZTFmM2I0YjU0NGFkMjliOWFmNDU3NGFlNDEyYWY2MWJjZjEzMjIxYTBkZjBkYjc0Njc5Y2I4NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjgzZTM1MzBkOTc1YTUwYmZhYjNjOWNjMGUyODBlNmJhMjcxYjMwMDZkM2MzNWMwNmU0ZDc0ZTgxZDI2ZWI2MCJ9"
         }
       ]
@@ -271,18 +275,32 @@
       "statement": "In personal (local-wiki) mode, OpenWikiLocalShellBackend.execute denies every shell command at the backend level with a distinct 'Shell execution is disabled in personal mode' message, enforced because personal agents consume untrusted connector content and must not reach the host shell even via delegated or stale tool calls; the conversational agent graph additionally restricts personal runs to a filesystem-only tool middleware.",
       "evidence": [
         {
-          "resource": "repo://src/agent/docs-only-backend.ts#L544-L555",
+          "resource": "repo://src/agent/docs-only-backend.ts#L545-L556",
           "version": "repo-lines-v1:sha256:aaec0804e24ea471b67af97d3ce06eb81339eecbb167fb93350cc5ace8c23867:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MjU0NmIxNGFkNjhhZjY1OTQ4ZmZmODQ4YTRkZDhjZmQyZTgzY2U0OWZkZmI1ZTRjYTUwMmQ2NTMyZTJhNGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3ODMyN2IyOTA0YzczNjc5YWY1ZDdiMTBhYjM5MWI4MWViNzM0ZjUyN2IzY2YyZjhhOTY5MjIyYTUwNDk4OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjMzM5OWU5MzdjOGIzZmVlNzYwZmM4YTQ1ZjMxNDRiZDAxNTI3NTRhMmNmNGI0MGI1Y2JiZjA5Y2Q3NTE1YmEifQ"
         },
         {
-          "resource": "repo://src/agent/index.ts#L506-L521",
+          "resource": "repo://src/agent/index.ts#L586-L601",
           "version": "repo-lines-v1:sha256:cc45291bfdfb12b90418f0cea2fc2406f737ec15a606b517a27ec45267bee5a7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhYjk5YzA4MGU1ZTI2MGIyYjYxYjE3YzExM2QxY2FhMjRmZDYwZTg5YWNjOTU4OGE2ZWYwZGE1OTU5ZWUxZTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliZDQ1YTc5YjVhZjlkNDUzZWEwOGIyNDI1NjU4YTE4N2IwOTcwMTMyNzgyOWFkZmVmNzQzYmQwNjIwYzA1MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5MTRjMmI4NzRkNWEzMzg1MThjYjY1ODgyM2Q3Mzk1ZWQ5OTIyZWJjMzM3ZmYyYmNjNjliMmJmMDc1YTkyN2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxOWFjZmRiN2UwNTQ0YTU3ZjBhYTUxZjI5OGY3YzE4NWQ5MjhlMzk1OTQyN2Y3MDFhYmFjZjI1YWQ5YTEzMTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6c0117b8acae4990b7ae14646f127eb6",
+      "statement": "Personal init/update runs in local-wiki mode use the native personal lifecycle driver only when OPENWIKI_PERSONAL_CORE=1; otherwise they run through the conversational agent graph.",
+      "evidence": [
+        {
+          "resource": "repo://src/agent/index.ts#L216-L240",
+          "version": "repo-lines-v1:sha256:ff57362697d27d56bc2b131441106037ad08e9977a996e7dbb36d220ec2e2a0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNjdhZGIzMTY3NWQ5NTE1YmM1ZGU0YmRjMWUxMzY1MjUzY2YxNGQ0ZjJmYjAxZjk4NjJhNDYwYzU0MWJjMGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkZTRiNDUyODNlYzEzMDk5OGNjMGE0NDVhZjY4NTg1MmEzYWQ4ZGMyOTE4ZTQ4YTUwNTViZmM1ZDg5NTQ5YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhZmMwMzk3ZjdlMWNhZDRhNzU0ZTA5ZjczOTgyZWQ2MjgyNTY4MDA0N2M0OTYwYjU3MjZmZGZkN2QzMGQxNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxMTljZDZhZTlmZWExYmRkZjZkNTg3NWYxMzc1Mjg3MWEzNzExNmFhOTUzYWZhNDVjYjBiZWM0ODUwNGRjYTUifQ"
+        },
+        {
+          "resource": "repo://src/agent/personal-runner.ts#L68-L80",
+          "version": "repo-lines-v1:sha256:1ccebca295812ad1ab4b8963cdb01e090092789a56b5c5f3a0c3ae8d593bb4a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllNjBlYTE1YTZjOTg2NzgxMzMzNGRhM2E4NzE2MGRjMTJhYTJiODc1MTNmYzk0YzI1ZGViYzJmMWVkYzg0ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1MWRkMWNhZWFiYzRkNjI5MDA5OTE1ZmZjMDg4NDYxZGE3NzA4M2I5YWQ2YjFiMDhjMzU0MjVjNWUzNjA1MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1ZmNlNDM5YTI1OTlhYjgzZTUyNGNkNTQxZmY5MzhhMjUzY2E5YWUzODQ1ZWMxYzZkMGExZjZjZjQ5MjVmODEifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.1",
-    "at": "2026-10-07T08:10:39.081Z"
+    "at": "2026-10-09T14:26:08.776Z"
   }
 }

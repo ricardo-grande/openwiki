@@ -36,10 +36,10 @@ sources:
     resource: repo://test/visualize/visualize-client-lib.test.ts
   - id: openwiki-source-42403648c3f500ce06398039
     resource: repo://tsconfig.client.json
-generated: { by: "openwiki/0.5.2", at: "2026-09-22T08:09:45.637Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
-  - by: openwiki/0.5.2
-    at: 2026-09-23T08:09:37.122Z
+  - by: openwiki/0.7.1
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Interactive Visualizer
@@ -281,8 +281,9 @@ Markdown and rendering in its shipped typeface.
 The client TypeScript is compiled separately from the server code. The `build`
 script in `package.json` runs `tsc -p tsconfig.json`, then `tsc -p
 tsconfig.client.json` (which compiles `client.ts` and its imported `client-lib.ts`
-with DOM libs enabled), and finally `node scripts/copy-visualize-assets.cjs`. That
-last step exists because `styles.css` is a hand-authored asset TypeScript does not
+with DOM libs enabled), then `node scripts/copy-visualize-assets.cjs`, and finally
+`node scripts/generate-personal-reference.mjs` (which writes the personal host skill's
+reference file and is unrelated to the visualizer). The copy step exists because `styles.css` is a hand-authored asset TypeScript does not
 emit: the copy script explicitly copies `src/visualize/styles.css` into
 `dist/visualize/styles.css` and fails the build if the source is missing, the
 `dist/visualize` directory does not exist (a sign the build did not run first), or

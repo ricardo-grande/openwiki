@@ -16,16 +16,18 @@ sources:
     resource: repo://src/generation/repository-run.ts
   - id: openwiki-source-080c4525024a9b689e361cbb
     resource: repo://src/generation/run-state.ts
+  - id: openwiki-source-c5b41bec7ab970ee9139e1e8
+    resource: repo://src/generation/shared/page-snapshot.ts
   - id: openwiki-source-9bac7069736f3ea19ed36748
     resource: repo://src/okf/claim-sources.ts
   - id: openwiki-source-bed0edb2a7279f0e40a56c2f
     resource: repo://src/okf/generated-provenance.ts
   - id: openwiki-source-5835357b69a5869be210533b
     resource: repo://src/okf/index-sync.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Wiki Finalization and Link Integrity
@@ -269,7 +271,7 @@ At finish, the sequence is:
    the wrapper passes every other operation through unchanged — and stash the
    index-sync report for the advisory emitted at the end.
 6. **Restore skipped page Markdown.** After finalization, each skipped job's
-   snapshot is replayed through `restoreRepositoryPageMarkdown`, writing the
+   snapshot is replayed through `restorePageMarkdown` (shared in `src/generation/shared/page-snapshot.ts`), writing the
    original bytes back (or deleting the file when the snapshot Markdown is
    `null`; a missing file on that delete is tolerated via
    `isNotFoundBackendError`, so a page already removed by a deletion step does

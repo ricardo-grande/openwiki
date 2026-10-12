@@ -20,10 +20,14 @@ sources:
     resource: repo://evals/ledger/metrics/claims.ts
   - id: openwiki-source-95cda7b563b2b8b1ace92a5c
     resource: repo://evals/ledger/metrics/score.ts
+  - id: openwiki-source-8a8d0cd832b045164d7da42d
+    resource: repo://evals/ledger/metrics/structural.ts
   - id: openwiki-source-949522a1dfce74920badb2b6
     resource: repo://evals/ledger/README.md
   - id: openwiki-source-e002292edb3472e7a17649a6
     resource: repo://evals/ledger/replay/git-replay.ts
+  - id: openwiki-source-d05fdffc5b2f7ef748f1eca1
+    resource: repo://evals/ledger/replay/personal-replay.ts
   - id: openwiki-source-e6c741496df7b14585c58ed3
     resource: repo://evals/ledger/replay/workspace.ts
   - id: openwiki-source-5185d105a452db1bae7fe294
@@ -38,14 +42,18 @@ sources:
     resource: repo://evals/ledger/run/runner.ts
   - id: openwiki-source-994a0045fd159b15d7c546d3
     resource: repo://evals/ledger/source/git-evidence.ts
+  - id: openwiki-source-a1dbd00b7113b5c9d10930c0
+    resource: repo://evals/ledger/source/raw-evidence.ts
   - id: openwiki-source-2dc719639f40452478188d6b
     resource: repo://evals/ledger/system/openwiki-system.ts
+  - id: openwiki-source-38f48b1870f38ef0f4c77935
+    resource: repo://evals/ledger/system/personal-child.ts
   - id: openwiki-source-5b54a58d1b51cd490b0e7162
     resource: repo://package.json
-generated: { by: "openwiki/0.5.1", at: "2026-09-14T08:10:27.832Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
-  - by: openwiki/0.5.1
-    at: 2026-09-14T08:10:27.832Z
+  - by: openwiki/0.7.1
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Evaluation Systems (LEDGER and DeepSWE)
@@ -140,7 +148,7 @@ The `ModelEvaluationBackend` runs the forgetting and precision passes concurrent
 
 ### Benchmark contract
 
-A benchmark contains a source-of-truth Git history, an ordered set of pinned checkpoints, an author-declared difficulty (`easy` | `medium` | `hard`), and optionally a reviewed semantic evidence map. The checked-in `calc` and `taskflow` benchmarks both include maps.
+A benchmark is either a **repository** benchmark (the default; `kind` omitted) or a **personal** benchmark (`"kind": "personal"`, see [Personal benchmarks](#personal-benchmarks)); `LedgerBenchmark` is the union of the two. A repository benchmark contains a source-of-truth Git history, an ordered set of pinned checkpoints, an author-declared difficulty (`easy` | `medium` | `hard`), and optionally a reviewed semantic evidence map. The checked-in `calc` and `taskflow` benchmarks both include maps.
 
 `LedgerCheckpoint` carries a stable `id`, a full-or-abbreviated commit SHA (validated against `/^[0-9a-f]{7,40}$/`), and an optional label. The `LedgerTrace` is frozen: the same commits produce the same replay every run. `BenchmarkDifficulty` is declared by a human, never computed from the trace, and rendered in the run headline and report so weak results on a `hard` benchmark read differently from the same results on an `easy` one.
 
@@ -150,7 +158,7 @@ Evidence-map concepts should identify a fact category, never supply its conclusi
 
 `runBenchmark` owns the end-to-end run. It takes a `RunnerInputs` bundle — benchmark, `SystemUnderTest`, `EvaluationBackend`, resolved `LedgerRunConfig`, injected `startedAt` timestamp, optional `onArtifact`/`onEvidence` durable sinks, and a progress reporter — and returns a `LedgerRunResult`.
 
-Before any system runs, the runner preflight-validates the whole trace against the source repository: every checkpoint SHA resolves to a commit, every checkpoint is a Git ancestor of the one that follows it, and no checkpoint tracks anything under `openwiki/`. The run then walks the trace: index 0 calls `system.init`, every later index calls `system.update` after the replay checks out the next commit. At each checkpoint it freezes an immutable artifact (`captureArtifact`), collects current source evidence, appends historical evidence from all prior checkpoints, and calls `evaluateCheckpoint`.
+The runner picks a replay and an evidence adapter by benchmark kind: `GitCheckpointReplay` and `GitSourceEvidenceAdapter` for repository benchmarks, `PersonalReplay` and `RawEvidenceAdapter` for personal ones, and it always tears the replay and workspace down in a `finally` block. For a repository benchmark, before any system runs, the runner preflight-validates the whole trace against the source repository: every checkpoint SHA resolves to a commit, every checkpoint is a Git ancestor of the one that follows it, and no checkpoint tracks anything under `openwiki/`. The run then walks the trace: index 0 calls `system.init`, every later index calls `system.update` after the replay checks out the next commit. At each checkpoint it freezes an immutable artifact (`captureArtifact`), collects current source evidence, appends historical evidence from all prior checkpoints, and calls `evaluateCheckpoint`.
 
 `evaluateCheckpoint` is the loop body shared verbatim by the live runner and the saved-run re-evaluator; the only per-caller differences (artifact/evidence source and how efficiency is built) are passed in through the inputs. It extracts the source surface at the checkpoint commit, diffs it against the previous checkpoint's surface (`diffSurface`) to derive transitions and newly obsolete versions, advances the sticky forgetting watch set, runs the evaluation backend, and reduces the raw verdicts into claim-state and evaluator-completeness measurements.
 
@@ -190,6 +198,17 @@ The `Workspace` is a disposable filesystem root under the OS temp directory, rem
 
 The baseline `SystemUnderTest` is `OpenWikiSystem` (`name = "openwiki-baseline"`), driven through OpenWiki's single `runOpenWikiAgent` entrypoint. It sets `OPENWIKI_PROVIDER` and `OPENWIKI_MODEL_ID` into the environment before each run, calls `runOpenWikiAgent(command, worktreeDir, { outputMode: "repository", modelId })`, and translates the result into a `SystemRunOutcome` (`skipped`, `durationMs`). The `outputMode: "repository"` flag is required so the worktree `cwd` is honored — without it OpenWiki ignores `cwd` and writes into the user's local wiki directory. It never passes a user message, so update change-detection is driven purely by the real source deltas between checkpoints.
 
+### Personal benchmarks
+
+A personal benchmark replays recorded connector pulls through OpenWiki's personal path instead of a Git history. `inbox-week` (Gmail, medium) and `cross-source` (Gmail and Slack, hard) are checked in under `evals/ledger/benchmarks/`, each with `benchmark.json` (kind, wiki goal, connectors, and the pulls per checkpoint), an evaluator-only `traps.json` (facts planted, changed, or retired, canaries, and noise), recorded `raw/<connectorId>/<rawRunId>/` files exactly as the real connector writes them, and a deterministic `build-fixtures.mjs`.
+
+- **Replay.** `PersonalReplay` builds a temporary OpenWiki home with the onboarding config and wiki brief. T0 is `personal --init` with no data; each later checkpoint copies its pulls into `connectors/<id>/raw/<runId>/` and runs one ingest, `all` when the checkpoint pulls every source, otherwise one source at a time. A replay connector returns the recorded pull instead of fetching, so the real source-update prompt and agent still run. The onboarding instant is the start of the earliest pull's 24-hour window, so every pulled item postdates it.
+- **Isolation.** OpenWiki runs in a child process with `OPENWIKI_CONFIG_DIR` pointing at the temporary home, connector credentials removed, and telemetry off; provider credentials come from the parent environment, and the user's `~/.openwiki` is never read or written.
+- **Evidence and grounding.** `RawEvidenceAdapter` produces one record per email or Slack message plus the wiki brief and connected sources. The corpus is cumulative (`cumulative = true`, so the runner adds no historical records), deduplicated across re-delivered items, and every record is current and dated. Personal runs use the `dated-evidence` grounding mode: the newest relevant item decides, a claim an older item established and a newer one changed is stale, and a fact independent sources disagree on is contested.
+- **Forgetting and structure.** Trap facts are the scorable surface, and a changed or retired fact's former version joins the forgetting watch set as obsolete API surface does for repository benchmarks. Model-free structural checks (`runPersonalStructuralChecks`) are reported beside the score: a quickstart exists and every page has valid front matter, `.last-update.json` is complete, no canary reaches the wiki, nothing outside the wiki and OpenWiki's own state changed in the home, no page is dedicated to planted noise, and placement traps stay off the pages they do not belong on.
+- **Fixtures.** They are synthetic and must match the connectors byte for byte: `benchmarks/personal-fixtures.test.ts` runs each recorded pull back through the real Gmail or Slack connector with a stubbed API and requires identical output, and checks each builder is deterministic. After changing a builder, rerun `node evals/ledger/benchmarks/<name>/build-fixtures.mjs`.
+- **Calibration.** The dated-evidence prompt is calibrated against `evaluator/fixtures/precision-gold-personal.json` by the live gold-agreement test (`LEDGER_LIVE=1`). An evaluator is valid only for the benchmark kinds whose gold set it passes at the 0.9 floor; a judge that passes the personal set but not the repository set must not score repository runs. A single partial `inbox-week` run is recorded as a legacy baseline, not a three-run baseline.
+
 #### Artifact capture and the sticky forgetting watch set
 
 Once captured, a `KnowledgeArtifact`'s document list is the evaluator's authoritative artifact input; it also carries a SHA-256 fingerprint over the sorted document set to detect whether two checkpoints produced identical wikis. If the initial checkpoint produces no wiki, the runner throws `SystemRunError`.
@@ -219,7 +238,7 @@ LEDGER is invoked through pnpm scripts defined in `package.json`:
 - `pnpm run eval:ledger:reevaluate -- --benchmark <dir> --run <results-dir>` — re-evaluate a completed run without invoking OpenWiki.
 - `pnpm run eval:ledger:typecheck` — `tsc --noEmit -p evals/ledger/tsconfig.json`.
 
-Recognized flags are `--benchmark <dir>`, `--results <dir>`, `--system-model <id>`, `--evaluator-model <id>`, and `--verbose`. Unknown flags and missing values are hard errors (`LedgerError`) so a typo never runs with a surprising default. `--verbose` does not accept a value; it prints every stale and hallucinated claim beneath the checkpoint that produced it.
+Personal benchmarks run the same way, for example `pnpm run eval:ledger -- --benchmark evals/ledger/benchmarks/inbox-week`. Recognized flags are `--benchmark <dir>`, `--results <dir>`, `--system-model <id>`, `--evaluator-model <id>`, and `--verbose`. Unknown flags and missing values are hard errors (`LedgerError`) so a typo never runs with a surprising default. `--verbose` does not accept a value; it prints every stale and hallucinated claim beneath the checkpoint that produced it.
 
 `resolveRunConfig` resolves the run config: `OPENWIKI_PROVIDER` is required; the system model comes from `--system-model` or `OPENWIKI_MODEL_ID`; the evaluator model comes from `--evaluator-model` or `LEDGER_EVALUATOR_MODEL_ID`, falling back to the system model. The evaluator model must resolve to a concrete id because the evaluator constructs its model directly rather than deferring to OpenWiki's default resolution. Results default to `evals/ledger/.results`.
 

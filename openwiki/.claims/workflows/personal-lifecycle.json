@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:34e4cb9104279f8b59fd96ae816f4dc96bc5891689702c7997f1b48c42272d83",
+  "claims": [
+    {
+      "id": "claim_9177c0864da64230b214a022556bb2ab",
+      "statement": "OPENWIKI_PERSONAL_CORE=1 routes personal init/update runs through runNativePersonalGeneration and the personal lifecycle core; without it the legacy conversational path runs.",
+      "evidence": [
+        {
+          "resource": "repo://src/agent/index.ts#L216-L240",
+          "version": "repo-lines-v1:sha256:ff57362697d27d56bc2b131441106037ad08e9977a996e7dbb36d220ec2e2a0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNjdhZGIzMTY3NWQ5NTE1YmM1ZGU0YmRjMWUxMzY1MjUzY2YxNGQ0ZjJmYjAxZjk4NjJhNDYwYzU0MWJjMGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkZTRiNDUyODNlYzEzMDk5OGNjMGE0NDVhZjY4NTg1MmEzYWQ4ZGMyOTE4ZTQ4YTUwNTViZmM1ZDg5NTQ5YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNhZmMwMzk3ZjdlMWNhZDRhNzU0ZTA5ZjczOTgyZWQ2MjgyNTY4MDA0N2M0OTYwYjU3MjZmZGZkN2QzMGQxNGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUxMTljZDZhZTlmZWExYmRkZjZkNTg3NWYxMzc1Mjg3MWEzNzExNmFhOTUzYWZhNDVjYjBiZWM0ODUwNGRjYTUifQ"
+        },
+        {
+          "resource": "repo://src/agent/personal-runner.ts#L68-L80",
+          "version": "repo-lines-v1:sha256:1ccebca295812ad1ab4b8963cdb01e090092789a56b5c5f3a0c3ae8d593bb4a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllNjBlYTE1YTZjOTg2NzgxMzMzNGRhM2E4NzE2MGRjMTJhYTJiODc1MTNmYzk0YzI1ZGViYzJmMWVkYzg0ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE1MWRkMWNhZWFiYzRkNjI5MDA5OTE1ZmZjMDg4NDYxZGE3NzA4M2I5YWQ2YjFiMDhjMzU0MjVjNWUzNjA1MTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1ZmNlNDM5YTI1OTlhYjgzZTUyNGNkNTQxZmY5MzhhMjUzY2E5YWUzODQ1ZWMxYzZkMGExZjZjZjQ5MjVmODEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2f712d0841bc4be587a0b6b44baa915d",
+      "statement": "A personal run's durable state is .run.json (kind personal, schema version 1, with phase, evidence frontier, plan and per-job status), .synthesis-cursor.json (per-connector synthesizedThrough raw run), and .run.lock, all in the wiki directory, and code-mode and personal readers reject each other's checkpoint.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run-state.ts#L1-L60",
+          "version": "repo-lines-v1:sha256:54c8ae9dc32b26b90ddb5ba652887923dae076919903f068c69ddcb4ee4fca54:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlM2NhMThkYjgzNmVlZWY2ZmE5NGFhYjgxMDY1YjY3NDc1YjliMDhiNTk2MzVhZmM3ZGYwYjVkMzFiNWZhZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkMjdmMGUzZGQxNzIwOTQ2NGQ1MzdiYTczYzg5YTc1MDVjMDkzYjgyZWFiMDAzZDc2ODJkZDIxMWJlMzMyMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1NGNlZGRlNmFlN2VjYTUwZGQzNDgxYmI1OWY2NDIwMzkxNDMyZDc3NWFkMjZkOGRkNTliMWE3ZjE5YTc2OWYifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run-state.ts#L420-L520",
+          "version": "repo-lines-v1:sha256:a120d8e9079d9b3711e19a3c9355c2cb614ffc4b51e3651a124ad914f47e4122:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4OGY0OGNlYTU5YTViMmU2ODlmY2I5ZjE3ODU2MTI4ODVhNTQwMmFkOTExNGUyN2QzZDU3OTdmNzQyYTc4NGNjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI5NzJhNDI5MzgyYjJlMTQ3MThlMGUzN2IwNTcwYThhMTcwMjk5MWZjZDg0OThjZDg0MDYwYThiZjRmMDUwMTdiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YTc0OTE0MWIwMDRhYmRkOTMwNDFmY2ZmMWQ4MWQwZjE3ZTc5ZjEwNjJiYzQ1NTZjNjA2ZTQ1YWExNzA0MzM2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlOTVmYzExZjI2NzU2NWVjMjRiYzQwZDhmZGRiYWMwNDhlYmNjY2RmMjY1ZDEzZDZlZTQ0MTU5NWM5OGZlYmMxIn0"
+        },
+        {
+          "resource": "repo://test/generation/personal-run.test.ts#L490-L540",
+          "version": "repo-lines-v1:sha256:b20a21719ef33d53ba1358d96ea6370d1e5217d94146189b7829eb2eafcf4e33:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkM2VkMTUzNTkxMzdjOGFkNWU4OTVmMWUxZTliODE1MWExOWU3MDE5ZTQwNDBkZjZhMWNlMjgwNTU4MThkYzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI3NzlkMTE4ZDZlM2NiZjQ1MDUzOTc0OGRlZTdhNDMwN2FjYmU2NDQ2Y2JhMjk3ZjI3NjBmYTVkMGJiYTFiYzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFkNWU1MDM1NTlkODU5NGM4YzY0YzBjOTUyMzJkMzJjMmZlODkzN2ZmMDc3NDA0ODdjZmFkNjhmOWQ4MjE1NjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e290c750d96e49dea09c16f07df63188",
+      "statement": "A run's evidence frontier lists, per in-scope connected connector, the raw runs newer than the synthesis cursor (or only the newest when there is no cursor); a deterministic connector with nothing new contributes no entry, while an agentic connector (notion, custom-mcp) always contributes an unfrozen entry because gathering may add evidence.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run-state.ts#L28-L40",
+          "version": "repo-lines-v1:sha256:3ad7ffe35bcacc97f1d6085736290c38b57f508d5c5188b6f3774e2f35266ff7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjViMDdkYTA1NzRlMTYwYjIxZTFiZDNlNTg5ZjQ0YTY5Mjg2OWU1OThkMWQ2NTk5YTBhMGJkMjNkMzk2YmY1OTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliNDU4YzA3MTdmOGFiNmZjOTcxMTliZjMwMTJlNzYyNGY2OWYyMTc2NWVhZDRmODNhYzdhYTI2OGE0NDE4MWUifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run.ts#L1118-L1160",
+          "version": "repo-lines-v1:sha256:cbfe307692e7d534ec1cb611eb4ecf475c6895de26d18026191bf812e39f000a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNzAxZWY0OGFmZGZlMzQ3MGIwYzI1YzgyM2ZmOTU2OTk0Y2YyM2I4MWQwMzliNTk1MjQyYTVlODBjZDcxMDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVjZjZmMmU5MmI5YjhjY2Q0MGQyNWE1NWM4Yjk4MGU4N2M4M2M5MWRmOWI2MzU0Zjc2MGFlZGNmZGY3NWUxZGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyZmYxOWM3YWRiZTBiN2NlOWY0NjQwNzNjNzMyMTI2MjI5NGE1M2NiNWYzY2VhZDhmZmU0NWRlZWRkNzkwNzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmNDBjNzc3ZGNlOTE1NDA5YTE4YzJiMWQ2YjY2NjdjNjNjNDg5ZjAxNzc4MDQ5Yzg0NTQ5NWE2NmE2OTUwODYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cccf3ddef12d4cd7a6fa8a39e915282b",
+      "statement": "beginPersonalRun validates the language before touching the wiki, acquires the single-writer lock before reading state, proves an update with no evidence, request, or rewrites a no-op (recording it complete and releasing the lock), and otherwise writes .run.json and an interrupted last-update record, after which the run is resumable.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L334-L482",
+          "version": "repo-lines-v1:sha256:2b38f96d1feb7ccd8c32bf430411402d177c0d1889194b07b4242120d485ea23:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJjNTg1YmRlZGZkYjZjYWFmYjdjNTYwMDI0NTcwY2JiNmYyM2ExZjcwZTAwNGY5NjBkODYzNDQ3MGRjYWZkNGFiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhYTNmZTMwYTU4NjlmZTk0NTFjOWU1MjQzNDU0ZTM5N2NkNDRhNjg2NDA1Y2RhMTY2ZDQ1MzkwYjU5MTljOTExIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3OWQ1ZDllYzIzZTU5ZmM0MDYxNGYwOWE4YjZjNzdmMjQ5MGFjZDA3MjNlMzZiZWIwZGJiMGViMjU3NjFhZmRjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzMjJjN2YzYjdmOWJmNTk2MjgzYzAwZTQ2MmZkYTg1NDBhMDA2MDcwM2RiMGFhNTRjYTUyMWQ4MjA0NjkwMzQ0In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_7eb0dfe6fe354ebfb65a57eea54737b6",
+      "statement": "Resuming a personal run rejects a different mode or language with conflict, returns skipped jobs to pending, drops frontier raw runs the user deleted, and lets a new instruction replace the old one only while no plan exists.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L484-L543",
+          "version": "repo-lines-v1:sha256:c940c7537b59127c2294ca4b84148881fdd6c7a2014bd60d2676c848705592f1:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlMDBhZjc0NDhiZGQ5YTg4MTFmMDUyMTYwYzk0MDIxYzUzZmIzNjVhMDAwMGU2YmY4OWExY2M1ZTRkMjk5MzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2ZmQ2MzVhMzY1YTA0MDhiNGU5NWQ2NGE4YWI2ZjM4MjZmOGRiNDYwZTk2NTNjYmY2ZDgxMzliMTQ5MWIxMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMwM2E0NDhhMDJhZWY0YTJlMDJlZjZjNzU0ZDFhNWIxNjc5NTFjMWRhMGJkYjI1ODA4MDZhYjA0ZThhMjNlZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0NjAyZWY3YTI0NmFkYzA3ZjY4ZmQ2NTMzNTE0MzA4YTg4ZmM5MmFlY2QxMjc5YTc0NGJkMzQzZDQzZWY2OWEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4a75a1be69ee4a139951205eea3d6292",
+      "statement": "closePersonalGathering adds the raw runs agentic connectors wrote since the run began, freezes every frontier entry, and moves the run to planning.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L545-L590",
+          "version": "repo-lines-v1:sha256:7feb314e51bbb08f1fca2e7c63c9202d8e18887d6f2635148e805df955d3b6c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5ZTg4N2I4YzMzYzQzYjcwYjVhNDk0YWFjMzk5MmQ4NmJiZmIwODIxODMwOGEwMTY4ZjI4MzU4NGQxOGMxNTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhM2U0NmY5NDI3NmI2ZjZmNGVkMWYwMmFmNzhiZWY2YTJlZTFjNDM5ZGQ1NTg0Yjk3Mzk0ODMxMzIxNGQyYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY0ZDczYjc5MjBiOGE0M2U2MTAxNzIxODU2ZWFjYzhlZTJkNjI1YzRhNzkyNWVkNWQyNjVlM2EzYTI5MDk4MmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_244c4f5356cf4a84ac06752559998617",
+      "statement": "submitPersonalPlan accepts a plan only in the planning phase, accepts resubmission of the same plan but rejects a different one with invalid_state, and a rejected plan writes nothing.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L606-L650",
+          "version": "repo-lines-v1:sha256:35db13bae5282310ef26697df3c62e575d831cd703013809058910ea1da909f7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM5NDVhYTEyNDljZTZkMDRlMDJiMjQyZmRhOTdjZmExOGFlYjI1Y2QzNzBkYzhhYzRhNTE2ZGU5NDViMjFlNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3MjY2YzAwOTk0ODY3MDdiYzM5ZTgxZmYyZjM4NDVkNDZlOGI1NjUxYzk0MTY3NGQyNjUyN2U5YTMyNDUxYmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkMTAzNzUyNmE5NDdkNTk5NWViNDQxYzA1MmU3ZTZlYTYxNGUyODMxMzdlYjBjMGE3MWIzNWM5NGU1MjQyOGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2e701c73d1c34a7590c7333f750cd88b",
+      "statement": "Personal plan validation rejects duplicate or hidden-segment paths, a page both planned and deleted, seed evidence outside the frontier, pages outside the scope allowlist, deletions in an init plan, and deletion of /quickstart.md or /open-questions.md; code then adds source-index jobs per frontier connector, an open-questions maintenance job, language rewrite jobs, and a quickstart job for init or page-set changes.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run-plan.ts#L119-L182",
+          "version": "repo-lines-v1:sha256:736fc53d0acd1aea671773749fc42a7fd65543dcff27382c2f20c23384c9253a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjOWZiYmI4ZGUwMDFhYTdiNTQ3MTkwZTcwYjg4NWJhOWE0ODAzYzU2OTgwZWM5ODRmYmNmYjcwNzJmOTBhY2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA1ZmQwZGZiOWJiZjU4YTMxZWFlODQ3OWFlZDQzMTAzNjZlOTFkY2U4YjRjZTM3NDk3YWEyY2IwZGIyZTZkOGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0MTU4NmZjZmIzODFkZWJjYjQyYjE2NzU2YTA2YWNhOTYwMjJmYzA1N2I1NmQyNTRhZTg1ZDUwZTZmOWNiYjEifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run-plan.ts#L270-L380",
+          "version": "repo-lines-v1:sha256:9468af35bdaea6ad4cadd2186f023911f031704748faad0ab5222833fa6223dd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTExLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyN2U1Nzg4ZDVkOWQ3M2QyNGE4MWRiYzBhNWE3NGJmYTgyYzljM2IzYWY5OWU1MmFmNzk2ZTkwYjQ2OGE4YTNkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1NTIwYWNjZjRhMGY0ZDk3NTBjOTQ3Mzc2M2ZmMGU3MGJmMWFmY2Y3YWFhNjIzNzllYjc1ODE0OTU3ZGJhN2U2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwMGFmY2IwZmUyM2U0NjMyZjViMzllNWYyNzY4OTA4ZGM3MjEyN2Q1N2U5ZjdkYjA5M2I2MTcyMzAwNTU3YTk0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4MmZiYzNjZGQxYmExODE1YmIyNjdkZmE4YjM2ZGM0NTNmNjQxMDZjYzg2OTEzOGQxMjNjNmM3NTFiZjlmNjI3In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_1bd8d67d13544f01959d823497a41a24",
+      "statement": "The personal page queue is ordered by tier then path: domain pages, then /commitments.md, /personal-logistics.md, and /themes.md, then /sources pages, then /open-questions.md, then /quickstart.md last.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run-plan.ts#L14-L40",
+          "version": "repo-lines-v1:sha256:1dfdd8f8fd73f85bd893376553ed04487d67456545f99e9272473c879809b523:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwNGMzMzNkZmFiNzk4MDE2ZGZhYmY5ZjhmMTk2MmQ3OGZlMWMyN2FlOWU0OWIxZDMyNDA0NzQ0Yzc1M2JmMDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZlZDhjMDJmZTZlNWZkMTNlODgxY2IyNjY5YTA5YzA1MGNiMzI2MDY3MDA1YmY0YWRmN2UxOTVlYTE3Y2ZmYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhhYTE2ZjE2N2M4Y2QyNTRmMGU1Y2U5YWIxYjA3ZTZhNjM5ZWM1ODQ2NzY5MWRjNjAyNDM1NzE3YzUxMzBlMTIifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run-plan.ts#L246-L255",
+          "version": "repo-lines-v1:sha256:465b0f375c6ea2214cc5b61a90f66f6d6ce1ff8e3fcf15b89aa526f89644c154:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5NThiZDI2YTc1NWZkZDM2NGYxYjIxNGY5OTNkYTY4OTc1ZTY3MDM5ODM5ODBlMDE0ZTUzMjAwYjAzZDZjYmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2ZDliYTQyOTQyNjZlZTk4NjQxNGRhYjhmOTZhNTcwMDBiZDk1MzU2NDMzM2Y3NzRhZWI5NGM3MmY4MDMyZmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_452da7771fe641878604009019cb790c",
+      "statement": "nextPersonalPage returns the first non-excluded pending job without reserving it, with the page's sha256 pageVersion or absent, and a maintenance job also carries the page's Active section and the pages completed so far.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L651-L730",
+          "version": "repo-lines-v1:sha256:132ebd8b63494a44de8ef4bc56e2a25e38182acdf1558c6fea6ad80330f56190:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0NDM4ZDAzMWQxMDUwOGM2ZWYzZmIxODVjYTA3OGNiZWVhZmZiNDIyYWFiYWQ1ZjNmOTdhMjMwMjZkMzQ4OTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmYzI3MjJmYTkwZWM0MDI3YThhYzhkMmNlMzMxMGEyOWZlNDM3ZTY5NjkyNzU0MjZjYmE5MmIzYmZhM2E3NDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBkMGUwNzlmMWMyMTYzMTY4ZmE5NGUwMTdmZTVjMGNjMWI2ZTE3NDViN2ZkOTFhNzZjOWY4OWU0ZDY1NjBlNzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_33c6aa960c2f42d2a0c60431ab46e1cc",
+      "statement": "Personal page writes and edits are checked against a baseVersion: a page changed since that version fails with conflict and is left unchanged, and writes repair front matter; submitPersonalPage requires an existing page with valid front matter and is idempotent for a completed job.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L1310-L1345",
+          "version": "repo-lines-v1:sha256:b19f495c5c8748209c89d6076fb430299477f384ee3220b9a8b8e79b994d4896:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzMGM0MjU2YmE0ODFkYWViMWI4Njc1NTdhOWI5MDkwMTgwMjYzMzlkMTFiZjJlNGFlNDFlMzZmNzEzNDNhNWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY1ZWU3NTE4NDE2ZWQzMWU1ODA5ZTk4M2FmYmU2ZDY3NWMyOTA0MmFjOTMxZTc5NzU1OTZjMzk0ZjIzMjc1OTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzMGM1NGE3YTEyYjk1YmEzYjdlMzJkOTliNjQwMmJiYzMzMjA4ZDIwZGU4MjBlNDQyN2M0NGEyMzAxYzE3NDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzMDhmNWY3Y2MyYzIxNWYxNzE5N2RkYzhlNzJlZWZlOThlOTczMDNlZmYyNGM3ZGUwODM2MmQ2YjM3MzE2MjYifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run.ts#L822-L990",
+          "version": "repo-lines-v1:sha256:4d5bfd4b610eb5634e8f5c062816a0097070151852e8235c31ffa42bb94a5c14:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiMzlmNzFkNWQ4NjBhMzk3MzFmN2FkYmZhMzkwNWFlM2EyODQzMWJjMzE4OGFmN2ViNmRmOWUyMjNkZWEyNjVjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2MjNjYjRjMTNkNjc3NTlkNTRmNzY3MWQ0NDAzNDk3MmQwOTAzYTM5ZDA4YWZhZTczYmI5ODFlYjlhYjBkY2YzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3NTdkYTU2YmJlMTUxNzk4MDkxZGRiN2Q2NTRlYTNiOTFlYjgxZDZlZTYxYWFkMGVlODhiYzcxY2JhMGM3ZTdhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlNGMwYzMyZWU0YWY5ODUzOTZmM2NlNzlkMWY5OTYzYjVmZThmMTAzYzZkMzhkN2Q0YWNhNmMwN2ZiYjQxZDExIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_1d5d6115ea32465793521a912f4e833c",
+      "statement": "finishPersonalRun requires an accepted plan, no pending jobs, and an original snapshot for every skipped job; it applies planned deletions, finalizes wiki artifacts, restores skipped pages, advances synthesis cursors, writes interrupted or complete last-update metadata, and removes .run.json and then the lock last so a crash leaves a resumable run.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L995-L1106",
+          "version": "repo-lines-v1:sha256:d187e3b397b280f906ddb1bec6d73fefb3deda3608457a57ebc5c5b11046b79e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4NGE4ZDA4NTcwNzRhOGUwN2U1Yzc1MWVkMDUxYWMyZDljYWEwZTk0ZjE5MzAzZWNkNWM0ZGMwMzE4MjM5MzdjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIyYjhjYWI0NTIyYmFhYzcxZDRhOTViMDliYTMyNDA3ZTkxZDk5MjkwNDI0NmVlOTg2MDFkMzkwZDk0ZWYwZTczIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5YjAyNWRmMTRjYzA5YzE0MTdiYzdiNThmZTNmMTgzMjBlOGVhMjAxZmFkOGYzNTM4ODMzMmMwYzQ5NDViMzhmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiZTI5YTljYWQ4OGVkOWExMTljZTQ2NDZkMGIyZTg1MGMzNTRkOGEyNTYzN2I0MmQ4MjQ4ZTNhZGQxM2I5YWFjIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_9af9154a94bb41fbb99bcb461b541344",
+      "statement": "A connector's synthesis cursor advances to its newest frontier raw run only when every job seeded with that connector's evidence completed; otherwise the cursor is held so the evidence is read again by the next run.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run.ts#L1226-L1262",
+          "version": "repo-lines-v1:sha256:4e53e6e1d09e8e7f6c104813cddfda07fd2541c18b507941a0bdf6d4dfdb9de2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjZjZmOTRmZGM0MDZlOTg0ZDhlMWZlNmYxMjI0ZDFiODQ4NDQyODk0MjU5ZWFkOTBmYzEyZGE2MDI2NTk1MGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY1MWRjOTY2YjdhOGNhZjcwODc4ZDBjMjVkYzcxOGE3YjY5NjljZjcyNGUyMzJkYzNkYWNkNTE1ZWUzNWMzZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0OTA2MDllMGI2ZTE2NTJiOWJhOTYxZjUwMDgyNzBkOGY1YTlmZDQzMTRkNjMxNzAxYjQzN2Q0YjVkNjgyODEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_89ce0893f2244267980ad0b6b76c9fd7",
+      "statement": "The personal run lock expires after 30 minutes without renewal, or immediately when its holder ran on this machine and the pid is gone; a fresh lock held by another holder is a conflict naming the holder and age, an expired lock is taken over only with explicit takeover, and of two simultaneous takers exactly one wins.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run-lock.ts#L13-L22",
+          "version": "repo-lines-v1:sha256:8776226f42f625e61d43632d8213fa636490227540127cb026f8fc1f728925b1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3NTY1OWNkYzVlNWJlMDFkYWNkNDUxYzdjY2Q5YWQwNTQzNWJlMzVkY2RmMDY5YmQzM2JkYjVmOGViYWI5OTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwN2RiYzQ4YWJlMGNkZGI1YmU2NzhmOWYzNzRjZGE5N2RjNzlhZWM2MTE1YTE2MjgxY2M1MWE1YmMyOTY3ZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJhMTgzMTIwNDIwM2IyN2E1NGQ4OTAzN2MzYjFjZjBjZThkOGZjMzU4MzUyOGYxZWU0MzI5NWY0NWQ5Mzk4ODUifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run-lock.ts#L195-L292",
+          "version": "repo-lines-v1:sha256:13bfe229ef94d0d7a0a2199ae01dd95dd893dbb54f6b3368fc8bfd49fe2a9eaf:eyJzZWxlY3RlZExpbmVDb3VudCI6OTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3MmE0MjkzODJiMmUxNDcxOGUwZTM3YjA1NzBhOGExNzAyOTkxZmNkODQ5OGNkODQwNjBhOGJmNGYwNTAxN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxMjcyZWEzN2FmNDg5ZWFmN2Y0MzNiOGQyMjEyOGFmYTM4OWM5ZTI3YjE5YzhkMGM3MmQ4ZTU0OWM5MGIyMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlYWVkYjhhNTUzMGRjZGU5YjYzM2IxMDJlMGFmMmQ5NTU3NzgzODM4ZTUxM2MwM2NhNWEwYmJiNTY1NDYyODEifQ"
+        },
+        {
+          "resource": "repo://test/generation/personal-run.test.ts#L716-L800",
+          "version": "repo-lines-v1:sha256:01b657a54ed39830414d881585c8380aa8dcdfd3081b97b3421b599df6c602ce:eyJzZWxlY3RlZExpbmVDb3VudCI6ODUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0YzRlYzgzMDA0MDBlOTBjNjg2MjU1OGM0Nzc2NTliY2YxNjhhZTI2MTI5MjU2ZWViMjU5MWUyYmJhYTk1M2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZjJiODA3ZjEyZjM2ZjZjMDcxNDQ0YTJlNjgyMWJmN2Y0ZjQyZGJmY2IzZTBjMTMzZjI0YTY4YTk2MTA3YzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxNjQ4YmMyYWEyODlkNmM2YzcwZmQ2ZjIxMmY1OGQwMDU5YmYzMjUzMWU0YTQ1M2RlNzc2NjMyOTZmZDE1MzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkNTQ4ZTBiOWZlZDNjNjI0ZDVlN2EzOWY2MTQ5Mjg0MTlmMDUxYTIxZGJmN2UyZWRmNWY0MTMzMzY5NmQ1YzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_441c4c80f5ac412e9dd707f218e871d1",
+      "statement": "After begin, every personal core operation renews the lock and fails with conflict if the process no longer holds it, and a driver that exits unfinished releases the lock while keeping .run.json so another driver can resume.",
+      "evidence": [
+        {
+          "resource": "repo://src/generation/personal-run-lock.ts#L293-L340",
+          "version": "repo-lines-v1:sha256:7708c92680ef8e5f3440b4eb7e6bd713863a051656d91e50290f5ed60f14de58:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwNGNiZDkxN2JmMGYwMzNlZjk4OTA2YzEwZjM0OGVmYmVhMjM2NmRjYTc5YzI5Yjc5YmFjODllYTBjNzRmM2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA2NTk1ZjRlZTVmZjYzZDUwOTUwNDE5ZGMzNDQxNDUxMzg1MWRjOTczNmZkMTdhNGY3YmZhOTMwYjI2MWI2ZjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwM2RhMTExYWQyMjU3ODAxMGQ2YzdmMjVhMmNkNzczMWQwM2NlOTQxMDIwYjllM2NjOTM5NjBiN2ZjN2U3NDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlMGY1YzBiOTA3OGVlNzY3MzJjNDdmOTk4NTYxODE0YWE1YmUzNzc3MGQ0MGVjZmQyMmE1YzUxMDM4MTc3MjMifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run.ts#L1106-L1130",
+          "version": "repo-lines-v1:sha256:0f8a39acbbbc19504fc36fd9439497c4e9adcc6422a9733d1cb98fe4c68bbab2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJiOGNhYjQ1MjJiYWFjNzFkNGE5NWIwOWJhMzI0MDdlOTFkOTkyOTA0MjQ2ZWU5ODYwMWQzOTBkOTRlZjBlNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyM2NiNGMxM2Q2Nzc1OWQ1NGY3NjcxZDQ0MDM0OTcyZDA5MDNhMzlkMDhhZmFlNzNiYjk4MWViOWFiMGRjZjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzMjlkNGVjZDJlYzk2Mjk2NzQ0OTI5NjUyOWY4Y2VhZjMwZWJlOTdiYmEwNjNjYzMxNDg0OGJkODg1NjViMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiYzAzY2ZjNDNjNmE2YTQ2MTViMGQzMzZjNzQ2N2I2MWUxZDVhNmFlNmZkNzEwNjg1MjcwMGE5N2YyMjg3YWUifQ"
+        },
+        {
+          "resource": "repo://src/generation/personal-run.ts#L1265-L1275",
+          "version": "repo-lines-v1:sha256:882f9b1e5dccbe0748d966772cf6aa63a43df3b5fb49ef96805e73348e8b5225:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjNDIxNzUxZjdhZTExYThjZGQ2YzAxNzQ4YjBjZWIzZmY1NmU3ZmVkZjU2MjJhZDU0MTJjMjViMzI5NDE2YTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExY2NjMTIzZjkxZjc3NDNlMzM5YzMxNjhkZjVkNmI3YTVmMDE3YzcyZWQwODg4ZThjYTg5ODYyMzAyNzk1NDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3OTI5ZTkxZTBmOTljM2U4MjVkZTY5YjQzNWZiNjQ4NGQxYjBhMWRmMmY0NjU2MWFiZjFhMjlmMDQxODhiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllMjJhYzVkMWVkOTM2NTE1ODVmNmI3Yjk5ZjJkODA0ZDllMDQ0MWI0OWE1YTM5OWE1ZTQyM2JkZjViY2Q0MjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_799a565882d34b2586d3b67c6896a3df",
+      "statement": "runNativePersonalGeneration begins (retrying once with takeover when an expired lock is confirmed by the user), renews the lock on a timer, then runs a gather worker when gathering, a read-only planner that must submit a plan (or submits an empty plan with no planner when there is no evidence or request), page workers through the shared pool with quickstart last, and finishPersonalRun; on failure it releases the lock and keeps .run.json.",
+      "evidence": [
+        {
+          "resource": "repo://src/agent/personal-runner.ts#L253-L340",
+          "version": "repo-lines-v1:sha256:728ecb7fbb2829e3430f37beedd80e683010cd4dc25bc7a9eaf061314985f7b5:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5ODhiNDcwZjNjMjFkMWY1NTlkMzJlNjE5MTY5ZWE1MjdmNjQ5MTg0NGUwNTQxMDdkMDAyYmI2MWNiNzY3MzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1YWQyNGQxZWYwNzFhZjQ2N2E0YmYwZmQ4ZGYxZDIyY2E0NDg3ZDg2MjNmMDM1OWQ2YWE3ZjcwODE1MDljNWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIxN2FkN2JiY2U0MDcwYzYwZTVkN2MzYzcxMDJmNTBhNjI4NWRjYTNhNjJmY2JjMWIyM2UxOGY3MDBjNzkwZDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1YTI5MzA3NWJjZGRmYjcxYWQ3Y2M2MmI5ODI4ZDc5YjZhYTUwYzgzOWRlZmE4NDFiMmFmOTA2MjVhODRjNGEifQ"
+        },
+        {
+          "resource": "repo://src/agent/personal-runner.ts#L342-L395",
+          "version": "repo-lines-v1:sha256:003706aa25f09ec18733f37e5ed6423664ba605640357e4aee2b0d1fa9da9a63:eyJzZWxlY3RlZExpbmVDb3VudCI6NTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4OWNjNTI0ZjU4MTM5NzQzMmIwNzBkNDRlMDhkMTRjYTkxYzE4ZjI1YjMwZGNjZWUwM2RjMWUzZTExNjAzYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkMmQ5MDE3MjIwOWZjMjVmMTE1Mzg2OTQ4MzhkM2I0Yzk3OTdjM2ZmNGE2MThhYTRiY2I4MmJjMjhhZmFjZWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyMjU2ZTUxNmQ5NWMyZGZmNThjMDk2ODI3YTdjZGU4MzhlMDczMDAwMTY2Nzk5MzM5ZThmZmFhZTI1NjdjYTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4OWNjYWE0MmM4NWI0OTkzZmYxYzFhMDIyNWRlNWU2Zjk5MWVkYzliOTRhNjlmMDc5ZTI2MzA3MWQ1MDEzNDAifQ"
+        },
+        {
+          "resource": "repo://src/agent/personal-runner.ts#L415-L470",
+          "version": "repo-lines-v1:sha256:f614b24a86fdf98c564106ca3695922d84e89b58b41924fb3f65480d68b73ae1:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0N2VmMTY3ODllNTUwMmExZjZmOTdjYjgzNDg3YzliOGE5YmQ1M2ZiYWFkYmEzNzI1NzkyNzc2ODQ1ODI0MTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2OTQxZTQ2NzNlZTMzZmJlZTUxOGJiYTA5Y2NhMTNiZjY1YzBkYzJmYzEyZDJjOTg2NzZiNmM2MmQ0YzBjOWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4NTVkMTc5YjA5NjA5NTUzMDBlZTBkOGIyZmU0MTA3NzA5MmE3NWYxODEwYmVkOGUzYjVkYTkzZTViZjU1ODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzN2YzYTU1ZGUyMjUwMjc2NzZjZGE1NTI1ZThmZGUyNzllNTc2MjUzMjJlODViNWIxNzA0YzQ2Mzg1ODMwYjYifQ"
+        },
+        {
+          "resource": "repo://src/agent/personal-runner.ts#L577-L612",
+          "version": "repo-lines-v1:sha256:b7fd9580531513828ec5e62f356d4a133d0d1151dfe2842a59cd95a5f30f818d:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzOTE2YjZmMGFjOTBiYTAxZjhkMzQ2NjEyZGNhMTAxMDYxOGQ3Njg2YWMwYzhiOTdlY2FjOGNlYTA3ZWJkNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0MzMwMzc2M2MyMjliMGZjNWU0NWI2OGQxOWE4YTEwNmViYmU5YTk1Yjg1YjNkNGM1NmUzYWI4NzdmYzdkMDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI0ZWQyMWRmOGUwNmIyY2Q0YzIyZGNjMWM3NzNmODk0NzhkYmQyNGFmODdiNzUxMGUxOWI1ZDQwMDE3OTE0MDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwZmZkYjQwYjMwOGU4NDRmOTQwOTgyYjU3MmRiOWU5MWZhZTZlYmZhYWRlMWQxNWY3MDEyZTQyNTU4Mzk0MzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c742b68129fc4a378ded7f16c191ce58",
+      "statement": "Native personal workers have no shell, ingest tools, or delegation, and each page worker's PersonalPageWorkerBackend allows writes only to its own page and checks them against a tracked base version taken from job start, its last write, or its last complete read.",
+      "evidence": [
+        {
+          "resource": "repo://src/agent/personal-runner.ts#L648-L740",
+          "version": "repo-lines-v1:sha256:10fe7e19804d15ef09782914e453c8660cb30c15aedbded0495fced45781af97:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ5NWI3YmRiMDBhODgzNTUwMWZkMTM1NGI0MTU3Y2M1Yzk5YjhmM2M5ZWEyNTFkMWNhN2ZlYjg1MzViM2QwN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNzAxZWY0OGFmZGZlMzQ3MGIwYzI1YzgyM2ZmOTU2OTk0Y2YyM2I4MWQwMzliNTk1MjQyYTVlODBjZDcxMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNiNTU0ZTZmNWQxOGQ5OWU5ZmU2NjM2NmY2NGMzOTYzZTdkN2U2MTgzNjg5NTg5YmI4ZWJiZjJkZTVlMTVlMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4MzgyZTQ0Y2QyZDIyOWEwNmZkZjdiNDIzNGU3ZDU4N2VhNThmMmQ4YzQxZmJmZGEyY2FkZDAzZmQ5NDJjNjAifQ"
+        },
+        {
+          "resource": "repo://src/agent/personal-worker-tools.ts#L313-L400",
+          "version": "repo-lines-v1:sha256:75b3fcb8b0b52f5d766d66a16df38a1fd421317263a87000aee2e581a5f4e001:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxZDU3NWYxOWZkODE5NmRlYmFjOGEzZGVhYzBiOWE1MDE4MDNmYmM2MWI2ZTkzZTk1NTA3MGFkZGYwNjMyYTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlNzExMjdmN2Y1ZjE3MTdiOTZlN2U5NzY5MGE3ZDE4MWE1MDcyMzdmY2FkMTg4NDBiYmIwOTM0MDIyYTkyMGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5NWY0ZWRjYTUxNzUyMDZmODZhNjM1ZDQwMGI0ZmJiZmQ4MDRjYTYzODQ5MmIyZTNiOTg0MTJmY2Y4MDJkYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0ZTMxNWZkYmIzNzg5ZDU4OTI2MmMyZGQ4NjViNjAxZTNmMTFkN2ViNTM4ZGJlYjhlOWU3NGY3OTM0OTdlNjAifQ"
+        },
+        {
+          "resource": "repo://test/agent/personal-runner.test.ts#L330-L400",
+          "version": "repo-lines-v1:sha256:01798d9ca974339487930fdccc9b150faad1827b319dc38105a1d0d455332715:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg5MTg4OTJjOWRjNzUwNzRlZGFjZjg2YTRiYTRmNzAxZTE5OGVkN2I1MmQzZThkMDdhYjg2ZTczOTFiM2YwOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmOTNkZjY4MzhiNDMyYzE5NDUwM2MxMmU5MGI5NDc1ZWQyNTlmYTE4YzNkOWRlNWE1MWFkODMyOTBmNGE2YzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzMzZkMzgwZWFjM2ZkNjQ2MjUyODgwY2FhMDNhY2QyOGNjNWFhZTVmOGU0MGE5MjI1ZWQ4ZjgwYzU4NWUxZDkifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.7.1",
+    "at": "2026-10-09T14:26:08.776Z"
+  }
+}

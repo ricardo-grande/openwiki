@@ -6,6 +6,8 @@ tags: [ingestion, connectors, personal-mode, local-wiki, agent-run, scheduling]
 sources:
   - id: openwiki-source-6fd9c8ed42336141de43b3c2
     resource: repo://src/agent/okf-middleware.ts
+  - id: openwiki-source-3345f17d8b31bf5bb337b3f4
+    resource: repo://src/agent/prompts/personal-guidance.ts
   - id: openwiki-source-3fc16f0371ced4d94330f06c
     resource: repo://src/cli/commands.ts
   - id: openwiki-source-106c72a9cb6dd904077fc747
@@ -26,10 +28,10 @@ sources:
     resource: repo://test/ingestion/ingestion-run.test.ts
   - id: openwiki-source-578c3bdefeb989094f3d457f
     resource: repo://test/ingestion/ingestion.test.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Personal Mode Ingestion
@@ -54,14 +56,40 @@ See [connectors](../integrations/connectors.md),
 
 The orchestrator is `runOpenWikiIngestion`. It loads OpenWiki env, ensures the
 home directory exists, reads the onboarding config, builds the connector
-registry, resolves the target to source instances, and runs each source in turn,
-collecting one `SourceIngestionResult` per source instance.
+registry (or uses an injected `connectorRegistry`), resolves the target to source
+instances, and returns one `SourceIngestionResult` per source instance. It then
+takes one of two paths, chosen by `OPENWIKI_PERSONAL_CORE` (read after the env
+load, so it may come from `~/.openwiki/.env`):
 
-The CLI `openwiki ingest <target> [--scheduled] [--print] [--modelId <id>]`
+- **Lifecycle-core path** (`OPENWIKI_PERSONAL_CORE=1`, `runCoreIngestion`): every
+  requested deterministic pull runs first, then exactly **one** personal update
+  run covers all of them, scoped to the pulled connectors
+  (`personalScope: { connectors }`) and driven by the native personal driver
+  described in [Personal lifecycle core](./personal-lifecycle.md). A failed pull
+  stops neither the other pulls nor the run, and a failed or conflicting run
+  keeps the pulls: the synthesis cursor has not moved past them, so the next run
+  reads them. The run's outcome is returned as `synthesis` (`complete`,
+  `interrupted`, `noop`, `conflict`, or `error`). Source statuses here are
+  `pulled` (deterministic), `gathered` (agentic, collected by the run's gather
+  worker), `skipped`, or `error`.
+- **Legacy path** (the default): each source instance runs in turn through
+  `runSourceIngestion`, with one OpenWiki agent update per source, as described
+  below.
+
+`--pull-only` (`pullOnly`) pulls deterministic sources and never begins a run;
+the evidence waits in the frontier of the next update, and agentic sources are
+skipped with a note. It requires `OPENWIKI_PERSONAL_CORE=1` and is refused before
+any pull otherwise, because the legacy path would never read pulled-only data.
+Interactive ingestion may ask the user to take over an expired personal wiki
+lock (`confirmTakeover`); scheduled ingestion never takes over.
+
+The CLI `openwiki ingest <target> [--pull-only] [--scheduled] [--print] [--modelId <id>]`
 command parses arguments in `src/cli/commands.ts` and is executed by
 `runIngestCommand` in `src/cli/runners.ts`, which streams text events to stdout,
-prints an ingestion summary line per source, and sets a non-zero exit code when
-any source result has status `error`.
+prints an ingestion summary line per source (plus a personal-wiki line when a
+core run happened), and sets a non-zero exit code when `ingestionFailed` is true:
+any source result has status `error`, or the core run ended in `conflict` or
+`error`.
 
 ```mermaid
 flowchart TD
@@ -120,7 +148,7 @@ no-op when the user has paused ingestion, while a manual `openwiki ingest` run
 
 ## Per-source run: deterministic pull vs. agentic discovery
 
-Each source instance runs through `runSourceIngestion`. Whether it performs a
+On the legacy path each source instance runs through `runSourceIngestion`. Whether it performs a
 pre-agent deterministic pull depends on the connector's
 `supportsAgenticDiscovery` flag: `isDeterministicConnector` returns true when
 that flag is false.
@@ -132,8 +160,8 @@ that flag is false.
   written under the connector's raw directory inside the OpenWiki home
   (`~/.openwiki/connectors/<id>/raw`) and their in-tree-relative paths are handed
   to the agent.
-- **Agentic-discovery connectors** (`custom-mcp`/`notion` and `git-repo`) skip
-  the pre-pull. The agent instead uses connector/MCP tools, local inspection,
+- **Agentic-discovery connectors** (`custom-mcp` and `notion`) skip the pre-pull;
+  `git-repo` is deterministic (`supportsAgenticDiscovery` is false). The agent instead uses connector/MCP tools, local inspection,
   and source config during its run to gather data itself.
 
 A deterministic pull whose status is `error` **and** which produced zero raw
@@ -177,8 +205,10 @@ and to run no other source's ingestion in the same run.
 `createConnectorSynthesisGuidance` appends per-connector guidance selected by
 connector id (Gmail classification/priority rules, Notion page-selection rules,
 X saved-context handling, Hacker News watchlist defaults, LangSmith runtime
-analysis, etc.). This same guidance builder is reused by code-mode ingestion in
-`runCodeModeConnectors`.
+analysis, etc.). The builder lives in `src/agent/prompts/personal-guidance.ts`
+and is shared by code-mode ingestion in `runCodeModeConnectors`, the native
+personal planner prompts, the personal host session's per-connector briefs, and
+the generated personal skill reference.
 
 ## Agent run and telemetry
 
@@ -203,10 +233,14 @@ is one of:
 - `agent-updated` — the agent update run completed for this source.
 - `error` — the deterministic pull failed with no raw files, or the source run
   threw.
-- `skipped` — reserved in the result type for a source that produced no work.
+- `skipped` — a source that produced no work (on the core path, an agentic
+  source under `--pull-only`).
+- `pulled` and `gathered` — core-path statuses for a deterministic pull and an
+  agentic source left to the run's gather worker.
 
-`runOpenWikiIngestion` returns `{ results }` aggregating all per-source results;
-the CLI derives its process exit code from whether any result is `error`.
+`runOpenWikiIngestion` returns `{ results }` aggregating all per-source results,
+plus `synthesis` on the core path; the CLI derives its process exit code from
+`ingestionFailed`.
 
 ## Windows
 

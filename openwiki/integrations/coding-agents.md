@@ -22,10 +22,14 @@ sources:
     resource: repo://src/generation/page-jobs.ts
   - id: openwiki-source-7c5ecb56558cc061dab24f9d
     resource: repo://src/generation/repository-run.ts
+  - id: openwiki-source-7e0dee8ba0da61adfb6324a9
+    resource: repo://src/generation/shared/pending-job.ts
   - id: openwiki-source-85064d6a188fa56bcc282f11
     resource: repo://src/ingestion/code-mode.ts
   - id: openwiki-source-5c32d5425e61a6c32d810844
     resource: repo://src/integrations/core/errors.ts
+  - id: openwiki-source-23cdf4374eda9083fb0dab89
+    resource: repo://src/integrations/core/operation-guard.ts
   - id: openwiki-source-410e7efbe6dee8c4d43e9b4d
     resource: repo://src/integrations/core/protocol.ts
   - id: openwiki-source-ce169075085dcc1a24c7601d
@@ -58,10 +62,10 @@ sources:
     resource: repo://src/integrations/pi/openwiki.ts
   - id: openwiki-source-349c953869b025f9d4935470
     resource: repo://src/platform/language.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Coding-Agent Integrations (IBM Bob/Codex/Claude/OpenCode/Cursor/Kiro/Oh My Pi/Antigravity/Copilot)
@@ -211,9 +215,11 @@ several invariants:
   `runId` does not match the currently active run with an `invalid_state` error,
   telling the caller to `openwiki_begin` first. `begin` clears the active run on
   no-op and sets it on a real run; `finish` clears it on success.
-- **Serialized operations.** `runOperation` acquires a single-operation guard
-  (`startOperation`) and rejects concurrent lifecycle calls with `invalid_state`;
-  the guard is always released in a `finally` block.
+- **Serialized operations.** `runOperation` runs each lifecycle call through a
+  shared `OperationGuard` (`src/integrations/core/operation-guard.ts`), which
+  rejects concurrent lifecycle calls with `invalid_state` and always releases
+  the guard when the call settles. The personal session manager reuses the same
+  guard.
 - **Bounded, mapped errors.** `mapRepositoryRunError` converts internal
   `RepositoryRunError` codes into stable `HostIntegrationError` codes
   (`conflict`, `invalid_input`, `invalid_state`). The MCP transport further wraps
@@ -221,9 +227,12 @@ several invariants:
   so unexpected exception detail never leaks through the transport.
 
 `HostSessionManager.create` validates the host identity against a lowercase
-`[a-z0-9-]{1,64}` pattern (`isValidHostId`) and derives the metadata model
-identity as `host-agent/<host>`; the producer actor defaults to the host id when
-not supplied.
+`[a-z0-9-]{1,64}` pattern (`isValidHostId`) through the shared
+`validateHostIdentity` helper and derives the metadata model identity as
+`host-agent/<host>` (`getHostAgentIdentity`); the producer actor defaults to the
+host id when not supplied. `mapRepositoryRunError` and both helpers are exported
+so the personal session manager applies the same identity rules and error
+mapping.
 
 ## Repository-root resolution and safety
 
@@ -251,20 +260,36 @@ this path today.
 connects a `StdioServerTransport`. The adapter registers each tool's schema and
 description with the MCP SDK and executes it through `executeTool`. The server
 is invoked by the CLI's `openwiki mcp --host <id>` command, which looks up the
-host's registry entry to supply the correct provenance actor.
+host's registry entry to supply the correct provenance actor. `openwiki mcp
+personal --host <id>` starts a second, separate server, `openwiki-personal`
+(`runOpenWikiPersonalMcp`), built by `createOpenWikiPersonalMcpServer` over the
+same generic `createMcpServer` adapter but with its own name, instructions
+(`PERSONAL_INSTRUCTIONS`), and tool provider; see
+[Personal host agent mode](personal-host-mode.md).
 
 ## Installation: host config and the skill bundle
 
 Installing an integration writes two managed artifacts into a host's chosen
-scope: a **skill directory** (a copy of the canonical `integrations/openwiki`
-bundle) and a **managed MCP server entry** in the host's config file. The
-`HostIntegrationInstaller` performs this transactionally.
+scope: a **skill directory** (a copy of a canonical bundle under
+`integrations/`) and a **managed MCP server entry** in the host's config file.
+The `HostIntegrationInstaller` performs this transactionally. Two
+**components** can be installed independently
+(`HOST_INTEGRATION_COMPONENTS`): `code` (skill `openwiki`, MCP server
+`openwiki`, started with `openwiki mcp`, user and project scope) and `personal`
+(skill `openwiki-personal`, MCP server `openwiki-personal`, started with
+`openwiki mcp personal`, **user scope only** because the personal wiki belongs
+to the user). The CLI selects the personal component with `--personal`, which
+cannot be combined with `--project`; `openwiki integrations list` reports one
+row per host and component.
 
 ### The host registry
 
 `HOST_TARGETS` in `src/integrations/install/registry.ts` is the immutable
 registry of supported hosts. Each entry declares its display name, provenance
-actor, per-scope skill directory and MCP config, and a documentation URL:
+actor, per-scope skills root and MCP config, and a documentation URL. The
+installed skill directory is `<skillsRoot>/<component skill name>`, so the
+paths below show the `openwiki` skill and the personal component installs
+`openwiki-personal` beside it:
 
 - **IBM Bob** — user config at `.bob/settings/mcp.json` and project at
   `.bob/mcp.json` (`json`); skill under `.agents/skills/openwiki` at
@@ -306,8 +331,10 @@ actor, per-scope skill directory and MCP config, and a documentation URL:
   user/project skill paths diverge because GitHub Copilot CLI keeps global
   skills under `~/.copilot/skills` but per-repository skills under `.github/skills`.
 
-`defaultMcpServerCommand(target)` produces the published invocation
-`openwiki mcp --host <target>`, which is what installed configs launch.
+`defaultMcpServerCommand(target, component)` produces the published invocation
+`openwiki mcp --host <target>` for the code component and
+`openwiki mcp personal --host <target>` for the personal one, which is what
+installed configs launch.
 
 ### The Pi package extension
 
@@ -335,12 +362,16 @@ nine installed targets.
 Three adapters own the managed entry per config kind, each preserving unrelated
 user configuration and enforcing exact ownership:
 
-- **`json`** adds/removes an `mcpServers.openwiki` entry and refuses to touch an
-  `openwiki` entry it does not own.
+Each adapter takes the component's server name, so the code and personal
+components own separate entries side by side:
+
+- **`json`** adds/removes an `mcpServers.<server>` entry (`openwiki` or
+  `openwiki-personal`) and refuses to touch an entry it does not own.
 - **`codex-toml`** writes a fenced block delimited by `# OPENWIKI:MCP:START` /
-  `# OPENWIKI:MCP:END` and refuses to replace a modified block or an unmanaged
-  `openwiki` table.
-- **`opencode-json`** edits the `mcp.openwiki` local-server entry in JSONC while
+  `# OPENWIKI:MCP:END` (the prefix derives from the server name, so the
+  personal block uses its own markers) and refuses to replace a modified block
+  or an unmanaged table of the same name.
+- **`opencode-json`** edits the `mcp.<server>` local-server entry in JSONC while
   preserving surrounding comments.
 
 Each adapter reports whether its entry is `not-installed`, `installed`, or
@@ -348,14 +379,17 @@ Each adapter reports whether its entry is `not-installed`, `installed`, or
 
 ### Skill bundle and ownership receipt
 
-The canonical bundle is resolved relative to the installer module
-(`resolveCanonicalSkillBundle`) and inventoried into a deterministic SHA-256
+The canonical bundle for a component (`integrations/openwiki` or
+`integrations/openwiki-personal`) is resolved relative to the installer module
+(`resolveCanonicalSkillBundle(moduleUrl, component)`) and inventoried into a deterministic SHA-256
 hash map keyed by relative path (`inventorySkill`), which requires a `SKILL.md`
 at the root. The bundle root is restricted to `SKILL.md`, an `agents/` tree
 (host agent manifests such as `agents/bob.yaml` and `agents/openai.yaml`), and a
 `references/` tree; any other path is rejected. On install, a
 `.openwiki-install.json` **receipt** records the owning package, OpenWiki
 version, host target, installed MCP command, and per-file hashes.
+The personal bundle's reference file is generated at build time by
+`scripts/generate-personal-reference.mjs`, which `pnpm build` now runs.
 `inspectInstallation` uses the receipt to classify a destination as
 `not-installed`, `installed` (intact), or `modified` (present but altered or
 unmanaged).
@@ -377,12 +411,14 @@ entry, snapshots the config for rollback, removes the managed entry, moves the
 skill to a cleanup backup, and prunes now-empty skill parent directories.
 `status` reports `installed` only when both the skill and the config entry are
 intact, `modified` when either is partially present, and `unsupported` when the
-requested scope does not exist for the host.
+requested scope does not exist for the host or for the component (the personal
+component reports `unsupported` at project scope).
 
 ## User-level vs project scope
 
 Every host supports **project** scope; user scope is optional (`user` may be
-`null` in the registry, though all nine current hosts support both). For
+`null` in the registry, though all nine current hosts support both). The
+personal component is the exception: it installs at user scope only. For
 **project** scope the installer resolves the root through the same
 `resolveRepositoryRoot` used by runs, so a project install always lands at the
 Git worktree root; for **user** scope it anchors at the home directory. When a
@@ -437,7 +473,8 @@ The full procedure, including the local dogfooding command
 builds OpenWiki, refreshes the host skill, and records absolute paths to the
 current Node executable and `dist/cli/cli.js`; all nine current hosts install at
 user scope, and later source changes only require `pnpm build` unless the bundled
-skill itself changes.
+skill itself changes. Adding `--personal` installs the separate
+`openwiki-personal` skill and MCP server instead, at user scope only.
 
 ## Focused tests
 

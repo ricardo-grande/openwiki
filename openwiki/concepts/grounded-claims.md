@@ -42,10 +42,10 @@ sources:
     resource: repo://src/okf/claim-sources.ts
   - id: openwiki-source-95484b6dcd037757691dcbb2
     resource: repo://src/okf/claims-verification.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Grounded Claims
@@ -117,6 +117,18 @@ JSON **sidecar** under `openwiki/.claims/`, mirroring the page's path below
 they carry the persisted schema version, a `pageVersion` hash of the generated
 Markdown bytes, the complete `claims` array, and an optional `verification`
 event.
+
+The store is parameterized by the wiki's virtual page prefix
+(`CODE_WIKI_PAGE_PREFIX`, `/openwiki/`, by default): `ClaimsStore(rootDir,
+pagePrefix)` places the wiki directory at `<rootDir>/openwiki` for a repository
+root, or at `rootDir` itself when the prefix is `/`, as for the personal wiki
+rooted at its own directory. Every path helper (`normalizeWikiPagePath`,
+`isGroundedWikiPage`, `toClaimsSidecarRelativePath`) takes the same prefix, and a
+wiki rooted at its directory must not be a symbolic link, just as `openwiki/`
+must not be one below a repository root. Grounded Claims themselves still apply
+to repository code wikis; the personal lifecycle uses the store only to discover
+the wiki's pages (see
+[Personal lifecycle core](../workflows/personal-lifecycle.md)).
 
 Only pages that own factual state receive a sidecar. Structural and reserved
 files (`index.md`, `log.md`, `instructions.md`) and anything inside the

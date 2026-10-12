@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:fdd9dc471628fe883b98ff5d7e5ff3182c3311191b3fbd074f9a0704018715b9",
+  "pageVersion": "sha256:39e2ca635e806769252d909c18768c9ac4439eda1f4d81641c722b5f9845a49f",
   "claims": [
     {
       "id": "claim_4f1bb9562e1846dc92e1f9ba3ad68ed8",
       "statement": "validateCronExpression normalizes a cron expression (trim and collapse whitespace), rejects an empty result with the guidance message \"Enter a cron expression like 0 2 * * *.\", parses it with cron-parser's CronExpressionParser.parse (returning the parser error on failure), and on success attaches a human-readable description.",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L576-L578",
+          "resource": "repo://src/scheduling/schedules.ts#L656-L658",
           "version": "repo-lines-v1:sha256:f7a7c1c911f269b4c518f740419bffff03aa2185ff382505560df8c43995bd83:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDIxMWE5ZGE3ZjdhMWNhMTg1MzIyN2IyOGM4M2UxYzA3M2Y1NTVmOTBmNWVmMjc3MWM3ZjExNjJmN2ZlNGQ4OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2ExZDkxMzQxMGVhNjJkMzk5NTk2ZGJkMGI1NGIyOWE5Y2UxYzUyZmFjY2M2MDZjMjY1MWY4M2YyOTJmZTMyNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzcwYjE4M2I0MTI2MzRiMTQyYTYzYTk1ZTI2NzBmMjg3YzUyOWVmNzk1NGJhYjg0ZDgyYmQyYzE4YWJjYzRiNiJ9"
         },
         {
-          "resource": "repo://src/scheduling/schedules.ts#L88-L115",
+          "resource": "repo://src/scheduling/schedules.ts#L89-L116",
           "version": "repo-lines-v1:sha256:aee6229897dfe4bdc72c6b99b6299d34fbc544ef942308130c7d9966e819eddf:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5YTdkYzFkNTRkNmQ3ODBhZDEzMjU2NWZlZjI3NTZmZWQ2MDQyZGVkM2U5YmQxOTBhYzZkZDFjYWU1ZTU2ZGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzOWI1YjI0NjU0Mjc0YTgxYjkwZGQ0MzU5N2MxZDg4NzQ3MmY5MjY0NzZiNDA2NjBjNjQ0MmRkODU2NTNmZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5NDg3M2RlNDUzNDA5NzY4MmVhY2U0OWExMmZiMzA0NDYxZDc0ZDRhNjg1ZTYxZDMzYzFiMGFhMDY3ZDU2NzkifQ"
         }
       ]
@@ -21,7 +21,7 @@
       "statement": "describeCronExpression renders a cron expression as human-readable twelve-hour text using cronstrue, configured to throw on parse errors rather than return junk.",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L117-L122",
+          "resource": "repo://src/scheduling/schedules.ts#L118-L123",
           "version": "repo-lines-v1:sha256:8c0bd9025330eeadc27769bfc677e3be0244cdafc48e956f52acbe9d2d4a75f4:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODM1Mzg5NzZhNmJmYmY2N2RlNTVlZmIxZDc4NGE1N2QyNjJmY2Q5ZjhkODQyZWI0MjE2N2FkZmFlM2MxZmE3YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmI1ODBlOTY0ZjgzYTQ3M2Y0M2Q0NDM4NDYyOTQ5ZDY4YjU2MDBmZGE3ODdmMTYzNzQ1ZDAwZGU4OWNiZjM2YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmM5NzVlNmEzNjY5YWEzZGIxM2I1NDUyNGUwYjNkOTk0YzNmMzU5NWIzMDlkYzEwYWVhYmEyYThlNzY5ZDNmMSJ9"
         },
         {
@@ -35,7 +35,7 @@
       "statement": "getSuggestedCronExpression returns the saved ingestion schedule expression when one exists and otherwise defaults to \"0 2 * * *\" (2 AM daily).",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L124-L130",
+          "resource": "repo://src/scheduling/schedules.ts#L125-L131",
           "version": "repo-lines-v1:sha256:048de207d8dff8b3ec00021c9834f8dc22a09be2067853399cfa444af24cd1a8:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzM3YWFlZDg2Y2JkYWQ4MTNhNzcxMzY4ZmI0NzVlOTQ3NTM4NzZkYTY3MGRmMmY5MmMxZDYxYzFlZjkwZGU5YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDEyY2EzNDVjY2Y3NWJmOWMwODA2YmNlNjk1YmU4ZGU4MDhiNzk5ODQyNTFhN2E1NGQyMDJjZjYxMDFkZDQ1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmQwZjJkM2EzYWFkYTI3NTg2NDU3OGQwYTQzOTE1NjM4ZDU0M2ZlY2EyYzk0ODU4ZGI5NDEyMTFlODZjZWYyYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGMwMDdjM2Q5MjhkY2Q4YTU2NzJjMzM4MDRmNzgzNzcyYjc1MGZhNjE4N2Y3ODkyYTVhYWNjYjcwMDQ3ODc4ZCJ9"
         },
         {
@@ -46,15 +46,15 @@
     },
     {
       "id": "claim_d78bd03ec75a4d8aafcca662209b4ce9",
-      "statement": "installConnectorSchedule installs a macOS launchd LaunchAgent that runs `openwiki ingest all --scheduled --print`, writing the plist to ~/Library/LaunchAgents/com.openwiki.ingestion.plist and reloading it by bootout-ing any existing agent then bootstrap-ing the plist into the per-user GUI launchd domain via launchctl.",
+      "statement": "installConnectorSchedule installs a macOS launchd LaunchAgent that runs `openwiki ingest all --scheduled --print` (adding --pull-only for a pull-only schedule), writing the plist to ~/Library/LaunchAgents/com.openwiki.ingestion.plist and reloading it by bootout-ing any existing agent then bootstrap-ing the plist into the per-user GUI launchd domain via launchctl.",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L132-L203",
-          "version": "repo-lines-v1:sha256:289d077b84b2f6d381d855232c9be25961b317732e3b3f39ca21f2256b9f164e:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmOGNkMjYyZmVhNjYzMWIxNzA0MDAxODJkODU3ODU0NDZjYmVjMGM0MTZhNWM3MjgxNDYzNDU1ZmRjM2FjZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEwM2RhMDMxYWIyODUzNmY1NjQ0MjJkM2M1OTI4YmZkODgwNDU2MjEzZDNlMWQyZmY1NWY1MDA5NzQ0YzdmZTcifQ"
+          "resource": "repo://src/scheduling/schedules.ts#L133-L215",
+          "version": "repo-lines-v1:sha256:6feec702894f7cfc575528d2e7f4d9012281eec2a6a003ffc77f27c0231f21d0:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmOGNkMjYyZmVhNjYzMWIxNzA0MDAxODJkODU3ODU0NDZjYmVjMGM0MTZhNWM3MjgxNDYzNDU1ZmRjM2FjZmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzOTgyOGYyNmEwZjUyMWYzNzE2ZGJkOWM4OTNiZDZkNWQwZGQ0M2NkYzdiMmZlZTVmYWIxMzcyMDkzYWU4NDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5NGZjMGMxNzNkMWVjM2ZjNTAxZDdkZmE5Mjg1NTAxYzUyN2NmYjQ3MTI1ODNkYTNjYzM2MTgwNTY2YjRiZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAzZmQwZjZkZTU2YzZjZTcxNDc4MWEyZmRjMmVjNGRiMmYxYjJkYTZhMWRjZDYyMWNiZTBkZTdhNGRkYTYyZmMifQ"
         },
         {
-          "resource": "repo://src/scheduling/schedules.ts#L812-L899",
-          "version": "repo-lines-v1:sha256:23b0359748d1f69b9ebd535473f86e0b2b6ad83c444e06bd6b8e38cafedf8833:eyJzZWxlY3RlZExpbmVDb3VudCI6ODgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2Y2ZmZDg3ZDZhOWZlZDM4ZTc5NjZmYTNkNzJhY2I3MmQyNjgxN2QzNjQ5ZWI3Mjk4M2MxNWIwOWI0YTIxMjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmNmY3NThkZTdiYzM2NmYzYWI5NDYxMGI5ZDI3NjdiMWE3MjcwZDliNGNiNGY1YjE0NjUxZDI4OWZjOGMxMzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0MDFmYTY0M2NiOTAyY2QzM2MyYWQ0ZmI0NDliODBiY2YzMGRjY2EyOGUyMzkyNDAwNDJkMTNkN2QyMjE3YWIifQ"
+          "resource": "repo://src/scheduling/schedules.ts#L890-L990",
+          "version": "repo-lines-v1:sha256:def140105400dcbd6b137c1705b36952c8e5cd98e4d7f580a4adc8753e71d999:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZTZhZGY2ODc0NjY5ZDIxM2NhOTIxMzI4YjM5ZTk5ZGFmN2U2NTZjYjY3MGZmZjcxYjNjYTlkNjcxMjg3ZGJmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3YjNiYzBmMjhkY2UyZjcwNzlhYjI3NTdjNzdiMjkxMGQ4NGNiMGFkYjE1N2Y4ZDRjODI2ZTg3MDY1NmJjNmE3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2YTQxZDczYzQ1MjJiZWEzOWZmODE1ZTI0YmNmMTMxMTg1MzFkNjcxZWIzY2Y1MzEyMTg4NWUxMWExYzQ3MjRkIn0"
         }
       ]
     },
@@ -63,36 +63,36 @@
       "statement": "parseLaunchdCalendarInterval rejects cron expressions that restrict both day-of-month and day-of-week because cron ORs those fields while launchd ANDs every StartCalendarInterval field, so emitting the plist would fire far less often than intended (often never); it also rejects any field it cannot reduce to a single in-range integer.",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L585-L645",
+          "resource": "repo://src/scheduling/schedules.ts#L665-L725",
           "version": "repo-lines-v1:sha256:dd561fe667efaac52c204f47ffcc0462b12311684ffc4b7a28109bbd8b332d0c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyNzU5MDFmYmFkYjY2NzMzZjA0MmVmNGEyYzUyZDljN2I1YTQ1YTE2OGU2NzdmN2M4YTM0NmM1NDQ3ZmIwOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVjZTQ0NmI3OWU5ODQ1ODA4ZTBlMjU2NjBjMTQxYWNiYzRhODcyYjM4ZjFlODQ0YTdjMDYxOGVjNDgzZWVkMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5ZjBmZjJiNWIxZGMyMTE4ZWVlMjlhZWY5OTNhZjEzNWMyY2U4NGJlOTBkZTNkMzdmODY4OWJlZWY4M2I2MjkifQ"
         },
         {
-          "resource": "repo://src/scheduling/schedules.ts#L800-L810",
+          "resource": "repo://src/scheduling/schedules.ts#L880-L890",
           "version": "repo-lines-v1:sha256:cb057789798384f115402fd7ee50be5df3410933ad13e5fdcfbf615a5299764d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4ZDlkMTgwNDFjNThlZTE5MmNkY2U5ODJkODg3OTgxNDBhYzIyOTg1OTA4YzNiYjYxOTZhNjJmZTFhNjljMDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmYzAyMzJkZjEwY2U2YTk5NGEyYmFiZThhM2RmZDMzMDFkNWRkZmU1ZmNjMThhNzExZTM2NTc3OTJlY2Y2YzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI0YmRjNjI3YThmNTkyZGZkNGQ5ZDNiZmNkZTc2ODMxN2UxM2QyNDY0YWVmNWQ1OWZiMzAyNjYzNjM4N2FkMmIifQ"
         }
       ]
     },
     {
       "id": "claim_9c4250c920f5411abfa4b12ec778675e",
-      "statement": "The CLI `cron` subcommand (runCronCommand) manages a single \"all ingestion\" schedule by dispatching to the scheduling module's list, pause, resume, and delete helpers, saving the updated config and reconciling the Mac wake window after each mutation.",
+      "statement": "The CLI `cron` subcommand (runCronCommand) manages a single \"all ingestion\" schedule by dispatching to the scheduling module's list, pause, resume, pull-only, and delete helpers, saving the updated config and reconciling the Mac wake window after each mutation.",
       "evidence": [
         {
-          "resource": "repo://src/cli/runners.ts#L93-L149",
-          "version": "repo-lines-v1:sha256:af54883c38f775f31aec81a6954d36eb6a7ac9cf14d243765e32f9589ae44f78:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNTIxNTM2NWU5Zjk0YjZiNjM2ZTI5YWIzMWRhODYyMzkzODFhZGExYzk5OTQ0MjA0NGRlYjgzNDU3MGRhY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmYWJjNmNjMDFmYjRmNTZkNDgxOGFiYjAwMThjMTg4OGJmMzk4ZDI4OTcyNDdlY2MyZDQwM2Y0MTFkYWUzZTUifQ"
+          "resource": "repo://src/cli/runners.ts#L101-L160",
+          "version": "repo-lines-v1:sha256:9da29007a0804dacfec6c96f25090b1b2aacf580f9a81a0e76e90c349a9acf06:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIxNTIxNTM2NWU5Zjk0YjZiNjM2ZTI5YWIzMWRhODYyMzkzODFhZGExYzk5OTQ0MjA0NGRlYjgzNDU3MGRhY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5YzNmY2ZhNzIwZDVhOWQ5NzAwMzE4MTc3ZDYxOGZmOTRmZmNkN2Q5NDZkMGU4NTUwYmNmNGE1MjliYWY4ODIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZiNTgwZTk2NGY4M2E0NzNmNDNkNDQzODQ2Mjk0OWQ2OGI1NjAwZmRhNzg3ZjE2Mzc0NWQwMGRlODljYmYzNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1NGRlY2ExMjJiMWEzMzA1MTQ1MDdmMDFkM2QwYzlkODJmYmM2ZDk3MDE1NDZmY2NmYTUyOGY0MzEyYTA5MmUifQ"
         },
         {
-          "resource": "repo://src/scheduling/schedules.ts#L205-L355",
-          "version": "repo-lines-v1:sha256:fe84dbd1c5deb6cd80dd90f99329c8ca67b67e331c23dd78f25c12b6109b5f87:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiZDFjNzIxNzZkODQxMDExZjllZTZmZGQ4NWFkYTc4OTFlYjAzNGRlMTQyNzZmMTRhMmNiYWJhMGFjOWY2NzEwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5MjA0MGUwOTVhOTRlMmFkYTc0ZTQyMWYzNzE4NzUxYTkxYTgxMGJmZDY2ZjQ4ZjRlOTM5YzdiNzQ4MGViNjcwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIxNDgwNGFmMzFhMDFiMTFhZWVkMmJhMTFkMmFkYzU1ODQ4ZmRiZjBkODU4NzBhZmI1MTc5ZjBlOGE2MmE2YTllIn0"
+          "resource": "repo://src/scheduling/schedules.ts#L214-L406",
+          "version": "repo-lines-v1:sha256:8b8b585de0f61143e31bed69a058598ee5e18fb39941b2a00e5951e5ea709b31:eyJzZWxlY3RlZExpbmVDb3VudCI6MTkzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiZDFjNzIxNzZkODQxMDExZjllZTZmZGQ4NWFkYTc4OTFlYjAzNGRlMTQyNzZmMTRhMmNiYWJhMGFjOWY2NzEwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI5MjA0MGUwOTVhOTRlMmFkYTc0ZTQyMWYzNzE4NzUxYTkxYTgxMGJmZDY2ZjQ4ZjRlOTM5YzdiNzQ4MGViNjcwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4YTI2NzczMzViZTlmMGVhY2FiYjM2ZjE3YzNhYWM4NjZlOTExODRmNTg2NGU3NTJmNjJmZWIxYTU5OGZmZWNkIn0"
         }
       ]
     },
     {
       "id": "claim_887cd69060e04c409f11f6ce32dc9166",
-      "statement": "The cron CLI parser only accepts the target `all` for pause, resume, and delete; any other target or extra arguments returns a usage error.",
+      "statement": "The cron CLI parser only accepts the target `all` for pause, resume, delete, and pull-only (pull-only also requires an on or off setting); any other target or extra arguments returns a usage error.",
       "evidence": [
         {
-          "resource": "repo://src/cli/commands.ts#L583-L619",
-          "version": "repo-lines-v1:sha256:aaafa859d907ece31edf3ca5047d73f9186586bd24b421fde03e0335b3381c31:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0NDk3Mjg4YjQ4MTAzMGE5Nzk3ODEwODM1NjgyMTFiNDQwNDkwZWNlMjEyMjE1NTg3MGY0YzQ3MTNhYmRhNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3ZTU3ODhkNWQ5ZDczZDI0YTgxZGJjMGE1YTc0YmZhODJjOWMzYjNhZjk5ZTUyYWY3OTZlOTBiNDY4YThhM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlZWVmZGQ1MTEzZDk5MDU2ZjFlMTlkZTFiN2Q1YmVkZTZlMGEzMDFmOWU4ZjdiZTRlYWQzZjhmOGRhODY2YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1YmE2NmYwYzI1NjkyNmU4OWZhM2Q4Yjg0YTdjZGI2YjIyZWIyOTEwMGNmODUwMDUyOTEzZjZlY2I2NzNiOGYifQ"
+          "resource": "repo://src/cli/commands.ts#L609-L670",
+          "version": "repo-lines-v1:sha256:547ae4823643c0ac40d438db54b67b43e3f1b9f54f2740e9f950239ddbc02e7d:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0NDk3Mjg4YjQ4MTAzMGE5Nzk3ODEwODM1NjgyMTFiNDQwNDkwZWNlMjEyMjE1NTg3MGY0YzQ3MTNhYmRhNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJlZWVmZGQ1MTEzZDk5MDU2ZjFlMTlkZTFiN2Q1YmVkZTZlMGEzMDFmOWU4ZjdiZTRlYWQzZjhmOGRhODY2YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0NzMzYzNhMDkxY2QyZDYzYTRiYTg0MDZkNTQwMGVlNGEwYjFmMmYxM2YzOTk3NjgzZmJkMGEzMTA2Mjc2MjIifQ"
         }
       ]
     },
@@ -101,11 +101,11 @@
       "statement": "pauseConnectorSchedules marks the schedule pausedAt and unloads the LaunchAgent while leaving the plist in place, while deleteConnectorSchedules removes the schedule from config, unloads the agent, and deletes the plist.",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L234-L272",
+          "resource": "repo://src/scheduling/schedules.ts#L244-L282",
           "version": "repo-lines-v1:sha256:c1b171f927a2d804cf7256e461920372ec320ceed2268e4fb5f5b32cc99c581e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5NTBiYTRiMjQwOTJkYjU2MmVhMzI3YmQ4NjdlODgwNDA5ZmU5ZmQ1MzhlOTI3NTFiMWY3ZTE1OGIzMTBkMWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0MDA1MjRmZDJjOWUwNzVhNzQ2YjM3MTc0M2EwMjFmNDY0ODlkNjYwYTMxNjA1YjkzNTA2MjcyODZjM2M2OGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4OTQyY2IwZGUxNTE5MGEwYzI3ZmRjZWVmNTQ1ZTlmMDNlMTE4YmY4MjRmMjQ1ZGE2NjNhMjYyNGE0MTU1NzYifQ"
         },
         {
-          "resource": "repo://src/scheduling/schedules.ts#L327-L355",
+          "resource": "repo://src/scheduling/schedules.ts#L407-L435",
           "version": "repo-lines-v1:sha256:663604ff7b5305b7411280ebd18baedfb65bd91bd2f575a4f3db1df14d9413d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5ZjNkMWM1NmFjMjQ0MDYyOTFmZjI2Y2Q3NjIwOTliYWI3OGRmZmYwMTRmNjk4NjUwMzRlNjdjMzkxMzY4YTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0ODA0YWYzMWEwMWIxMWFlZWQyYmExMWQyYWRjNTU4NDhmZGJmMGQ4NTg3MGFmYjUxNzlmMGU4YTYyYTZhOWUifQ"
         }
       ]
@@ -115,11 +115,11 @@
       "statement": "reconcileOpenWikiPowerSchedule keeps a macOS pmset repeat wake/sleep window in sync with the active ingestion schedule after every mutation, installing a window when an active schedule exists and canceling it otherwise; the window is derived from the schedule's earliest and latest run times and is skipped with a warning when the schedule cannot be represented as a simple single-day repeat window.",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L433-L528",
+          "resource": "repo://src/scheduling/schedules.ts#L513-L608",
           "version": "repo-lines-v1:sha256:634d144c150b12a8313460f7d6fd0caabac318d54924a33582656a5358b31af8:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyNjVhMzBmYjgzMzdmOTBlYzNlMTExMmRkNzJjM2QyM2M2MGE0YzU5M2E2MGYzMjZkYTkyMTM2OTliMmI4ZjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0YTc0NGZmOTE5MjY4OTExMjkwMWQ0YjcyMjdjZWEzNjY5MGIwYjQ3OWY4NGM5OTUzZmRlMWU3M2Q4MzlmODgifQ"
         },
         {
-          "resource": "repo://src/scheduling/schedules.ts#L669-L705",
+          "resource": "repo://src/scheduling/schedules.ts#L749-L785",
           "version": "repo-lines-v1:sha256:a77bda33345383b98fdb34d83d455d17c3d6af9202893e2e45380acda0f1cc36:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1NDk4ZjlkMDE4YjA5MjA3ODlhMTM2YTY3NjIxZmFlOGJkNzAxYmE1YWUwY2NiMjdlNWYyZThkNzg0OTlkOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0MjlkNWI0NmEyNWZlNDZiOWMzNTc5MWM4ZjBiZWFiYTk2OThlNTJlOTExMzY5OTY1MzBkNTA1ZDdkMzk5NDIifQ"
         }
       ]
@@ -129,7 +129,7 @@
       "statement": "installOpenWikiPowerSchedule invokes pmset through osascript with administrator privileges and warns that macOS supports only one repeat power schedule, which OpenWiki overwrites to cover the currently saved schedule; power scheduling is macOS-only.",
       "evidence": [
         {
-          "resource": "repo://src/scheduling/schedules.ts#L357-L412",
+          "resource": "repo://src/scheduling/schedules.ts#L437-L492",
           "version": "repo-lines-v1:sha256:a1f78358344ee261b30d920d17645d0c6bf3eaca210a468842940a2c9bd9d522:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNGY1N2Q2YmIxZWM4Y2QzYTMwM2E3NDE1MzM0Zjg5ZWU2ZjAxZTQ1NjFkMWZjNmRiYjBmNmY1NjEzZTVmMmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyMDQwZTA5NWE5NGUyYWRhNzRlNDIxZjM3MTg3NTFhOTFhODEwYmZkNjZmNDhmNGU5MzljN2I3NDgwZWI2NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExZDBkMjc2MDJkMDRmMzc2NDllMjYwNTYyMGY1MmUxOTA1YTU5ZWYxZDVkNDI0ODc4MDYxODc2ODE0Y2U5Y2YifQ"
         }
       ]
@@ -235,7 +235,7 @@
           "version": "repo-lines-v1:sha256:9a839067f47beb1ca08c710b71e598b0402cc1fd184fbaffb0641be925ef8a7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzc5Yzg4MGY2MmQ0MjI1MzhiY2E4NGNiNTVlY2U4ZmUxMGU5NjU4YjA2MTExNWMzZmFiY2RjN2IzYmVjZjQ0NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzg2ZTgzZTdmOTYxYjVhN2NhZDhlZWZmZDZhM2Y0MWY4NTczZjBiZWRhODQxZGQyM2YyOTZjNTc5NGVhNGJjNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2NkOTNkZDYxY2RiYWRhMDY1NDFjZGMzNzIwZWUxOTU5ZWJlZTgyNGFhNzYwYzliNjljNWFkZDY4Yjk1NDk5MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGRlZWVlZTNlMTIwZDlkMTA0Yjc2ZTVjNzFhNjIyNmU0NWMwOTM1Y2I1YzZmMjUxMjJlNTI1N2ZiMWMzODI0MiJ9"
         },
         {
-          "resource": "repo://README.md#L264-L264",
+          "resource": "repo://README.md#L266-L266",
           "version": "repo-lines-v1:sha256:8c14e665e35950919d64b14e39d29156ccabac889d7c08fa09d47ff748f58ec7:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGMxNGU2NjVlMzU5NTA5MTlkNjRiMTRlMzlkMjkxNTZjY2FiYWM4ODlkN2MwOGZhMDlkNDdmZjc0OGY1OGVjNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGMxNGU2NjVlMzU5NTA5MTlkNjRiMTRlMzlkMjkxNTZjY2FiYWM4ODlkN2MwOGZhMDlkNDdmZjc0OGY1OGVjNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTk2ZDFmZDFlMTA3OTg2YjJlYmM0ZTljZDQ2NGViMmE5MTIzYWMyMTZiMzkzMTI0YWMxNmNhNTdlNjlmYjNlMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2M4ZWQ0OTRlYTNkMWU4MTgzMzRhNTUzYmE1Y2UxMWU0MGI1YjgyNWY5ZGMwNGM3ZjAzZWFhNTRkZThjZTJmZCJ9"
         }
       ]
@@ -273,7 +273,7 @@
       "statement": "The examples/openwiki-update-auto-merge.yml variant requires repository-level setup beyond the canonical example: enable GitHub Allow auto-merge, add branch protection or a ruleset for the default branch gating the generated-docs checks, create a fine-grained personal access token or GitHub App token scoped to the target repo with Contents and Pull requests read and write permissions stored as the OPENWIKI_PR_TOKEN Actions secret, and pin OpenWiki and provider versions. The dedicated token is needed because PRs created with the default GITHUB_TOKEN do not start most pull_request workflows, so required PR checks may never run.",
       "evidence": [
         {
-          "resource": "repo://README.md#L227-L243",
+          "resource": "repo://README.md#L229-L245",
           "version": "repo-lines-v1:sha256:0ff4e4edb16971237e099c5ecf9cd8186dfa4dd4ee61a883ef14df195be858e3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjM2VmMTIxMDAzMzRhYzVhNDRhYjYyMmY1OWEzY2EzYTMwOWQxMGQ0NzJmNTc5MjhlNWFlMDlmMTFhYzA4OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZjg3M2RjMGM3NzU5ZTNiMTRmNTcxNzM0YWJjYWNjYWZmNWY4NGE1ZmZmOGM4ODdmOTdkMTdhMjdhY2U5MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYzYmExODVlYzVjYTExYzc2YmNlYThmM2EwMWZkNzRkN2I4NDllN2Y4NmUwYmYwZjFhYTk5OGZkZDg5MTE3ZjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM3ZTlhYTkyZDcxYWQ1YmI4ZGIzMjUzNTNjZTdhOGIwZWYxMTI5Yzg4YzEzOTA3MDRmMzA4MzA5NjgxMmY1MjUifQ"
         },
         {
@@ -305,7 +305,7 @@
           "version": "repo-lines-v1:sha256:7df9e13c81a30c0a47445fe18f4db167d84acd1c45abc997f1f7f1c1009e1b6d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwZThmOWZhNDBlN2JkMDQ5OWQxYzBkODNmZDc1OGFhODViMzA4NDJkYmQ2MWYwZWE2YjdhZTEwZWZlYzc2ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4ZjhiODAyNzQxYWZjN2ZiMzg0MGZlY2RjNDNkN2Y4ZTQwMjNiYmZjYjViN2VjNjVlZTA4ODc5OGQ4NTE3MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU1NWQzOGExNGQwZmVhMDRhMWRhZWUxMDM0MGNmMzhlMjc0N2VjYjkyMzBhNWU1ZTFlYzU3MDlmODU2N2Q1Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzNTA5NTljNWMxZTQ2NTg1ZDk2MjVjY2Q1ZjUyMzZmYTgyZjI1ZTdlMWMwODg2MjY2Mzk1NTU1ZTYxZTI2YTEifQ"
         },
         {
-          "resource": "repo://README.md#L296-L296",
+          "resource": "repo://README.md#L298-L298",
           "version": "repo-lines-v1:sha256:c55dbcf1c532eae193d3b1e09d113a09398ce60bcf46ef08b2af290a50ef5c52:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzU1ZGJjZjFjNTMyZWFlMTkzZDNiMWUwOWQxMTNhMDkzOThjZTYwYmNmNDZlZjA4YjJhZjI5MGE1MGVmNWM1MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzU1ZGJjZjFjNTMyZWFlMTkzZDNiMWUwOWQxMTNhMDkzOThjZTYwYmNmNDZlZjA4YjJhZjI5MGE1MGVmNWM1MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmE2NTYxZmM4ODhkNTdkMDc3MmRlMjEyMDAzNjE4MzVjMTNhNzkzMDQ1MTE1Y2ZlOTk0ZGYyY2UzMTE2ZmU5MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2M4ZWQ0OTRlYTNkMWU4MTgzMzRhNTUzYmE1Y2UxMWU0MGI1YjgyNWY5ZGMwNGM3ZjAzZWFhNTRkZThjZTJmZCJ9"
         },
         {
@@ -323,10 +323,24 @@
           "version": "repo-lines-v1:sha256:fdfc63c7c509f3962429207db3e666da9535cca806fc471f555cc15aa1f50261:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4M2FhNTY2NzFmOGNjNDQyM2U4ZjdlNDQyYjA5NmJlZTZkMDk4ZWI3OWE3YTliNTkwMDJjOTNiZTFkNjgwNDRjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNmY1YjQwYjE1ODQ1N2QxNzg2NGYyMTc5MDc4NmRkNWEyZWNkYjY0YjY2YTY1MWY3ODhkNGUyNWNkMzMwM2QyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
+    },
+    {
+      "id": "claim_62665d7d35cb43cbbab1e583751d7959",
+      "statement": "Turning a scheduled pull-only run on requires OPENWIKI_PERSONAL_CORE=1; setConnectorSchedulePullOnly reinstalls an active schedule so its next run uses the new setting, and a paused schedule applies the saved pullOnly flag on resume.",
+      "evidence": [
+        {
+          "resource": "repo://src/cli/runners.ts#L108-L122",
+          "version": "repo-lines-v1:sha256:a1a749c16396fba2ff3aa1d862b0677c9dae28ce3664a8b24fc0d31fd9e712e9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1ZTZjZWQzMDc5NGNlZjVmYjE5OGY0OGQ4OTc0ODk5Mjc2Nzc4ZDI4MGY2ZDIyNDFhMjEzZWQxYWYyZjNkM2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzZmM4MjA4MWM1NzAzY2YyZWYxM2RmM2FmMTFhNGVlNTNiMjY1YzFlMmVjOGRiMjM1OWYwYTkzMjYyYThlNzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxMjEwMWQ0NDY5YmU0NzQzM2U3ZTNiZTNmYWNiMGVlMWQ0MTMwYjI4NTQwNzkyMTIwODkyZTc2MDk4N2U5YTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhNjk2NmY5N2VhMTY0NmNhMGRmYWJmNTM5NGI2MmQ5MDE3NjdkNDJhOTI3Mjk5ZGEwN2EzNTU0MjdkNDQ0Y2UifQ"
+        },
+        {
+          "resource": "repo://src/scheduling/schedules.ts#L286-L406",
+          "version": "repo-lines-v1:sha256:cda18334e9293fba878bbb25ed65bbeb9a6f82620f3f9caaa740b378c999dceb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiOTEzNzY0M2QyYWI2ZmE2NDYyMjAyMzRiYzA3YjJjOWJjYjg0NzI3MjIwMTkwNTEzMzVhNzNhNWZhOWFlYzdmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI3ODk0MmNiMGRlMTUxOTBhMGMyN2ZkY2VlZjU0NWU5ZjAzZTExOGJmODI0ZjI0NWRhNjYzYTI2MjRhNDE1NTc2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI4YTI2NzczMzViZTlmMGVhY2FiYjM2ZjE3YzNhYWM4NjZlOTExODRmNTg2NGU3NTJmNjJmZWIxYTU5OGZmZWNkIn0"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.7.1",
-    "at": "2026-10-07T08:10:39.081Z"
+    "at": "2026-10-09T14:26:08.776Z"
   }
 }

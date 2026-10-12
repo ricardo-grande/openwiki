@@ -10,6 +10,8 @@ sources:
     resource: repo://src/agent/docs-only-backend.ts
   - id: openwiki-source-a953060a04ccefcf777de48e
     resource: repo://src/agent/index.ts
+  - id: openwiki-source-4c92df2a32845b39906f2019
+    resource: repo://src/agent/personal-runner.ts
   - id: openwiki-source-8bf337d8927152d7d30230b4
     resource: repo://src/agent/prompt.ts
   - id: openwiki-source-5d1891104d4c886504a5cc7d
@@ -34,10 +36,10 @@ sources:
     resource: repo://src/integrations/core/retrieval-tools.ts
   - id: openwiki-source-eab9328975981f427c4218d0
     resource: repo://src/integrations/mcp/server.ts
-generated: { by: "openwiki/0.7.1", at: "2026-10-07T08:10:39.081Z" }
+generated: { by: "claude-code", at: "2026-10-09T14:26:08.776Z" }
 verified:
   - by: openwiki/0.7.1
-    at: 2026-10-07T08:10:39.081Z
+    at: 2026-10-09T14:26:08.776Z
 ---
 
 # Code vs Personal Modes
@@ -116,10 +118,17 @@ way:
 - The non-interactive (`--print`) path in `runPrintCommand` resolves
   `runtimeOutputMode = getRunModeOutputMode(command.mode)` and `runtimeCwd =
   getRunModeCwd(command.mode)`, then passes `outputMode` into
-  `runOpenWikiAgent`'s `OpenWikiRunOptions`.
+  `runOpenWikiAgent`'s `OpenWikiRunOptions`, together with a
+  `confirmPersonalTakeover` callback (`createTerminalTakeoverConfirmation`).
 - The interactive TUI (`App`) computes the same `runtimeOutputMode` and
   `runtimeCwd` from the startup `runMode` and threads them through the same
-  `runOptions` into `runOpenWikiAgent`.
+  `runOptions` into `runOpenWikiAgent`, with a `confirmPersonalTakeover` that
+  shows a `TakeoverPrompt` and waits for the answer.
+
+`confirmPersonalTakeover` matters only to personal runs: when another process
+holds the personal wiki's run lock and that lock has expired, the run asks the
+user whether to take it over rather than failing (see
+[Personal lifecycle core](../workflows/personal-lifecycle.md)).
 
 Inside `runOpenWikiAgent`, `outputMode` defaults to `"local-wiki"` when an option
 is not supplied, and selects two top-level behaviors before any agent is built:
@@ -128,7 +137,10 @@ is not supplied, and selects two top-level behaviors before any agent is built:
   command is `init` or `update`, the run takes the native page-job generation
   path (`runNativeRepositoryGeneration`) instead of the conversational agent.
   `createOpenWikiAgent` refuses repository `init`/`update` for the same reason —
-  those runs must go through the page-job runner.
+  those runs must go through the page-job runner. Personal (`local-wiki`)
+  `init`/`update` runs take an analogous native path,
+  `runNativePersonalGeneration`, when `OPENWIKI_PERSONAL_CORE=1`; without that
+  flag they still use the conversational agent graph.
 - **`.openwikiignore` loading.** The ignore ruleset is loaded from the runtime
   cwd only in `repository` mode; `local-wiki` mode constructs an empty
   `OpenWikiIgnore`, so personal runs never apply repository ignore rules.
@@ -162,25 +174,35 @@ apply to code repository wikis only:
 
 - **Docs-only write boundary.** Repository init/update runs may only write under
   `openwiki/`; writes escaping that tree are refused. In `local-wiki` mode the
-  docs-only check is relaxed and writes are allowed.
+  docs-only tree check is relaxed, but the optional `writableWikiPages`
+  allowlist still applies, so a native personal page worker can write only its
+  own page.
 - **Grounded Claims ownership.** Repository Claims state (the `/openwiki/.claims`
   tree) is implementation-owned: generic read/write/edit/delete/ls/glob/grep
   operations into Claims state paths are refused, and shell `execute` commands
   that reference Claims state are rejected. This ownership boundary is applied
   only in `repository` output mode — `isClaimsPath` returns false unless
   `outputMode === "repository"`.
-- **Host-driven (coding-agent) runs.** Running OpenWiki inside Codex, Claude
-  Code, OpenCode, and the other registered coding agents currently supports
-  repository code wikis only, not personal brains. The MCP lifecycle the host
-  drives (`openwiki_begin` → `openwiki_submit_plan` → `openwiki_next_page` →
-  `openwiki_submit_page` → `openwiki_finish`) operates on a resolved Git
-  repository root and `openwiki/`, exposes read-only repository-wiki retrieval
-  plus the page-job generation queue, and never hands the host the connector
-  ingestion tools. The host researches the repository with its own native
-  tools, so connector-sourced context (including LangSmith) is not yet
-  supported in that path.
+- **Host-driven repository runs.** Running OpenWiki inside Codex, Claude
+  Code, OpenCode, and the other registered coding agents through the
+  repository MCP server supports repository code wikis. The MCP lifecycle the
+  host drives (`openwiki_begin` → `openwiki_submit_plan` →
+  `openwiki_next_page` → `openwiki_submit_page` → `openwiki_finish`) operates
+  on a resolved Git repository root and `openwiki/`, exposes read-only
+  repository-wiki retrieval plus the page-job generation queue, and never hands
+  the host the connector ingestion tools. The host researches the repository
+  with its own native tools, so connector-sourced context (including
+  LangSmith) is not yet supported in that path. The personal wiki has its own
+  host integration (see below).
 
 ## Capabilities that apply to personal mode only
+
+A coding agent can also work with the personal wiki through a separate
+`openwiki-personal` MCP server and skill, installed with
+`openwiki integrations install <host> --personal` at user scope. It answers
+from `~/.openwiki/wiki`, pulls connected sources with `openwiki_personal_ingest`,
+and maintains the wiki through the same resumable lifecycle the native personal
+driver uses (see [Personal host agent mode](../integrations/personal-host-mode.md)).
 
 Connector ingestion tools are a personal/local-wiki capability. When the output
 mode is `repository`, `createOpenWikiConnectorTools` returns no tools at all,
